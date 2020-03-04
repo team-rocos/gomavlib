@@ -2,9 +2,11 @@
 
 MAINFOLDER=$1
 INFOLDER=$2
-OUTFOLDER=$3
+FF=$3
+OUTFOLDER=$4
 
-pushd $INFOLDER
+
+pushd $INFOLDER > /dev/null
 go run ${MAINFOLDER}/main.go ${MAINFOLDER}/defdecoder.go ardupilotmega.xml > ${OUTFOLDER}/ardupilotmega.go
 go run ${MAINFOLDER}/main.go ${MAINFOLDER}/defdecoder.go ASLUAV.xml > ${OUTFOLDER}/ASLUAV.go
 go run ${MAINFOLDER}/main.go ${MAINFOLDER}/defdecoder.go autoquad.xml > ${OUTFOLDER}/autoquad.go
@@ -18,5 +20,5 @@ go run ${MAINFOLDER}/main.go ${MAINFOLDER}/defdecoder.go standard.xml > ${OUTFOL
 go run ${MAINFOLDER}/main.go ${MAINFOLDER}/defdecoder.go test.xml > ${OUTFOLDER}/test.go
 go run ${MAINFOLDER}/main.go ${MAINFOLDER}/defdecoder.go ualberta.xml > ${OUTFOLDER}/ualberta.go
 go run ${MAINFOLDER}/main.go ${MAINFOLDER}/defdecoder.go uAvionix.xml > ${OUTFOLDER}/uAvionix.go
-go run ${MAINFOLDER}/main.go ${MAINFOLDER}/defdecoder.go ../../../message_definitions/v1.0/mavlink_freightfish.xml > ${OUTFOLDER}/mavlink_freightfish.go
-popd
+go run ${MAINFOLDER}/main.go ${MAINFOLDER}/defdecoder.go ${FF}/mavlink_freightfish.xml > ${OUTFOLDER}/mavlink_freightfish.go
+popd > /dev/null
