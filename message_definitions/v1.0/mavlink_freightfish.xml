@@ -1,0 +1,366 @@
+<?xml version="1.0" ?>
+<mavlink>
+  <include>common.xml</include>
+  <version>3</version>
+  <dialect>7</dialect>
+  <messages>
+    <message id="13512" name="TELE_IMU">
+      <description/>
+      <field type="float" name="quaternion_w"/>
+      <field type="float" name="quaternion_x"/>
+      <field type="float" name="quaternion_y"/>
+      <field type="float" name="quaternion_z"/>
+      <field type="int16_t" name="acceleration_x"/>
+      <field type="int16_t" name="acceleration_y"/>
+      <field type="int16_t" name="acceleration_z"/>
+      <field type="int16_t" name="angularvelocity_x"/>
+      <field type="int16_t" name="angularvelocity_y"/>
+      <field type="int16_t" name="angularvelocity_z"/>
+    </message>
+    <message id="13513" name="TELE_HEIGHT">
+      <description/>
+      <field type="uint16_t" name="sonar_frontleft"/>
+      <field type="uint16_t" name="sonar_frontright"/>
+      <field type="uint16_t" name="sonar_center"/>
+      <field type="uint16_t" name="sonar_backleft"/>
+      <field type="uint16_t" name="sonar_backright"/>
+      <field type="float" name="sonar_filtered"/>
+    </message>
+    <message id="13514" name="TELE_GPS">
+      <description/>
+      <field type="int32_t" name="latitude"/>
+      <field type="int32_t" name="longitude"/>
+      <field type="int16_t" name="heading"/>
+      <field type="uint8_t" name="satellites_locked"/>
+      <field type="float" name="velocity"/>
+    </message>
+    <message id="13515" name="TELE_GPS_LITE">
+      <description/>
+      <field type="int32_t" name="latitude"/>
+      <field type="int32_t" name="longitude"/>
+    </message>
+    <message id="13516" name="TELE_PITOT_TUBE">
+      <description/>
+      <field type="uint16_t" name="pressure_1"/>
+      <field type="uint16_t" name="pressure_2"/>
+      <field type="float" name="calculated_depth"/>
+    </message>
+    <message id="13517" name="CONT_COMPONENTS">
+      <description/>
+      <field type="float" name="pitch_p"/>
+      <field type="float" name="pitch_i"/>
+      <field type="float" name="pitch_d"/>
+      <field type="float" name="pitch_t"/>
+      <field type="float" name="roll_p"/>
+      <field type="float" name="roll_i"/>
+      <field type="float" name="roll_d"/>
+      <field type="float" name="roll_t"/>
+      <field type="float" name="yaw_p"/>
+      <field type="float" name="yaw_i"/>
+      <field type="float" name="yaw_d"/>
+      <field type="float" name="yaw_t"/>
+      <field type="float" name="height_p"/>
+      <field type="float" name="height_i"/>
+      <field type="float" name="height_d"/>
+      <field type="float" name="height_t"/>
+    </message>
+    <message id="13518" name="CONT_COMPONENTS_TOTAL">
+      <description/>
+      <field type="float" name="roll_t"/>
+      <field type="float" name="pitch_t"/>
+      <field type="float" name="yaw_t"/>
+      <field type="float" name="height_t"/>
+    </message>
+    <message id="13519" name="CONT_FRONT_YAW_ACTUATOR_COMPONENTS_LITE">
+      <description/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13520" name="CONT_FRONT_YAW_ACTUATOR_COMPONENTS">
+      <description/>
+      <field type="float" name="roll"/>
+      <field type="float" name="pitch"/>
+      <field type="float" name="yaw"/>
+      <field type="float" name="height"/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13521" name="CONT_FRONT_RAKE_ACTUATOR_COMPONENTS_LITE">
+      <description/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13522" name="CONT_FRONT_RAKE_ACTUATOR_COMPONENTS">
+      <description/>
+      <field type="float" name="pitch"/>
+      <field type="float" name="roll"/>
+      <field type="float" name="yaw"/>
+      <field type="float" name="height"/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13523" name="CONT_REAR_RAKE_ACTUATOR_COMPONENTS_LITE">
+      <description/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13524" name="CONT_REAR_RAKE_ACTUATOR_COMPONENTS">
+      <description/>
+      <field type="float" name="roll"/>
+      <field type="float" name="pitch"/>
+      <field type="float" name="yaw"/>
+      <field type="float" name="height"/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13525" name="CONT_WINGLET_STARBOARD_ACTUATOR_COMPONENTS_LITE">
+      <description/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13526" name="CONT_WINGLET_STARBOARD_ACTUATOR_COMPONENTS">
+      <description/>
+      <field type="float" name="roll"/>
+      <field type="float" name="pitch"/>
+      <field type="float" name="yaw"/>
+      <field type="float" name="height"/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13527" name="CONT_WINGLET_PORT_ACTUATOR_COMPONENTS_LITE">
+      <description/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13528" name="CONT_WINGLET_PORT_ACTUATOR_COMPONENTS">
+      <description/>
+      <field type="float" name="pitch"/>
+      <field type="float" name="roll"/>
+      <field type="float" name="yaw"/>
+      <field type="float" name="height"/>
+      <field type="float" name="rotation_raw"/>
+      <field type="float" name="rotation_clamped"/>
+    </message>
+    <message id="13529" name="CONT_MASTER_PITCH_PID_GAINS">
+      <description/>
+      <field type="float" name="kp"/>
+      <field type="float" name="ki"/>
+      <field type="float" name="kd"/>
+    </message>
+    <message id="13530" name="CONT_MASTER_ROLL_PID_GAINS">
+      <description/>
+      <field type="float" name="kp"/>
+      <field type="float" name="ki"/>
+      <field type="float" name="kd"/>
+    </message>
+    <message id="13531" name="CONT_MASTER_YAW_PID_GAINS">
+      <description/>
+      <field type="float" name="kp"/>
+      <field type="float" name="ki"/>
+      <field type="float" name="kd"/>
+    </message>
+    <message id="13532" name="CONT_MASTER_HEIGHT_PID_GAINS">
+      <description/>
+      <field type="float" name="kp"/>
+      <field type="float" name="ki"/>
+      <field type="float" name="kd"/>
+    </message>
+    <message id="13533" name="COMM_PING_INIT">
+      <description/>
+      <field type="uint64_t" name="timestamp"/>
+    </message>
+    <message id="13534" name="COMM_PING_ACK">
+      <description/>
+      <field type="uint64_t" name="timestamp"/>
+    </message>
+    <message id="13535" name="COMM_HEARTBEAT">
+      <description/>
+      <field type="uint64_t" name="timestamp"/>
+      <field type="uint8_t" name="status_flags"/>
+    </message>
+    <message id="13536" name="COMM_WIRELESS">
+      <description/>
+      <field type="uint16_t" name="rssi_lora"/>
+      <field type="uint32_t" name="time_since_last_lora"/>
+      <field type="uint16_t" name="rssi_915"/>
+      <field type="uint32_t" name="time_since_last_915"/>
+    </message>
+    <message id="13537" name="COMM_SHIP_STATUS">
+      <description/>
+      <field type="uint16_t" name="battery_lv"/>
+      <field type="uint16_t" name="battery_hv"/>
+      <field type="uint8_t" name="water_alarm"/>
+      <field type="uint16_t" name="motor_temp_port"/>
+      <field type="uint16_t" name="motor_temp_starboard"/>
+    </message>
+    <message id="13538" name="COMM_MOTOR_SPEED">
+      <description/>
+      <field type="uint16_t" name="rpm_port"/>
+      <field type="uint16_t" name="rpm_starboard"/>
+    </message>
+    <message id="13539" name="COMM_RAW_RPHTT">
+      <description/>
+      <field type="float" name="roll"/>
+      <field type="int16_t" name="pitch"/>
+      <field type="int16_t" name="height"/>
+      <field type="int16_t" name="throttle_starboard"/>
+      <field type="int16_t" name="throttle_port"/>
+    </message>
+    <message id="13540" name="COMM_RAW_RPHTTGPS">
+      <description/>
+      <field type="float" name="roll"/>
+      <field type="int16_t" name="pitch"/>
+      <field type="int16_t" name="height"/>
+      <field type="int16_t" name="throttle_starboard"/>
+      <field type="int16_t" name="throttle_port"/>
+      <field type="int32_t" name="latitude"/>
+      <field type="int32_t" name="longitude"/>
+    </message>
+    <message id="13541" name="COMM_RAW_RPH">
+      <description/>
+      <field type="float" name="roll"/>
+      <field type="int16_t" name="pitch"/>
+      <field type="int16_t" name="height"/>
+    </message>
+    <message id="13542" name="COMM_RAW_RH">
+      <description/>
+      <field type="float" name="roll"/>
+      <field type="int16_t" name="height"/>
+    </message>
+    <message id="13543" name="COMM_RAW_R">
+      <description/>
+      <field type="float" name="roll"/>
+    </message>
+    <message id="13544" name="COMM_MASTER">
+      <description/>
+      <field type="float" name="roll_command"/>
+      <field type="float" name="pitch_command"/>
+      <field type="float" name="yaw_command"/>
+      <field type="float" name="height_command"/>
+      <field type="float" name="throttle_starboard_command"/>
+      <field type="float" name="throttle_port_command"/>
+    </message>
+    <message id="13545" name="COMM_OFFSETS">
+      <description/>
+      <field type="float" name="roll_command"/>
+      <field type="float" name="pitch_command"/>
+      <field type="float" name="yaw_command"/>
+      <field type="float" name="height_command"/>
+    </message>
+    <message id="13546" name="COMM_PID_COMMAND_TRIMS">
+      <description/>
+      <field type="float" name="pitch"/>
+      <field type="float" name="roll"/>
+      <field type="float" name="yaw"/>
+      <field type="float" name="height"/>
+    </message>
+    <message id="13547" name="COMM_PILOT_SWITCHES">
+      <description/>
+      <field type="uint8_t" name="switches"/>
+    </message>
+    <message id="13548" name="COMM_FRONT_YAW_CALIBRATION">
+      <description/>
+      <field type="float" name="poly_0"/>
+      <field type="float" name="poly_1"/>
+      <field type="float" name="poly_2"/>
+    </message>
+    <message id="13549" name="COMM_FRONT_RAKE_CALIBRATION">
+      <description/>
+      <field type="float" name="poly_0"/>
+      <field type="float" name="poly_1"/>
+      <field type="float" name="poly_2"/>
+    </message>
+    <message id="13550" name="COMM_REAR_RAKE_CALIBRATION">
+      <description/>
+      <field type="float" name="poly_0"/>
+      <field type="float" name="poly_1"/>
+      <field type="float" name="poly_2"/>
+    </message>
+    <message id="13551" name="COMM_WINGLET_PORT_CALIBRATION">
+      <description/>
+      <field type="float" name="poly_0"/>
+      <field type="float" name="poly_1"/>
+      <field type="float" name="poly_2"/>
+    </message>
+    <message id="13552" name="COMM_WINGLET_STARBOARD_CALIBRATION">
+      <description/>
+      <field type="float" name="poly_0"/>
+      <field type="float" name="poly_1"/>
+      <field type="float" name="poly_2"/>
+    </message>
+    <message id="13553" name="COMM_PROCEDURES">
+      <description/>
+      <field type="uint8_t" name="takeoff"/>
+      <field type="uint8_t" name="land"/>
+    </message>
+    <message id="13554" name="ACTU_POSITION">
+      <description/>
+      <field type="float" name="front_yaw_target"/>
+      <field type="float" name="front_yaw_position"/>
+      <field type="float" name="front_rake_target"/>
+      <field type="float" name="front_rake_position"/>
+      <field type="float" name="rear_rake_target"/>
+      <field type="float" name="rear_rake_position"/>
+      <field type="float" name="port_winglet_target"/>
+      <field type="float" name="port_winglet_position"/>
+      <field type="float" name="starboard_winglet_target"/>
+      <field type="float" name="starboard_winglet_position"/>
+    </message>
+    <message id="13555" name="MISC_AUXILIARY_1">
+      <description/>
+      <field type="float" name="param_1"/>
+      <field type="float" name="param_2"/>
+      <field type="float" name="param_3"/>
+      <field type="float" name="param_4"/>
+    </message>
+    <message id="13556" name="MISC_AUXILIARY_2">
+      <description/>
+      <field type="float" name="param_1"/>
+      <field type="float" name="param_2"/>
+      <field type="float" name="param_3"/>
+      <field type="float" name="param_4"/>
+    </message>
+    <message id="13557" name="MISC_AUXILIARY_3">
+      <description/>
+      <field type="float" name="param_1"/>
+      <field type="float" name="param_2"/>
+      <field type="float" name="param_3"/>
+      <field type="float" name="param_4"/>
+    </message>
+    <message id="13558" name="MISC_AUXILIARY_4">
+      <description/>
+      <field type="float" name="param_1"/>
+      <field type="float" name="param_2"/>
+      <field type="float" name="param_3"/>
+      <field type="float" name="param_4"/>
+    </message>
+    <message id="13559" name="MISC_AUXILIARY_5">
+      <description/>
+      <field type="int32_t" name="param_1"/>
+      <field type="int32_t" name="param_2"/>
+      <field type="int32_t" name="param_3"/>
+      <field type="int32_t" name="param_4"/>
+    </message>
+    <message id="13560" name="MISC_AUXILIARY_6">
+      <description/>
+      <field type="int32_t" name="param_1"/>
+      <field type="int32_t" name="param_2"/>
+      <field type="int32_t" name="param_3"/>
+      <field type="int32_t" name="param_4"/>
+    </message>
+    <message id="13561" name="MISC_AUXILIARY_7">
+      <description/>
+      <field type="int32_t" name="param_1"/>
+      <field type="int32_t" name="param_2"/>
+      <field type="int32_t" name="param_3"/>
+      <field type="int32_t" name="param_4"/>
+    </message>
+    <message id="13562" name="MISC_AUXILIARY_8">
+      <description/>
+      <field type="int32_t" name="param_1"/>
+      <field type="int32_t" name="param_2"/>
+      <field type="int32_t" name="param_3"/>
+      <field type="int32_t" name="param_4"/>
+    </message>
+  </messages>
+</mavlink>
