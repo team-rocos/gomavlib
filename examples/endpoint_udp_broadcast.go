@@ -5,8 +5,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/aler9/gomavlib"
-	"github.com/aler9/gomavlib/dialects/ardupilotmega"
+	"github.com/team-rocos/gomavlib"
+	"github.com/team-rocos/gomavlib/dialects/ardupilotmega"
 )
 
 func main() {

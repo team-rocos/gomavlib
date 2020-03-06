@@ -96,7 +96,7 @@ var tplDialect = template.Must(template.New("").Parse(
 package {{ .PkgName }}
 
 import (
-	"github.com/aler9/gomavlib"
+	"github.com/team-rocos/gomavlib"
 )
 
 // Dialect contains the dialect object that can be passed to the library.
