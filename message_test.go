@@ -1,9 +1,11 @@
 package gomavlib
 
+import "reflect"
+
 // this file contains a test dialect used in other tests.
 // it's better not to import real dialects, but to use a separate one
 
-var testDialect = MustDialect(3, []Message{
+var testDialect = MustDialectCT(3, []Message{
 	&MessageTest5{},
 	&MessageTest6{},
 	&MessageTest8{},
@@ -27,6 +29,11 @@ func (m *MessageTest5) GetId() uint32 {
 	return 5
 }
 
+func (m *MessageTest5) SetField(field string, value interface{}) error {
+	reflect.ValueOf(m).Elem().FieldByName(field).Set(reflect.ValueOf(value))
+	return nil
+}
+
 type MessageTest6 struct {
 	TestByte byte
 	TestUint uint32
@@ -36,6 +43,11 @@ func (m *MessageTest6) GetId() uint32 {
 	return 0x0607
 }
 
+func (m *MessageTest6) SetField(field string, value interface{}) error {
+	reflect.ValueOf(m).Elem().FieldByName(field).Set(reflect.ValueOf(value))
+	return nil
+}
+
 type MessageTest8 struct {
 	TestByte byte
 	TestUint uint32
@@ -43,6 +55,11 @@ type MessageTest8 struct {
 
 func (m *MessageTest8) GetId() uint32 {
 	return 8
+}
+
+func (m *MessageTest8) SetField(field string, value interface{}) error {
+	reflect.ValueOf(m).Elem().FieldByName(field).Set(reflect.ValueOf(value))
+	return nil
 }
 
 type MessageHeartbeat struct {
@@ -58,6 +75,10 @@ func (*MessageHeartbeat) GetId() uint32 {
 	return 0
 }
 
+func (m *MessageHeartbeat) SetField(field string, value interface{}) error {
+	return SetMessageField(m, field, value)
+}
+
 type MessageRequestDataStream struct {
 	TargetSystem    uint8
 	TargetComponent uint8
@@ -68,6 +89,10 @@ type MessageRequestDataStream struct {
 
 func (*MessageRequestDataStream) GetId() uint32 {
 	return 66
+}
+
+func (m *MessageRequestDataStream) SetField(field string, value interface{}) error {
+	return SetMessageField(m, field, value)
 }
 
 type MessageSysStatus struct {
@@ -90,6 +115,10 @@ func (m *MessageSysStatus) GetId() uint32 {
 	return 1
 }
 
+func (m *MessageSysStatus) SetField(field string, value interface{}) error {
+	return SetMessageField(m, field, value)
+}
+
 type MessageChangeOperatorControl struct {
 	TargetSystem   uint8
 	ControlRequest uint8
@@ -99,6 +128,10 @@ type MessageChangeOperatorControl struct {
 
 func (m *MessageChangeOperatorControl) GetId() uint32 {
 	return 5
+}
+
+func (m *MessageChangeOperatorControl) SetField(field string, value interface{}) error {
+	return SetMessageField(m, field, value)
 }
 
 type MessageAttitudeQuaternionCov struct {
@@ -112,6 +145,10 @@ type MessageAttitudeQuaternionCov struct {
 
 func (m *MessageAttitudeQuaternionCov) GetId() uint32 {
 	return 61
+}
+
+func (m *MessageAttitudeQuaternionCov) SetField(field string, value interface{}) error {
+	return SetMessageField(m, field, value)
 }
 
 type MessageOpticalFlow struct {
@@ -131,6 +168,10 @@ func (*MessageOpticalFlow) GetId() uint32 {
 	return 100
 }
 
+func (m *MessageOpticalFlow) SetField(field string, value interface{}) error {
+	return SetMessageField(m, field, value)
+}
+
 type MessagePlayTune struct {
 	TargetSystem    uint8
 	TargetComponent uint8
@@ -140,6 +181,10 @@ type MessagePlayTune struct {
 
 func (*MessagePlayTune) GetId() uint32 {
 	return 258
+}
+
+func (m *MessagePlayTune) SetField(field string, value interface{}) error {
+	return SetMessageField(m, field, value)
 }
 
 type MessageAhrs struct {
@@ -154,6 +199,10 @@ type MessageAhrs struct {
 
 func (*MessageAhrs) GetId() uint32 {
 	return 163
+}
+
+func (m *MessageAhrs) SetField(field string, value interface{}) error {
+	return SetMessageField(m, field, value)
 }
 
 type MessageTrajectoryRepresentationWaypoints struct {
@@ -175,4 +224,8 @@ type MessageTrajectoryRepresentationWaypoints struct {
 
 func (*MessageTrajectoryRepresentationWaypoints) GetId() uint32 {
 	return 332
+}
+
+func (m *MessageTrajectoryRepresentationWaypoints) SetField(field string, value interface{}) error {
+	return SetMessageField(m, field, value)
 }

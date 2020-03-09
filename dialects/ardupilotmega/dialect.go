@@ -9,7 +9,7 @@ import (
 var Dialect = dialect
 
 // dialect is not exposed directly such that it is not displayed in godoc.
-var dialect = gomavlib.MustDialect(3, []gomavlib.Message{
+var dialect = gomavlib.MustDialectCT(3, []gomavlib.Message{
     // common.xml
     &MessageHeartbeat{},
     &MessageSysStatus{},
@@ -4036,8 +4036,12 @@ type MessageHeartbeat struct {
     MavlinkVersion uint8
 }
 
-func (*MessageHeartbeat) GetId() uint32 {
+func (m *MessageHeartbeat) GetId() uint32 {
     return 0
+}
+
+func (m *MessageHeartbeat) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The general system state. If the system is following the MAVLink standard, the system state is mainly defined by three orthogonal states/modes: The system mode, which is either LOCKED (motors shut down and locked), MANUAL (system under RC control), GUIDED (system with autonomous position control, position setpoint controlled manually) or AUTO (system guided by path/waypoint planner). The NAV_MODE defined the current flight state: LIFTOFF (often an open-loop maneuver), LANDING, WAYPOINTS or VECTOR. This represents the internal navigation state machine. The system status shows whether the system is currently active or not and if an emergency occurred. During the CRITICAL and EMERGENCY states the MAV is still considered to be active, but should start emergency procedures autonomously. After a failure occurred it should first move from active to critical to allow manual intervention and then move to emergency after a certain timeout.
@@ -4070,8 +4074,12 @@ type MessageSysStatus struct {
     ErrorsCount4 uint16
 }
 
-func (*MessageSysStatus) GetId() uint32 {
+func (m *MessageSysStatus) GetId() uint32 {
     return 1
+}
+
+func (m *MessageSysStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The system time is the time of the master clock, typically the computer clock of the main onboard computer.
@@ -4082,8 +4090,12 @@ type MessageSystemTime struct {
     TimeBootMs uint32
 }
 
-func (*MessageSystemTime) GetId() uint32 {
+func (m *MessageSystemTime) GetId() uint32 {
     return 2
+}
+
+func (m *MessageSystemTime) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // A ping message either requesting or responding to a ping. This allows to measure the system latencies, including serial port, radio modem and UDP connections. The ping microservice is documented at https://mavlink.io/en/services/ping.html
@@ -4098,8 +4110,12 @@ type MessagePing struct {
     TargetComponent uint8
 }
 
-func (*MessagePing) GetId() uint32 {
+func (m *MessagePing) GetId() uint32 {
     return 4
+}
+
+func (m *MessagePing) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request to control this MAV
@@ -4114,8 +4130,12 @@ type MessageChangeOperatorControl struct {
     Passkey string `mavlen:"25"`
 }
 
-func (*MessageChangeOperatorControl) GetId() uint32 {
+func (m *MessageChangeOperatorControl) GetId() uint32 {
     return 5
+}
+
+func (m *MessageChangeOperatorControl) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Accept / deny control of this MAV
@@ -4128,8 +4148,12 @@ type MessageChangeOperatorControlAck struct {
     Ack uint8
 }
 
-func (*MessageChangeOperatorControlAck) GetId() uint32 {
+func (m *MessageChangeOperatorControlAck) GetId() uint32 {
     return 6
+}
+
+func (m *MessageChangeOperatorControlAck) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Emit an encrypted signature / key identifying this system. PLEASE NOTE: This protocol has been kept simple, so transmitting the key requires an encrypted channel for true safety.
@@ -4138,8 +4162,12 @@ type MessageAuthKey struct {
     Key string `mavlen:"32"`
 }
 
-func (*MessageAuthKey) GetId() uint32 {
+func (m *MessageAuthKey) GetId() uint32 {
     return 7
+}
+
+func (m *MessageAuthKey) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status generated in each node in the communication chain and injected into MAVLink stream.
@@ -4168,8 +4196,12 @@ type MessageLinkNodeStatus struct {
     MessagesLost uint32
 }
 
-func (*MessageLinkNodeStatus) GetId() uint32 {
+func (m *MessageLinkNodeStatus) GetId() uint32 {
     return 8
+}
+
+func (m *MessageLinkNodeStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Set the system mode, as defined by enum MAV_MODE. There is no target component id as the mode is by definition for the overall aircraft, not only for one component.
@@ -4182,8 +4214,12 @@ type MessageSetMode struct {
     CustomMode uint32
 }
 
-func (*MessageSetMode) GetId() uint32 {
+func (m *MessageSetMode) GetId() uint32 {
     return 11
+}
+
+func (m *MessageSetMode) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request to read the onboard parameter with the param_id string id. Onboard parameters are stored as key[const char*] -> value[float]. This allows to send a parameter to any other component (such as the GCS) without the need of previous knowledge of possible parameter names. Thus the same GCS can store different parameters for different autopilots. See also https://mavlink.io/en/services/parameter.html for a full documentation of QGroundControl and IMU code.
@@ -4198,8 +4234,12 @@ type MessageParamRequestRead struct {
     ParamIndex int16
 }
 
-func (*MessageParamRequestRead) GetId() uint32 {
+func (m *MessageParamRequestRead) GetId() uint32 {
     return 20
+}
+
+func (m *MessageParamRequestRead) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request all parameters of this component. After this request, all parameters are emitted. The parameter microservice is documented at https://mavlink.io/en/services/parameter.html
@@ -4210,8 +4250,12 @@ type MessageParamRequestList struct {
     TargetComponent uint8
 }
 
-func (*MessageParamRequestList) GetId() uint32 {
+func (m *MessageParamRequestList) GetId() uint32 {
     return 21
+}
+
+func (m *MessageParamRequestList) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Emit the value of a onboard parameter. The inclusion of param_count and param_index in the message allows the recipient to keep track of received parameters and allows him to re-request missing parameters after a loss or timeout. The parameter microservice is documented at https://mavlink.io/en/services/parameter.html
@@ -4228,8 +4272,12 @@ type MessageParamValue struct {
     ParamIndex uint16
 }
 
-func (*MessageParamValue) GetId() uint32 {
+func (m *MessageParamValue) GetId() uint32 {
     return 22
+}
+
+func (m *MessageParamValue) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Set a parameter value (write new value to permanent storage). IMPORTANT: The receiving component should acknowledge the new parameter value by sending a PARAM_VALUE message to all communication partners. This will also ensure that multiple GCS all have an up-to-date list of all parameters. If the sending GCS did not receive a PARAM_VALUE message within its timeout time, it should re-send the PARAM_SET message. The parameter microservice is documented at https://mavlink.io/en/services/parameter.html
@@ -4246,8 +4294,12 @@ type MessageParamSet struct {
     ParamType MAV_PARAM_TYPE `mavenum:"uint8"`
 }
 
-func (*MessageParamSet) GetId() uint32 {
+func (m *MessageParamSet) GetId() uint32 {
     return 23
+}
+
+func (m *MessageParamSet) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The global position, as returned by the Global Positioning System (GPS). This is                NOT the global position estimate of the system, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate.
@@ -4286,8 +4338,12 @@ type MessageGpsRawInt struct {
     Yaw uint16 `mavext:"true"`
 }
 
-func (*MessageGpsRawInt) GetId() uint32 {
+func (m *MessageGpsRawInt) GetId() uint32 {
     return 24
+}
+
+func (m *MessageGpsRawInt) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The positioning status, as reported by GPS. This message is intended to display status information about each satellite visible to the receiver. See message GLOBAL_POSITION for the global position estimate. This message can contain information for up to 20 satellites.
@@ -4306,8 +4362,12 @@ type MessageGpsStatus struct {
     SatelliteSnr [20]uint8
 }
 
-func (*MessageGpsStatus) GetId() uint32 {
+func (m *MessageGpsStatus) GetId() uint32 {
     return 25
+}
+
+func (m *MessageGpsStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The RAW IMU readings for the usual 9DOF sensor setup. This message should contain the scaled values to the described units
@@ -4336,8 +4396,12 @@ type MessageScaledImu struct {
     Temperature int16 `mavext:"true"`
 }
 
-func (*MessageScaledImu) GetId() uint32 {
+func (m *MessageScaledImu) GetId() uint32 {
     return 26
+}
+
+func (m *MessageScaledImu) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The RAW IMU readings for a 9DOF sensor, which is identified by the id (default IMU1). This message should always contain the true raw values without any scaling to allow data capture and system debugging.
@@ -4368,8 +4432,12 @@ type MessageRawImu struct {
     Temperature int16 `mavext:"true"`
 }
 
-func (*MessageRawImu) GetId() uint32 {
+func (m *MessageRawImu) GetId() uint32 {
     return 27
+}
+
+func (m *MessageRawImu) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The RAW pressure readings for the typical setup of one absolute pressure and one differential pressure sensor. The sensor values should be the raw, UNSCALED ADC values.
@@ -4386,8 +4454,12 @@ type MessageRawPressure struct {
     Temperature int16
 }
 
-func (*MessageRawPressure) GetId() uint32 {
+func (m *MessageRawPressure) GetId() uint32 {
     return 28
+}
+
+func (m *MessageRawPressure) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The pressure readings for the typical setup of one absolute and differential pressure sensor. The units are as specified in each field.
@@ -4402,8 +4474,12 @@ type MessageScaledPressure struct {
     Temperature int16
 }
 
-func (*MessageScaledPressure) GetId() uint32 {
+func (m *MessageScaledPressure) GetId() uint32 {
     return 29
+}
+
+func (m *MessageScaledPressure) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right).
@@ -4424,8 +4500,12 @@ type MessageAttitude struct {
     Yawspeed float32
 }
 
-func (*MessageAttitude) GetId() uint32 {
+func (m *MessageAttitude) GetId() uint32 {
     return 30
+}
+
+func (m *MessageAttitude) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right), expressed as quaternion. Quaternion order is w, x, y, z and a zero rotation would be expressed as (1 0 0 0).
@@ -4450,8 +4530,12 @@ type MessageAttitudeQuaternion struct {
     ReprOffsetQ [4]float32 `mavext:"true"`
 }
 
-func (*MessageAttitudeQuaternion) GetId() uint32 {
+func (m *MessageAttitudeQuaternion) GetId() uint32 {
     return 31
+}
+
+func (m *MessageAttitudeQuaternion) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The filtered local position (e.g. fused computer vision and accelerometers). Coordinate frame is right-handed, Z-axis down (aeronautical frame, NED / north-east-down convention)
@@ -4472,8 +4556,12 @@ type MessageLocalPositionNed struct {
     Vz float32
 }
 
-func (*MessageLocalPositionNed) GetId() uint32 {
+func (m *MessageLocalPositionNed) GetId() uint32 {
     return 32
+}
+
+func (m *MessageLocalPositionNed) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The filtered global position (e.g. fused GPS and accelerometers). The position is in GPS-frame (right-handed, Z-up). It               is designed as scaled integer message since the resolution of float is not sufficient.
@@ -4498,8 +4586,12 @@ type MessageGlobalPositionInt struct {
     Hdg uint16
 }
 
-func (*MessageGlobalPositionInt) GetId() uint32 {
+func (m *MessageGlobalPositionInt) GetId() uint32 {
     return 33
+}
+
+func (m *MessageGlobalPositionInt) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The scaled values of the RC channels received: (-100%) -10000, (0%) 0, (100%) 10000. Channels that are inactive should be set to UINT16_MAX.
@@ -4528,8 +4620,12 @@ type MessageRcChannelsScaled struct {
     Rssi uint8
 }
 
-func (*MessageRcChannelsScaled) GetId() uint32 {
+func (m *MessageRcChannelsScaled) GetId() uint32 {
     return 34
+}
+
+func (m *MessageRcChannelsScaled) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The RAW values of the RC channels received. The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%. A value of UINT16_MAX implies the channel is unused. Individual receivers/transmitters might violate this specification.
@@ -4558,8 +4654,12 @@ type MessageRcChannelsRaw struct {
     Rssi uint8
 }
 
-func (*MessageRcChannelsRaw) GetId() uint32 {
+func (m *MessageRcChannelsRaw) GetId() uint32 {
     return 35
+}
+
+func (m *MessageRcChannelsRaw) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Superseded by ACTUATOR_OUTPUT_STATUS. The RAW values of the servo outputs (for RC input from the remote, use the RC_CHANNELS messages). The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%.
@@ -4602,8 +4702,12 @@ type MessageServoOutputRaw struct {
     Servo16Raw uint16 `mavext:"true"`
 }
 
-func (*MessageServoOutputRaw) GetId() uint32 {
+func (m *MessageServoOutputRaw) GetId() uint32 {
     return 36
+}
+
+func (m *MessageServoOutputRaw) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request a partial list of mission items from the system/component. https://mavlink.io/en/services/mission.html. If start and end index are the same, just send one waypoint.
@@ -4620,8 +4724,12 @@ type MessageMissionRequestPartialList struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionRequestPartialList) GetId() uint32 {
+func (m *MessageMissionRequestPartialList) GetId() uint32 {
     return 37
+}
+
+func (m *MessageMissionRequestPartialList) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // This message is sent to the MAV to write a partial list. If start index == end index, only one item will be transmitted / updated. If the start index is NOT 0 and above the current list size, this request should be REJECTED!
@@ -4638,8 +4746,12 @@ type MessageMissionWritePartialList struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionWritePartialList) GetId() uint32 {
+func (m *MessageMissionWritePartialList) GetId() uint32 {
     return 38
+}
+
+func (m *MessageMissionWritePartialList) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message encoding a mission item. This message is emitted to announce                the presence of a mission item and to set a mission item on the system. The mission item can be either in x, y, z meters (type: LOCAL) or x:lat, y:lon, z:altitude. Local frame is Z-down, right handed (NED), global frame is Z-up, right handed (ENU). NaN may be used to indicate an optional/default value (e.g. to use the system's current latitude or yaw rather than a specific value). See also https://mavlink.io/en/services/mission.html.
@@ -4676,8 +4788,12 @@ type MessageMissionItem struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionItem) GetId() uint32 {
+func (m *MessageMissionItem) GetId() uint32 {
     return 39
+}
+
+func (m *MessageMissionItem) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request the information of the mission item with the sequence number seq. The response of the system to this message should be a MISSION_ITEM message. https://mavlink.io/en/services/mission.html
@@ -4692,8 +4808,12 @@ type MessageMissionRequest struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionRequest) GetId() uint32 {
+func (m *MessageMissionRequest) GetId() uint32 {
     return 40
+}
+
+func (m *MessageMissionRequest) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Set the mission item with sequence number seq as current item. This means that the MAV will continue to this mission item on the shortest path (not following the mission items in-between).
@@ -4706,8 +4826,12 @@ type MessageMissionSetCurrent struct {
     Seq uint16
 }
 
-func (*MessageMissionSetCurrent) GetId() uint32 {
+func (m *MessageMissionSetCurrent) GetId() uint32 {
     return 41
+}
+
+func (m *MessageMissionSetCurrent) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message that announces the sequence number of the current active mission item. The MAV will fly towards this mission item.
@@ -4716,8 +4840,12 @@ type MessageMissionCurrent struct {
     Seq uint16
 }
 
-func (*MessageMissionCurrent) GetId() uint32 {
+func (m *MessageMissionCurrent) GetId() uint32 {
     return 42
+}
+
+func (m *MessageMissionCurrent) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request the overall list of mission items from the system/component.
@@ -4730,8 +4858,12 @@ type MessageMissionRequestList struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionRequestList) GetId() uint32 {
+func (m *MessageMissionRequestList) GetId() uint32 {
     return 43
+}
+
+func (m *MessageMissionRequestList) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // This message is emitted as response to MISSION_REQUEST_LIST by the MAV and to initiate a write transaction. The GCS can then request the individual mission item based on the knowledge of the total number of waypoints.
@@ -4746,8 +4878,12 @@ type MessageMissionCount struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionCount) GetId() uint32 {
+func (m *MessageMissionCount) GetId() uint32 {
     return 44
+}
+
+func (m *MessageMissionCount) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Delete all mission items at once.
@@ -4760,8 +4896,12 @@ type MessageMissionClearAll struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionClearAll) GetId() uint32 {
+func (m *MessageMissionClearAll) GetId() uint32 {
     return 45
+}
+
+func (m *MessageMissionClearAll) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // A certain mission item has been reached. The system will either hold this position (or circle on the orbit) or (if the autocontinue on the WP was set) continue to the next waypoint.
@@ -4770,8 +4910,12 @@ type MessageMissionItemReached struct {
     Seq uint16
 }
 
-func (*MessageMissionItemReached) GetId() uint32 {
+func (m *MessageMissionItemReached) GetId() uint32 {
     return 46
+}
+
+func (m *MessageMissionItemReached) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Acknowledgment message during waypoint handling. The type field states if this message is a positive ack (type=0) or if an error happened (type=non-zero).
@@ -4786,8 +4930,12 @@ type MessageMissionAck struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionAck) GetId() uint32 {
+func (m *MessageMissionAck) GetId() uint32 {
     return 47
+}
+
+func (m *MessageMissionAck) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Sets the GPS co-ordinates of the vehicle local origin (0,0,0) position. Vehicle should emit GPS_GLOBAL_ORIGIN irrespective of whether the origin is changed. This enables transform between the local coordinate frame and the global (GPS) coordinate frame, which may be necessary when (for example) indoor and outdoor settings are connected and the MAV should move from in- to outdoor.
@@ -4804,8 +4952,12 @@ type MessageSetGpsGlobalOrigin struct {
     TimeUsec uint64 `mavext:"true"`
 }
 
-func (*MessageSetGpsGlobalOrigin) GetId() uint32 {
+func (m *MessageSetGpsGlobalOrigin) GetId() uint32 {
     return 48
+}
+
+func (m *MessageSetGpsGlobalOrigin) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Publishes the GPS co-ordinates of the vehicle local origin (0,0,0) position. Emitted whenever a new GPS-Local position mapping is requested or set - e.g. following SET_GPS_GLOBAL_ORIGIN message.
@@ -4820,8 +4972,12 @@ type MessageGpsGlobalOrigin struct {
     TimeUsec uint64 `mavext:"true"`
 }
 
-func (*MessageGpsGlobalOrigin) GetId() uint32 {
+func (m *MessageGpsGlobalOrigin) GetId() uint32 {
     return 49
+}
+
+func (m *MessageGpsGlobalOrigin) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Bind a RC channel to a parameter. The parameter should change according to the RC channel value.
@@ -4846,8 +5002,12 @@ type MessageParamMapRc struct {
     ParamValueMax float32
 }
 
-func (*MessageParamMapRc) GetId() uint32 {
+func (m *MessageParamMapRc) GetId() uint32 {
     return 50
+}
+
+func (m *MessageParamMapRc) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request the information of the mission item with the sequence number seq. The response of the system to this message should be a MISSION_ITEM_INT message. https://mavlink.io/en/services/mission.html
@@ -4862,8 +5022,12 @@ type MessageMissionRequestInt struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionRequestInt) GetId() uint32 {
+func (m *MessageMissionRequestInt) GetId() uint32 {
     return 51
+}
+
+func (m *MessageMissionRequestInt) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // A broadcast message to notify any ground station or SDK if a mission, geofence or safe points have changed on the vehicle.
@@ -4880,8 +5044,12 @@ type MessageMissionChanged struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8"`
 }
 
-func (*MessageMissionChanged) GetId() uint32 {
+func (m *MessageMissionChanged) GetId() uint32 {
     return 52
+}
+
+func (m *MessageMissionChanged) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Set a safety zone (volume), which is defined by two corners of a cube. This message can be used to tell the MAV which setpoints/waypoints to accept and which to reject. Safety areas are often enforced by national or competition regulations.
@@ -4906,8 +5074,12 @@ type MessageSafetySetAllowedArea struct {
     P2z float32
 }
 
-func (*MessageSafetySetAllowedArea) GetId() uint32 {
+func (m *MessageSafetySetAllowedArea) GetId() uint32 {
     return 54
+}
+
+func (m *MessageSafetySetAllowedArea) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Read out the safety zone the MAV currently assumes.
@@ -4928,8 +5100,12 @@ type MessageSafetyAllowedArea struct {
     P2z float32
 }
 
-func (*MessageSafetyAllowedArea) GetId() uint32 {
+func (m *MessageSafetyAllowedArea) GetId() uint32 {
     return 55
+}
+
+func (m *MessageSafetyAllowedArea) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right), expressed as quaternion. Quaternion order is w, x, y, z and a zero rotation would be expressed as (1 0 0 0).
@@ -4948,8 +5124,12 @@ type MessageAttitudeQuaternionCov struct {
     Covariance [9]float32
 }
 
-func (*MessageAttitudeQuaternionCov) GetId() uint32 {
+func (m *MessageAttitudeQuaternionCov) GetId() uint32 {
     return 61
+}
+
+func (m *MessageAttitudeQuaternionCov) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The state of the fixed wing navigation and position controller.
@@ -4972,8 +5152,12 @@ type MessageNavControllerOutput struct {
     XtrackError float32
 }
 
-func (*MessageNavControllerOutput) GetId() uint32 {
+func (m *MessageNavControllerOutput) GetId() uint32 {
     return 62
+}
+
+func (m *MessageNavControllerOutput) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The filtered global position (e.g. fused GPS and accelerometers). The position is in GPS-frame (right-handed, Z-up). It  is designed as scaled integer message since the resolution of float is not sufficient. NOTE: This message is intended for onboard networks / companion computers and higher-bandwidth links and optimized for accuracy and completeness. Please use the GLOBAL_POSITION_INT message for a minimal subset.
@@ -5000,8 +5184,12 @@ type MessageGlobalPositionIntCov struct {
     Covariance [36]float32
 }
 
-func (*MessageGlobalPositionIntCov) GetId() uint32 {
+func (m *MessageGlobalPositionIntCov) GetId() uint32 {
     return 63
+}
+
+func (m *MessageGlobalPositionIntCov) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The filtered local position (e.g. fused computer vision and accelerometers). Coordinate frame is right-handed, Z-axis down (aeronautical frame, NED / north-east-down convention)
@@ -5032,8 +5220,12 @@ type MessageLocalPositionNedCov struct {
     Covariance [45]float32
 }
 
-func (*MessageLocalPositionNedCov) GetId() uint32 {
+func (m *MessageLocalPositionNedCov) GetId() uint32 {
     return 64
+}
+
+func (m *MessageLocalPositionNedCov) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The PPM values of the RC channels received. The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%.  A value of UINT16_MAX implies the channel is unused. Individual receivers/transmitters might violate this specification.
@@ -5082,8 +5274,12 @@ type MessageRcChannels struct {
     Rssi uint8
 }
 
-func (*MessageRcChannels) GetId() uint32 {
+func (m *MessageRcChannels) GetId() uint32 {
     return 65
+}
+
+func (m *MessageRcChannels) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request a data stream.
@@ -5100,8 +5296,12 @@ type MessageRequestDataStream struct {
     StartStop uint8
 }
 
-func (*MessageRequestDataStream) GetId() uint32 {
+func (m *MessageRequestDataStream) GetId() uint32 {
     return 66
+}
+
+func (m *MessageRequestDataStream) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data stream status information.
@@ -5114,8 +5314,12 @@ type MessageDataStream struct {
     OnOff uint8
 }
 
-func (*MessageDataStream) GetId() uint32 {
+func (m *MessageDataStream) GetId() uint32 {
     return 67
+}
+
+func (m *MessageDataStream) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // This message provides an API for manually controlling the vehicle using standard joystick axes nomenclature, along with a joystick-like input device. Unused axes can be disabled an buttons are also transmit as boolean values of their 
@@ -5134,8 +5338,12 @@ type MessageManualControl struct {
     Buttons uint16
 }
 
-func (*MessageManualControl) GetId() uint32 {
+func (m *MessageManualControl) GetId() uint32 {
     return 69
+}
+
+func (m *MessageManualControl) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The RAW values of the RC channels sent to the MAV to override info received from the RC radio. A value of UINT16_MAX means no change to that channel. A value of 0 means control of that channel should be released back to the RC radio. The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%. Individual receivers/transmitters might violate this specification.
@@ -5182,8 +5390,12 @@ type MessageRcChannelsOverride struct {
     Chan18Raw uint16 `mavext:"true"`
 }
 
-func (*MessageRcChannelsOverride) GetId() uint32 {
+func (m *MessageRcChannelsOverride) GetId() uint32 {
     return 70
+}
+
+func (m *MessageRcChannelsOverride) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message encoding a mission item. This message is emitted to announce                the presence of a mission item and to set a mission item on the system. The mission item can be either in x, y, z meters (type: LOCAL) or x:lat, y:lon, z:altitude. Local frame is Z-down, right handed (NED), global frame is Z-up, right handed (ENU). NaN or INT32_MAX may be used in float/integer params (respectively) to indicate optional/default values (e.g. to use the component's current latitude, yaw rather than a specific value). See also https://mavlink.io/en/services/mission.html.
@@ -5220,8 +5432,12 @@ type MessageMissionItemInt struct {
     MissionType MAV_MISSION_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageMissionItemInt) GetId() uint32 {
+func (m *MessageMissionItemInt) GetId() uint32 {
     return 73
+}
+
+func (m *MessageMissionItemInt) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Metrics typically displayed on a HUD for fixed wing aircraft.
@@ -5240,8 +5456,12 @@ type MessageVfrHud struct {
     Climb float32
 }
 
-func (*MessageVfrHud) GetId() uint32 {
+func (m *MessageVfrHud) GetId() uint32 {
     return 74
+}
+
+func (m *MessageVfrHud) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message encoding a command with parameters as scaled integers. Scaling depends on the actual command value. The command microservice is documented at https://mavlink.io/en/services/command.html
@@ -5274,8 +5494,12 @@ type MessageCommandInt struct {
     Z float32
 }
 
-func (*MessageCommandInt) GetId() uint32 {
+func (m *MessageCommandInt) GetId() uint32 {
     return 75
+}
+
+func (m *MessageCommandInt) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Send a command with up to seven parameters to the MAV. The command microservice is documented at https://mavlink.io/en/services/command.html
@@ -5304,8 +5528,12 @@ type MessageCommandLong struct {
     Param7 float32
 }
 
-func (*MessageCommandLong) GetId() uint32 {
+func (m *MessageCommandLong) GetId() uint32 {
     return 76
+}
+
+func (m *MessageCommandLong) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Report status of a command. Includes feedback whether the command was executed. The command microservice is documented at https://mavlink.io/en/services/command.html
@@ -5324,8 +5552,12 @@ type MessageCommandAck struct {
     TargetComponent uint8 `mavext:"true"`
 }
 
-func (*MessageCommandAck) GetId() uint32 {
+func (m *MessageCommandAck) GetId() uint32 {
     return 77
+}
+
+func (m *MessageCommandAck) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Setpoint in roll, pitch, yaw and thrust from the operator
@@ -5346,8 +5578,12 @@ type MessageManualSetpoint struct {
     ManualOverrideSwitch uint8
 }
 
-func (*MessageManualSetpoint) GetId() uint32 {
+func (m *MessageManualSetpoint) GetId() uint32 {
     return 81
+}
+
+func (m *MessageManualSetpoint) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Sets a desired vehicle attitude. Used by an external controller to command the vehicle (manual controller or other system).
@@ -5372,8 +5608,12 @@ type MessageSetAttitudeTarget struct {
     Thrust float32
 }
 
-func (*MessageSetAttitudeTarget) GetId() uint32 {
+func (m *MessageSetAttitudeTarget) GetId() uint32 {
     return 82
+}
+
+func (m *MessageSetAttitudeTarget) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Reports the current commanded attitude of the vehicle as specified by the autopilot. This should match the commands sent in a SET_ATTITUDE_TARGET message if the vehicle is being controlled this way.
@@ -5394,8 +5634,12 @@ type MessageAttitudeTarget struct {
     Thrust float32
 }
 
-func (*MessageAttitudeTarget) GetId() uint32 {
+func (m *MessageAttitudeTarget) GetId() uint32 {
     return 83
+}
+
+func (m *MessageAttitudeTarget) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Sets a desired vehicle position in a local north-east-down coordinate frame. Used by an external controller to command the vehicle (manual controller or other system).
@@ -5434,8 +5678,12 @@ type MessageSetPositionTargetLocalNed struct {
     YawRate float32
 }
 
-func (*MessageSetPositionTargetLocalNed) GetId() uint32 {
+func (m *MessageSetPositionTargetLocalNed) GetId() uint32 {
     return 84
+}
+
+func (m *MessageSetPositionTargetLocalNed) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Reports the current commanded vehicle position, velocity, and acceleration as specified by the autopilot. This should match the commands sent in SET_POSITION_TARGET_LOCAL_NED if the vehicle is being controlled this way.
@@ -5470,8 +5718,12 @@ type MessagePositionTargetLocalNed struct {
     YawRate float32
 }
 
-func (*MessagePositionTargetLocalNed) GetId() uint32 {
+func (m *MessagePositionTargetLocalNed) GetId() uint32 {
     return 85
+}
+
+func (m *MessagePositionTargetLocalNed) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Sets a desired vehicle position, velocity, and/or acceleration in a global coordinate system (WGS84). Used by an external controller to command the vehicle (manual controller or other system).
@@ -5510,8 +5762,12 @@ type MessageSetPositionTargetGlobalInt struct {
     YawRate float32
 }
 
-func (*MessageSetPositionTargetGlobalInt) GetId() uint32 {
+func (m *MessageSetPositionTargetGlobalInt) GetId() uint32 {
     return 86
+}
+
+func (m *MessageSetPositionTargetGlobalInt) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Reports the current commanded vehicle position, velocity, and acceleration as specified by the autopilot. This should match the commands sent in SET_POSITION_TARGET_GLOBAL_INT if the vehicle is being controlled this way.
@@ -5546,8 +5802,12 @@ type MessagePositionTargetGlobalInt struct {
     YawRate float32
 }
 
-func (*MessagePositionTargetGlobalInt) GetId() uint32 {
+func (m *MessagePositionTargetGlobalInt) GetId() uint32 {
     return 87
+}
+
+func (m *MessagePositionTargetGlobalInt) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The offset in X, Y, Z and yaw between the LOCAL_POSITION_NED messages of MAV X and the global coordinate frame in NED coordinates. Coordinate frame is right-handed, Z-axis down (aeronautical frame, NED / north-east-down convention)
@@ -5568,8 +5828,12 @@ type MessageLocalPositionNedSystemGlobalOffset struct {
     Yaw float32
 }
 
-func (*MessageLocalPositionNedSystemGlobalOffset) GetId() uint32 {
+func (m *MessageLocalPositionNedSystemGlobalOffset) GetId() uint32 {
     return 89
+}
+
+func (m *MessageLocalPositionNedSystemGlobalOffset) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Sent from simulation to autopilot. This packet is useful for high throughput applications such as hardware in the loop simulations.
@@ -5608,8 +5872,12 @@ type MessageHilState struct {
     Zacc int16
 }
 
-func (*MessageHilState) GetId() uint32 {
+func (m *MessageHilState) GetId() uint32 {
     return 90
+}
+
+func (m *MessageHilState) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Sent from autopilot to simulation. Hardware in the loop control outputs
@@ -5638,8 +5906,12 @@ type MessageHilControls struct {
     NavMode uint8
 }
 
-func (*MessageHilControls) GetId() uint32 {
+func (m *MessageHilControls) GetId() uint32 {
     return 91
+}
+
+func (m *MessageHilControls) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Sent from simulation to autopilot. The RAW values of the RC channels received. The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%. Individual receivers/transmitters might violate this specification.
@@ -5674,8 +5946,12 @@ type MessageHilRcInputsRaw struct {
     Rssi uint8
 }
 
-func (*MessageHilRcInputsRaw) GetId() uint32 {
+func (m *MessageHilRcInputsRaw) GetId() uint32 {
     return 92
+}
+
+func (m *MessageHilRcInputsRaw) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Sent from autopilot to simulation. Hardware in the loop control outputs (replacement for HIL_CONTROLS)
@@ -5690,8 +5966,12 @@ type MessageHilActuatorControls struct {
     Flags uint64
 }
 
-func (*MessageHilActuatorControls) GetId() uint32 {
+func (m *MessageHilActuatorControls) GetId() uint32 {
     return 93
+}
+
+func (m *MessageHilActuatorControls) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Optical flow from a flow sensor (e.g. optical mouse sensor)
@@ -5718,8 +5998,12 @@ type MessageOpticalFlow struct {
     FlowRateY float32 `mavext:"true"`
 }
 
-func (*MessageOpticalFlow) GetId() uint32 {
+func (m *MessageOpticalFlow) GetId() uint32 {
     return 100
+}
+
+func (m *MessageOpticalFlow) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Global position/attitude estimate from a vision source.
@@ -5744,8 +6028,12 @@ type MessageGlobalVisionPositionEstimate struct {
     ResetCounter uint8 `mavext:"true"`
 }
 
-func (*MessageGlobalVisionPositionEstimate) GetId() uint32 {
+func (m *MessageGlobalVisionPositionEstimate) GetId() uint32 {
     return 101
+}
+
+func (m *MessageGlobalVisionPositionEstimate) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Local position/attitude estimate from a vision source.
@@ -5770,8 +6058,12 @@ type MessageVisionPositionEstimate struct {
     ResetCounter uint8 `mavext:"true"`
 }
 
-func (*MessageVisionPositionEstimate) GetId() uint32 {
+func (m *MessageVisionPositionEstimate) GetId() uint32 {
     return 102
+}
+
+func (m *MessageVisionPositionEstimate) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Speed estimate from a vision source.
@@ -5790,8 +6082,12 @@ type MessageVisionSpeedEstimate struct {
     ResetCounter uint8 `mavext:"true"`
 }
 
-func (*MessageVisionSpeedEstimate) GetId() uint32 {
+func (m *MessageVisionSpeedEstimate) GetId() uint32 {
     return 103
+}
+
+func (m *MessageVisionSpeedEstimate) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Global position estimate from a Vicon motion system source.
@@ -5814,8 +6110,12 @@ type MessageViconPositionEstimate struct {
     Covariance [21]float32 `mavext:"true"`
 }
 
-func (*MessageViconPositionEstimate) GetId() uint32 {
+func (m *MessageViconPositionEstimate) GetId() uint32 {
     return 104
+}
+
+func (m *MessageViconPositionEstimate) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The IMU readings in SI units in NED body frame
@@ -5854,8 +6154,12 @@ type MessageHighresImu struct {
     Id uint8 `mavext:"true"`
 }
 
-func (*MessageHighresImu) GetId() uint32 {
+func (m *MessageHighresImu) GetId() uint32 {
     return 105
+}
+
+func (m *MessageHighresImu) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Optical flow from an angular rate flow sensor (e.g. PX4FLOW or mouse sensor)
@@ -5886,8 +6190,12 @@ type MessageOpticalFlowRad struct {
     Distance float32
 }
 
-func (*MessageOpticalFlowRad) GetId() uint32 {
+func (m *MessageOpticalFlowRad) GetId() uint32 {
     return 106
+}
+
+func (m *MessageOpticalFlowRad) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The IMU readings in SI units in NED body frame
@@ -5924,8 +6232,12 @@ type MessageHilSensor struct {
     FieldsUpdated uint32
 }
 
-func (*MessageHilSensor) GetId() uint32 {
+func (m *MessageHilSensor) GetId() uint32 {
     return 107
+}
+
+func (m *MessageHilSensor) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of simulation environment, if used
@@ -5974,8 +6286,12 @@ type MessageSimState struct {
     Vd float32
 }
 
-func (*MessageSimState) GetId() uint32 {
+func (m *MessageSimState) GetId() uint32 {
     return 108
+}
+
+func (m *MessageSimState) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status generated by radio and injected into MAVLink stream.
@@ -5996,8 +6312,12 @@ type MessageRadioStatus struct {
     Fixed uint16
 }
 
-func (*MessageRadioStatus) GetId() uint32 {
+func (m *MessageRadioStatus) GetId() uint32 {
     return 109
+}
+
+func (m *MessageRadioStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // File transfer message
@@ -6012,8 +6332,12 @@ type MessageFileTransferProtocol struct {
     Payload [251]uint8
 }
 
-func (*MessageFileTransferProtocol) GetId() uint32 {
+func (m *MessageFileTransferProtocol) GetId() uint32 {
     return 110
+}
+
+func (m *MessageFileTransferProtocol) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Time synchronization message.
@@ -6024,8 +6348,12 @@ type MessageTimesync struct {
     Ts1 int64
 }
 
-func (*MessageTimesync) GetId() uint32 {
+func (m *MessageTimesync) GetId() uint32 {
     return 111
+}
+
+func (m *MessageTimesync) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Camera-IMU triggering and synchronisation message.
@@ -6036,8 +6364,12 @@ type MessageCameraTrigger struct {
     Seq uint32
 }
 
-func (*MessageCameraTrigger) GetId() uint32 {
+func (m *MessageCameraTrigger) GetId() uint32 {
     return 112
+}
+
+func (m *MessageCameraTrigger) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The global position, as returned by the Global Positioning System (GPS). This is                 NOT the global position estimate of the sytem, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate.
@@ -6070,8 +6402,12 @@ type MessageHilGps struct {
     SatellitesVisible uint8
 }
 
-func (*MessageHilGps) GetId() uint32 {
+func (m *MessageHilGps) GetId() uint32 {
     return 113
+}
+
+func (m *MessageHilGps) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Simulated optical flow from a flow sensor (e.g. PX4FLOW or optical mouse sensor)
@@ -6102,8 +6438,12 @@ type MessageHilOpticalFlow struct {
     Distance float32
 }
 
-func (*MessageHilOpticalFlow) GetId() uint32 {
+func (m *MessageHilOpticalFlow) GetId() uint32 {
     return 114
+}
+
+func (m *MessageHilOpticalFlow) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Sent from simulation to autopilot, avoids in contrast to HIL_STATE singularities. This packet is useful for high throughput applications such as hardware in the loop simulations.
@@ -6142,8 +6482,12 @@ type MessageHilStateQuaternion struct {
     Zacc int16
 }
 
-func (*MessageHilStateQuaternion) GetId() uint32 {
+func (m *MessageHilStateQuaternion) GetId() uint32 {
     return 115
+}
+
+func (m *MessageHilStateQuaternion) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The RAW IMU readings for secondary 9DOF sensor setup. This message should contain the scaled values to the described units
@@ -6172,8 +6516,12 @@ type MessageScaledImu2 struct {
     Temperature int16 `mavext:"true"`
 }
 
-func (*MessageScaledImu2) GetId() uint32 {
+func (m *MessageScaledImu2) GetId() uint32 {
     return 116
+}
+
+func (m *MessageScaledImu2) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request a list of available logs. On some systems calling this may stop on-board logging until LOG_REQUEST_END is called.
@@ -6188,8 +6536,12 @@ type MessageLogRequestList struct {
     End uint16
 }
 
-func (*MessageLogRequestList) GetId() uint32 {
+func (m *MessageLogRequestList) GetId() uint32 {
     return 117
+}
+
+func (m *MessageLogRequestList) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Reply to LOG_REQUEST_LIST
@@ -6206,8 +6558,12 @@ type MessageLogEntry struct {
     Size uint32
 }
 
-func (*MessageLogEntry) GetId() uint32 {
+func (m *MessageLogEntry) GetId() uint32 {
     return 118
+}
+
+func (m *MessageLogEntry) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request a chunk of a log
@@ -6224,8 +6580,12 @@ type MessageLogRequestData struct {
     Count uint32
 }
 
-func (*MessageLogRequestData) GetId() uint32 {
+func (m *MessageLogRequestData) GetId() uint32 {
     return 119
+}
+
+func (m *MessageLogRequestData) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Reply to LOG_REQUEST_DATA
@@ -6240,8 +6600,12 @@ type MessageLogData struct {
     Data [90]uint8
 }
 
-func (*MessageLogData) GetId() uint32 {
+func (m *MessageLogData) GetId() uint32 {
     return 120
+}
+
+func (m *MessageLogData) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Erase all logs
@@ -6252,8 +6616,12 @@ type MessageLogErase struct {
     TargetComponent uint8
 }
 
-func (*MessageLogErase) GetId() uint32 {
+func (m *MessageLogErase) GetId() uint32 {
     return 121
+}
+
+func (m *MessageLogErase) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Stop log transfer and resume normal logging
@@ -6264,8 +6632,12 @@ type MessageLogRequestEnd struct {
     TargetComponent uint8
 }
 
-func (*MessageLogRequestEnd) GetId() uint32 {
+func (m *MessageLogRequestEnd) GetId() uint32 {
     return 122
+}
+
+func (m *MessageLogRequestEnd) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data for injecting into the onboard GPS (used for DGPS)
@@ -6280,8 +6652,12 @@ type MessageGpsInjectData struct {
     Data [110]uint8
 }
 
-func (*MessageGpsInjectData) GetId() uint32 {
+func (m *MessageGpsInjectData) GetId() uint32 {
     return 123
+}
+
+func (m *MessageGpsInjectData) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Second GPS data.
@@ -6314,8 +6690,12 @@ type MessageGps2Raw struct {
     Yaw uint16 `mavext:"true"`
 }
 
-func (*MessageGps2Raw) GetId() uint32 {
+func (m *MessageGps2Raw) GetId() uint32 {
     return 124
+}
+
+func (m *MessageGps2Raw) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Power supply status
@@ -6328,8 +6708,12 @@ type MessagePowerStatus struct {
     Flags MAV_POWER_STATUS `mavenum:"uint16"`
 }
 
-func (*MessagePowerStatus) GetId() uint32 {
+func (m *MessagePowerStatus) GetId() uint32 {
     return 125
+}
+
+func (m *MessagePowerStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Control a serial port. This can be used for raw access to an onboard serial peripheral such as a GPS or telemetry radio. It is designed to make it possible to update the devices firmware via MAVLink messages or change the devices settings. A message with zero bytes can be used to change just the baudrate.
@@ -6348,8 +6732,12 @@ type MessageSerialControl struct {
     Data [70]uint8
 }
 
-func (*MessageSerialControl) GetId() uint32 {
+func (m *MessageSerialControl) GetId() uint32 {
     return 126
+}
+
+func (m *MessageSerialControl) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // RTK GPS data. Gives information on the relative baseline calculation the GPS is reporting
@@ -6382,8 +6770,12 @@ type MessageGpsRtk struct {
     IarNumHypotheses int32
 }
 
-func (*MessageGpsRtk) GetId() uint32 {
+func (m *MessageGpsRtk) GetId() uint32 {
     return 127
+}
+
+func (m *MessageGpsRtk) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // RTK GPS data. Gives information on the relative baseline calculation the GPS is reporting
@@ -6416,8 +6808,12 @@ type MessageGps2Rtk struct {
     IarNumHypotheses int32
 }
 
-func (*MessageGps2Rtk) GetId() uint32 {
+func (m *MessageGps2Rtk) GetId() uint32 {
     return 128
+}
+
+func (m *MessageGps2Rtk) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The RAW IMU readings for 3rd 9DOF sensor setup. This message should contain the scaled values to the described units
@@ -6446,8 +6842,12 @@ type MessageScaledImu3 struct {
     Temperature int16 `mavext:"true"`
 }
 
-func (*MessageScaledImu3) GetId() uint32 {
+func (m *MessageScaledImu3) GetId() uint32 {
     return 129
+}
+
+func (m *MessageScaledImu3) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Handshake message to initiate, control and stop image streaming when using the Image Transmission Protocol: https://mavlink.io/en/services/image_transmission.html.
@@ -6468,8 +6868,12 @@ type MessageDataTransmissionHandshake struct {
     JpgQuality uint8
 }
 
-func (*MessageDataTransmissionHandshake) GetId() uint32 {
+func (m *MessageDataTransmissionHandshake) GetId() uint32 {
     return 130
+}
+
+func (m *MessageDataTransmissionHandshake) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data packet for images sent using the Image Transmission Protocol: https://mavlink.io/en/services/image_transmission.html.
@@ -6480,8 +6884,12 @@ type MessageEncapsulatedData struct {
     Data [253]uint8
 }
 
-func (*MessageEncapsulatedData) GetId() uint32 {
+func (m *MessageEncapsulatedData) GetId() uint32 {
     return 131
+}
+
+func (m *MessageEncapsulatedData) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Distance sensor information for an onboard rangefinder.
@@ -6510,8 +6918,12 @@ type MessageDistanceSensor struct {
     Quaternion [4]float32 `mavext:"true"`
 }
 
-func (*MessageDistanceSensor) GetId() uint32 {
+func (m *MessageDistanceSensor) GetId() uint32 {
     return 132
+}
+
+func (m *MessageDistanceSensor) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request for terrain data and terrain status
@@ -6526,8 +6938,12 @@ type MessageTerrainRequest struct {
     Mask uint64
 }
 
-func (*MessageTerrainRequest) GetId() uint32 {
+func (m *MessageTerrainRequest) GetId() uint32 {
     return 133
+}
+
+func (m *MessageTerrainRequest) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Terrain data sent from GCS. The lat/lon and grid_spacing must be the same as a lat/lon from a TERRAIN_REQUEST
@@ -6544,8 +6960,12 @@ type MessageTerrainData struct {
     Data [16]int16
 }
 
-func (*MessageTerrainData) GetId() uint32 {
+func (m *MessageTerrainData) GetId() uint32 {
     return 134
+}
+
+func (m *MessageTerrainData) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request that the vehicle report terrain height at the given location. Used by GCS to check if vehicle has all terrain data needed for a mission.
@@ -6556,8 +6976,12 @@ type MessageTerrainCheck struct {
     Lon int32
 }
 
-func (*MessageTerrainCheck) GetId() uint32 {
+func (m *MessageTerrainCheck) GetId() uint32 {
     return 135
+}
+
+func (m *MessageTerrainCheck) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Response from a TERRAIN_CHECK request
@@ -6578,8 +7002,12 @@ type MessageTerrainReport struct {
     Loaded uint16
 }
 
-func (*MessageTerrainReport) GetId() uint32 {
+func (m *MessageTerrainReport) GetId() uint32 {
     return 136
+}
+
+func (m *MessageTerrainReport) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Barometer readings for 2nd barometer
@@ -6594,8 +7022,12 @@ type MessageScaledPressure2 struct {
     Temperature int16
 }
 
-func (*MessageScaledPressure2) GetId() uint32 {
+func (m *MessageScaledPressure2) GetId() uint32 {
     return 137
+}
+
+func (m *MessageScaledPressure2) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Motion capture attitude and position
@@ -6614,8 +7046,12 @@ type MessageAttPosMocap struct {
     Covariance [21]float32 `mavext:"true"`
 }
 
-func (*MessageAttPosMocap) GetId() uint32 {
+func (m *MessageAttPosMocap) GetId() uint32 {
     return 138
+}
+
+func (m *MessageAttPosMocap) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Set the vehicle attitude and body angular rates.
@@ -6632,8 +7068,12 @@ type MessageSetActuatorControlTarget struct {
     Controls [8]float32
 }
 
-func (*MessageSetActuatorControlTarget) GetId() uint32 {
+func (m *MessageSetActuatorControlTarget) GetId() uint32 {
     return 139
+}
+
+func (m *MessageSetActuatorControlTarget) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Set the vehicle attitude and body angular rates.
@@ -6646,8 +7086,12 @@ type MessageActuatorControlTarget struct {
     Controls [8]float32
 }
 
-func (*MessageActuatorControlTarget) GetId() uint32 {
+func (m *MessageActuatorControlTarget) GetId() uint32 {
     return 140
+}
+
+func (m *MessageActuatorControlTarget) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The current system altitude.
@@ -6668,8 +7112,12 @@ type MessageAltitude struct {
     BottomClearance float32
 }
 
-func (*MessageAltitude) GetId() uint32 {
+func (m *MessageAltitude) GetId() uint32 {
     return 141
+}
+
+func (m *MessageAltitude) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The autopilot is requesting a resource (file, binary, other type of data)
@@ -6686,8 +7134,12 @@ type MessageResourceRequest struct {
     Storage [120]uint8
 }
 
-func (*MessageResourceRequest) GetId() uint32 {
+func (m *MessageResourceRequest) GetId() uint32 {
     return 142
+}
+
+func (m *MessageResourceRequest) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Barometer readings for 3rd barometer
@@ -6702,8 +7154,12 @@ type MessageScaledPressure3 struct {
     Temperature int16
 }
 
-func (*MessageScaledPressure3) GetId() uint32 {
+func (m *MessageScaledPressure3) GetId() uint32 {
     return 143
+}
+
+func (m *MessageScaledPressure3) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Current motion information from a designated system
@@ -6732,8 +7188,12 @@ type MessageFollowTarget struct {
     CustomState uint64
 }
 
-func (*MessageFollowTarget) GetId() uint32 {
+func (m *MessageFollowTarget) GetId() uint32 {
     return 144
+}
+
+func (m *MessageFollowTarget) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The smoothed, monotonic system state used to feed the control loops of the system.
@@ -6774,8 +7234,12 @@ type MessageControlSystemState struct {
     YawRate float32
 }
 
-func (*MessageControlSystemState) GetId() uint32 {
+func (m *MessageControlSystemState) GetId() uint32 {
     return 146
+}
+
+func (m *MessageControlSystemState) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Battery information. Updates GCS with flight controller battery status. Use SMART_BATTERY_* messages instead for smart batteries.
@@ -6804,8 +7268,12 @@ type MessageBatteryStatus struct {
     ChargeState MAV_BATTERY_CHARGE_STATE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageBatteryStatus) GetId() uint32 {
+func (m *MessageBatteryStatus) GetId() uint32 {
     return 147
+}
+
+func (m *MessageBatteryStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Version and capability of autopilot software. This should be emitted in response to a MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES command.
@@ -6836,8 +7304,12 @@ type MessageAutopilotVersion struct {
     Uid2 [18]uint8 `mavext:"true"`
 }
 
-func (*MessageAutopilotVersion) GetId() uint32 {
+func (m *MessageAutopilotVersion) GetId() uint32 {
     return 148
+}
+
+func (m *MessageAutopilotVersion) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The location of a landing target. See: https://mavlink.io/en/services/landing_target.html
@@ -6872,8 +7344,12 @@ type MessageLandingTarget struct {
     PositionValid uint8 `mavext:"true"`
 }
 
-func (*MessageLandingTarget) GetId() uint32 {
+func (m *MessageLandingTarget) GetId() uint32 {
     return 149
+}
+
+func (m *MessageLandingTarget) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of geo-fencing. Sent in extended status stream when fencing enabled.
@@ -6890,8 +7366,12 @@ type MessageFenceStatus struct {
     BreachMitigation FENCE_MITIGATE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageFenceStatus) GetId() uint32 {
+func (m *MessageFenceStatus) GetId() uint32 {
     return 162
+}
+
+func (m *MessageFenceStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Estimator status message including flags, innovation test ratios and estimated accuracies. The flags message is an integer bitmask containing information on which EKF outputs are valid. See the ESTIMATOR_STATUS_FLAGS enum definition for further information. The innovation test ratios show the magnitude of the sensor innovation divided by the innovation check threshold. Under normal operation the innovation test ratios should be below 0.5 with occasional values up to 1.0. Values greater than 1.0 should be rare under normal operation and indicate that a measurement has been rejected by the filter. The user should be notified if an innovation test ratio greater than 1.0 is recorded. Notifications for values in the range between 0.5 and 1.0 should be optional and controllable by the user.
@@ -6918,8 +7398,12 @@ type MessageEstimatorStatus struct {
     PosVertAccuracy float32
 }
 
-func (*MessageEstimatorStatus) GetId() uint32 {
+func (m *MessageEstimatorStatus) GetId() uint32 {
     return 230
+}
+
+func (m *MessageEstimatorStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Wind covariance estimate from vehicle.
@@ -6944,8 +7428,12 @@ type MessageWindCov struct {
     VertAccuracy float32
 }
 
-func (*MessageWindCov) GetId() uint32 {
+func (m *MessageWindCov) GetId() uint32 {
     return 231
+}
+
+func (m *MessageWindCov) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // GPS sensor input message.  This is a raw sensor value sent by the GPS. This is NOT the global position estimate of the system.
@@ -6990,8 +7478,12 @@ type MessageGpsInput struct {
     Yaw uint16 `mavext:"true"`
 }
 
-func (*MessageGpsInput) GetId() uint32 {
+func (m *MessageGpsInput) GetId() uint32 {
     return 232
+}
+
+func (m *MessageGpsInput) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // RTCM message for injecting into the onboard GPS (used for DGPS)
@@ -7004,8 +7496,12 @@ type MessageGpsRtcmData struct {
     Data [180]uint8
 }
 
-func (*MessageGpsRtcmData) GetId() uint32 {
+func (m *MessageGpsRtcmData) GetId() uint32 {
     return 233
+}
+
+func (m *MessageGpsRtcmData) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message appropriate for high latency connections like Iridium
@@ -7060,8 +7556,12 @@ type MessageHighLatency struct {
     WpDistance uint16
 }
 
-func (*MessageHighLatency) GetId() uint32 {
+func (m *MessageHighLatency) GetId() uint32 {
     return 234
+}
+
+func (m *MessageHighLatency) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message appropriate for high latency connections like Iridium (version 2)
@@ -7122,8 +7622,12 @@ type MessageHighLatency2 struct {
     Custom2 int8
 }
 
-func (*MessageHighLatency2) GetId() uint32 {
+func (m *MessageHighLatency2) GetId() uint32 {
     return 235
+}
+
+func (m *MessageHighLatency2) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Vibration levels and accelerometer clipping
@@ -7144,8 +7648,12 @@ type MessageVibration struct {
     Clipping_2 uint32
 }
 
-func (*MessageVibration) GetId() uint32 {
+func (m *MessageVibration) GetId() uint32 {
     return 241
+}
+
+func (m *MessageVibration) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // This message can be requested by sending the MAV_CMD_GET_HOME_POSITION command. The position the system will return to and land on. The position is set automatically by the system during the takeoff in case it was not explicitly set by the operator before or after. The position the system will return to and land on. The global and local positions encode the position in the respective coordinate frames, while the q parameter encodes the orientation of the surface. Under normal conditions it describes the heading and terrain slope, which can be used by the aircraft to adjust the approach. The approach 3D vector describes the point to which the system should fly in normal flight mode and then perform a landing sequence along the vector.
@@ -7174,8 +7682,12 @@ type MessageHomePosition struct {
     TimeUsec uint64 `mavext:"true"`
 }
 
-func (*MessageHomePosition) GetId() uint32 {
+func (m *MessageHomePosition) GetId() uint32 {
     return 242
+}
+
+func (m *MessageHomePosition) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The position the system will return to and land on. The position is set automatically by the system during the takeoff in case it was not explicitly set by the operator before or after. The global and local positions encode the position in the respective coordinate frames, while the q parameter encodes the orientation of the surface. Under normal conditions it describes the heading and terrain slope, which can be used by the aircraft to adjust the approach. The approach 3D vector describes the point to which the system should fly in normal flight mode and then perform a landing sequence along the vector.
@@ -7206,8 +7718,12 @@ type MessageSetHomePosition struct {
     TimeUsec uint64 `mavext:"true"`
 }
 
-func (*MessageSetHomePosition) GetId() uint32 {
+func (m *MessageSetHomePosition) GetId() uint32 {
     return 243
+}
+
+func (m *MessageSetHomePosition) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The interval between messages for a particular MAVLink message ID. This message is the response to the MAV_CMD_GET_MESSAGE_INTERVAL command. This interface replaces DATA_STREAM.
@@ -7218,8 +7734,12 @@ type MessageMessageInterval struct {
     IntervalUs int32
 }
 
-func (*MessageMessageInterval) GetId() uint32 {
+func (m *MessageMessageInterval) GetId() uint32 {
     return 244
+}
+
+func (m *MessageMessageInterval) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Provides state for additional features
@@ -7230,8 +7750,12 @@ type MessageExtendedSysState struct {
     LandedState MAV_LANDED_STATE `mavenum:"uint8"`
 }
 
-func (*MessageExtendedSysState) GetId() uint32 {
+func (m *MessageExtendedSysState) GetId() uint32 {
     return 245
+}
+
+func (m *MessageExtendedSysState) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The location and information of an ADSB vehicle
@@ -7264,8 +7788,12 @@ type MessageAdsbVehicle struct {
     Squawk uint16
 }
 
-func (*MessageAdsbVehicle) GetId() uint32 {
+func (m *MessageAdsbVehicle) GetId() uint32 {
     return 246
+}
+
+func (m *MessageAdsbVehicle) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Information about a potential collision
@@ -7286,8 +7814,12 @@ type MessageCollision struct {
     HorizontalMinimumDelta float32
 }
 
-func (*MessageCollision) GetId() uint32 {
+func (m *MessageCollision) GetId() uint32 {
     return 247
+}
+
+func (m *MessageCollision) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message implementing parts of the V2 payload specs in V1 frames for transitional support.
@@ -7304,8 +7836,12 @@ type MessageV2Extension struct {
     Payload [249]uint8
 }
 
-func (*MessageV2Extension) GetId() uint32 {
+func (m *MessageV2Extension) GetId() uint32 {
     return 248
+}
+
+func (m *MessageV2Extension) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Send raw controller memory. The use of this message is discouraged for normal packets, but a quite efficient way for testing new messages and getting experimental debug output.
@@ -7320,8 +7856,12 @@ type MessageMemoryVect struct {
     Value [32]int8
 }
 
-func (*MessageMemoryVect) GetId() uint32 {
+func (m *MessageMemoryVect) GetId() uint32 {
     return 249
+}
+
+func (m *MessageMemoryVect) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // To debug something using a named 3D vector.
@@ -7338,8 +7878,12 @@ type MessageDebugVect struct {
     Z float32
 }
 
-func (*MessageDebugVect) GetId() uint32 {
+func (m *MessageDebugVect) GetId() uint32 {
     return 250
+}
+
+func (m *MessageDebugVect) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Send a key-value pair as float. The use of this message is discouraged for normal packets, but a quite efficient way for testing new messages and getting experimental debug output.
@@ -7352,8 +7896,12 @@ type MessageNamedValueFloat struct {
     Value float32
 }
 
-func (*MessageNamedValueFloat) GetId() uint32 {
+func (m *MessageNamedValueFloat) GetId() uint32 {
     return 251
+}
+
+func (m *MessageNamedValueFloat) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Send a key-value pair as integer. The use of this message is discouraged for normal packets, but a quite efficient way for testing new messages and getting experimental debug output.
@@ -7366,8 +7914,12 @@ type MessageNamedValueInt struct {
     Value int32
 }
 
-func (*MessageNamedValueInt) GetId() uint32 {
+func (m *MessageNamedValueInt) GetId() uint32 {
     return 252
+}
+
+func (m *MessageNamedValueInt) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status text message. These messages are printed in yellow in the COMM console of QGroundControl. WARNING: They consume quite some bandwidth, so use only for important status and error messages. If implemented wisely, these messages are buffered on the MCU and sent only at a limited rate (e.g. 10 Hz).
@@ -7382,8 +7934,12 @@ type MessageStatustext struct {
     ChunkSeq uint8 `mavext:"true"`
 }
 
-func (*MessageStatustext) GetId() uint32 {
+func (m *MessageStatustext) GetId() uint32 {
     return 253
+}
+
+func (m *MessageStatustext) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Send a debug value. The index is used to discriminate between values. These values show up in the plot of QGroundControl as DEBUG N.
@@ -7396,8 +7952,12 @@ type MessageDebug struct {
     Value float32
 }
 
-func (*MessageDebug) GetId() uint32 {
+func (m *MessageDebug) GetId() uint32 {
     return 254
+}
+
+func (m *MessageDebug) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Setup a MAVLink2 signing key. If called with secret_key of all zero and zero initial_timestamp will disable signing
@@ -7412,8 +7972,12 @@ type MessageSetupSigning struct {
     InitialTimestamp uint64
 }
 
-func (*MessageSetupSigning) GetId() uint32 {
+func (m *MessageSetupSigning) GetId() uint32 {
     return 256
+}
+
+func (m *MessageSetupSigning) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Report button state change.
@@ -7426,8 +7990,12 @@ type MessageButtonChange struct {
     State uint8
 }
 
-func (*MessageButtonChange) GetId() uint32 {
+func (m *MessageButtonChange) GetId() uint32 {
     return 257
+}
+
+func (m *MessageButtonChange) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Control vehicle tone generation (buzzer).
@@ -7442,8 +8010,12 @@ type MessagePlayTune struct {
     Tune2 string `mavext:"true" mavlen:"200"`
 }
 
-func (*MessagePlayTune) GetId() uint32 {
+func (m *MessagePlayTune) GetId() uint32 {
     return 258
+}
+
+func (m *MessagePlayTune) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Information about a camera
@@ -7476,8 +8048,12 @@ type MessageCameraInformation struct {
     CamDefinitionUri string `mavlen:"140"`
 }
 
-func (*MessageCameraInformation) GetId() uint32 {
+func (m *MessageCameraInformation) GetId() uint32 {
     return 259
+}
+
+func (m *MessageCameraInformation) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Settings of a camera, can be requested using MAV_CMD_REQUEST_CAMERA_SETTINGS.
@@ -7492,8 +8068,12 @@ type MessageCameraSettings struct {
     Focuslevel float32 `mavext:"true" mavname:"focusLevel"`
 }
 
-func (*MessageCameraSettings) GetId() uint32 {
+func (m *MessageCameraSettings) GetId() uint32 {
     return 260
+}
+
+func (m *MessageCameraSettings) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Information about a storage medium. This message is sent in response to a request and whenever the status of the storage changes (STORAGE_STATUS).
@@ -7518,8 +8098,12 @@ type MessageStorageInformation struct {
     WriteSpeed float32
 }
 
-func (*MessageStorageInformation) GetId() uint32 {
+func (m *MessageStorageInformation) GetId() uint32 {
     return 261
+}
+
+func (m *MessageStorageInformation) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Information about the status of a capture.
@@ -7538,8 +8122,12 @@ type MessageCameraCaptureStatus struct {
     AvailableCapacity float32
 }
 
-func (*MessageCameraCaptureStatus) GetId() uint32 {
+func (m *MessageCameraCaptureStatus) GetId() uint32 {
     return 262
+}
+
+func (m *MessageCameraCaptureStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Information about a captured image
@@ -7568,8 +8156,12 @@ type MessageCameraImageCaptured struct {
     FileUrl string `mavlen:"205"`
 }
 
-func (*MessageCameraImageCaptured) GetId() uint32 {
+func (m *MessageCameraImageCaptured) GetId() uint32 {
     return 263
+}
+
+func (m *MessageCameraImageCaptured) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Information about flight since last arming.
@@ -7584,8 +8176,12 @@ type MessageFlightInformation struct {
     FlightUuid uint64
 }
 
-func (*MessageFlightInformation) GetId() uint32 {
+func (m *MessageFlightInformation) GetId() uint32 {
     return 264
+}
+
+func (m *MessageFlightInformation) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Orientation of a mount
@@ -7602,8 +8198,12 @@ type MessageMountOrientation struct {
     YawAbsolute float32 `mavext:"true"`
 }
 
-func (*MessageMountOrientation) GetId() uint32 {
+func (m *MessageMountOrientation) GetId() uint32 {
     return 265
+}
+
+func (m *MessageMountOrientation) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // A message containing logged data (see also MAV_CMD_LOGGING_START)
@@ -7622,8 +8222,12 @@ type MessageLoggingData struct {
     Data [249]uint8
 }
 
-func (*MessageLoggingData) GetId() uint32 {
+func (m *MessageLoggingData) GetId() uint32 {
     return 266
+}
+
+func (m *MessageLoggingData) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // A message containing logged data which requires a LOGGING_ACK to be sent back
@@ -7642,8 +8246,12 @@ type MessageLoggingDataAcked struct {
     Data [249]uint8
 }
 
-func (*MessageLoggingDataAcked) GetId() uint32 {
+func (m *MessageLoggingDataAcked) GetId() uint32 {
     return 267
+}
+
+func (m *MessageLoggingDataAcked) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // An ack for a LOGGING_DATA_ACKED message
@@ -7656,8 +8264,12 @@ type MessageLoggingAck struct {
     Sequence uint16
 }
 
-func (*MessageLoggingAck) GetId() uint32 {
+func (m *MessageLoggingAck) GetId() uint32 {
     return 268
+}
+
+func (m *MessageLoggingAck) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Information about video stream
@@ -7688,8 +8300,12 @@ type MessageVideoStreamInformation struct {
     Uri string `mavlen:"160"`
 }
 
-func (*MessageVideoStreamInformation) GetId() uint32 {
+func (m *MessageVideoStreamInformation) GetId() uint32 {
     return 269
+}
+
+func (m *MessageVideoStreamInformation) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Information about the status of a video stream.
@@ -7712,8 +8328,12 @@ type MessageVideoStreamStatus struct {
     Hfov uint16
 }
 
-func (*MessageVideoStreamStatus) GetId() uint32 {
+func (m *MessageVideoStreamStatus) GetId() uint32 {
     return 270
+}
+
+func (m *MessageVideoStreamStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Configure AP SSID and Password.
@@ -7724,8 +8344,12 @@ type MessageWifiConfigAp struct {
     Password string `mavlen:"64"`
 }
 
-func (*MessageWifiConfigAp) GetId() uint32 {
+func (m *MessageWifiConfigAp) GetId() uint32 {
     return 299
+}
+
+func (m *MessageWifiConfigAp) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Version and capability of protocol version. This message is the response to REQUEST_PROTOCOL_VERSION and is used as part of the handshaking to establish which MAVLink version should be used on the network. Every node should respond to REQUEST_PROTOCOL_VERSION to enable the handshaking. Library implementers should consider adding this into the default decoding state machine to allow the protocol core to respond directly.
@@ -7742,8 +8366,12 @@ type MessageProtocolVersion struct {
     LibraryVersionHash [8]uint8
 }
 
-func (*MessageProtocolVersion) GetId() uint32 {
+func (m *MessageProtocolVersion) GetId() uint32 {
     return 300
+}
+
+func (m *MessageProtocolVersion) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The location and information of an AIS vessel
@@ -7784,8 +8412,12 @@ type MessageAisVessel struct {
     Flags AIS_FLAGS `mavenum:"uint16"`
 }
 
-func (*MessageAisVessel) GetId() uint32 {
+func (m *MessageAisVessel) GetId() uint32 {
     return 301
+}
+
+func (m *MessageAisVessel) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // General status information of an UAVCAN node. Please refer to the definition of the UAVCAN message "uavcan.protocol.NodeStatus" for the background information. The UAVCAN specification is available at http://uavcan.org.
@@ -7804,8 +8436,12 @@ type MessageUavcanNodeStatus struct {
     VendorSpecificStatusCode uint16
 }
 
-func (*MessageUavcanNodeStatus) GetId() uint32 {
+func (m *MessageUavcanNodeStatus) GetId() uint32 {
     return 310
+}
+
+func (m *MessageUavcanNodeStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // General information describing a particular UAVCAN node. Please refer to the definition of the UAVCAN service "uavcan.protocol.GetNodeInfo" for the background information. This message should be emitted by the system whenever a new node appears online, or an existing node reboots. Additionally, it can be emitted upon request from the other end of the MAVLink channel (see MAV_CMD_UAVCAN_GET_NODE_INFO). It is also not prohibited to emit this message unconditionally at a low frequency. The UAVCAN specification is available at http://uavcan.org.
@@ -7830,8 +8466,12 @@ type MessageUavcanNodeInfo struct {
     SwVcsCommit uint32
 }
 
-func (*MessageUavcanNodeInfo) GetId() uint32 {
+func (m *MessageUavcanNodeInfo) GetId() uint32 {
     return 311
+}
+
+func (m *MessageUavcanNodeInfo) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request to read the value of a parameter with the either the param_id string id or param_index.
@@ -7846,8 +8486,12 @@ type MessageParamExtRequestRead struct {
     ParamIndex int16
 }
 
-func (*MessageParamExtRequestRead) GetId() uint32 {
+func (m *MessageParamExtRequestRead) GetId() uint32 {
     return 320
+}
+
+func (m *MessageParamExtRequestRead) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request all parameters of this component. After this request, all parameters are emitted.
@@ -7858,8 +8502,12 @@ type MessageParamExtRequestList struct {
     TargetComponent uint8
 }
 
-func (*MessageParamExtRequestList) GetId() uint32 {
+func (m *MessageParamExtRequestList) GetId() uint32 {
     return 321
+}
+
+func (m *MessageParamExtRequestList) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Emit the value of a parameter. The inclusion of param_count and param_index in the message allows the recipient to keep track of received parameters and allows them to re-request missing parameters after a loss or timeout.
@@ -7876,8 +8524,12 @@ type MessageParamExtValue struct {
     ParamIndex uint16
 }
 
-func (*MessageParamExtValue) GetId() uint32 {
+func (m *MessageParamExtValue) GetId() uint32 {
     return 322
+}
+
+func (m *MessageParamExtValue) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Set a parameter value. In order to deal with message loss (and retransmission of PARAM_EXT_SET), when setting a parameter value and the new value is the same as the current value, you will immediately get a PARAM_ACK_ACCEPTED response. If the current state is PARAM_ACK_IN_PROGRESS, you will accordingly receive a PARAM_ACK_IN_PROGRESS in response.
@@ -7894,8 +8546,12 @@ type MessageParamExtSet struct {
     ParamType MAV_PARAM_EXT_TYPE `mavenum:"uint8"`
 }
 
-func (*MessageParamExtSet) GetId() uint32 {
+func (m *MessageParamExtSet) GetId() uint32 {
     return 323
+}
+
+func (m *MessageParamExtSet) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Response from a PARAM_EXT_SET message.
@@ -7910,8 +8566,12 @@ type MessageParamExtAck struct {
     ParamResult PARAM_ACK `mavenum:"uint8"`
 }
 
-func (*MessageParamExtAck) GetId() uint32 {
+func (m *MessageParamExtAck) GetId() uint32 {
     return 324
+}
+
+func (m *MessageParamExtAck) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Obstacle distances in front of the sensor, starting from the left in increment degrees to the right
@@ -7936,8 +8596,12 @@ type MessageObstacleDistance struct {
     Frame MAV_FRAME `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageObstacleDistance) GetId() uint32 {
+func (m *MessageObstacleDistance) GetId() uint32 {
     return 330
+}
+
+func (m *MessageObstacleDistance) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Odometry message to communicate odometry information with an external interface. Fits ROS REP 147 standard for aerial vehicles (http://www.ros.org/reps/rep-0147.html).
@@ -7978,8 +8642,12 @@ type MessageOdometry struct {
     EstimatorType MAV_ESTIMATOR_TYPE `mavenum:"uint8" mavext:"true"`
 }
 
-func (*MessageOdometry) GetId() uint32 {
+func (m *MessageOdometry) GetId() uint32 {
     return 331
+}
+
+func (m *MessageOdometry) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Describe a trajectory using an array of up-to 5 waypoints in the local frame.
@@ -8014,8 +8682,12 @@ type MessageTrajectoryRepresentationWaypoints struct {
     Command [5]MAV_CMD `mavenum:"uint16"`
 }
 
-func (*MessageTrajectoryRepresentationWaypoints) GetId() uint32 {
+func (m *MessageTrajectoryRepresentationWaypoints) GetId() uint32 {
     return 332
+}
+
+func (m *MessageTrajectoryRepresentationWaypoints) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Describe a trajectory using an array of up-to 5 bezier points in the local frame.
@@ -8036,8 +8708,12 @@ type MessageTrajectoryRepresentationBezier struct {
     PosYaw [5]float32
 }
 
-func (*MessageTrajectoryRepresentationBezier) GetId() uint32 {
+func (m *MessageTrajectoryRepresentationBezier) GetId() uint32 {
     return 333
+}
+
+func (m *MessageTrajectoryRepresentationBezier) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Report current used cellular network status
@@ -8058,8 +8734,12 @@ type MessageCellularStatus struct {
     Cid uint32
 }
 
-func (*MessageCellularStatus) GetId() uint32 {
+func (m *MessageCellularStatus) GetId() uint32 {
     return 334
+}
+
+func (m *MessageCellularStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of the Iridium SBD link.
@@ -8082,8 +8762,12 @@ type MessageIsbdLinkStatus struct {
     RxSessionPending uint8
 }
 
-func (*MessageIsbdLinkStatus) GetId() uint32 {
+func (m *MessageIsbdLinkStatus) GetId() uint32 {
     return 335
+}
+
+func (m *MessageIsbdLinkStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The global position resulting from GPS and sensor fusion.
@@ -8126,8 +8810,12 @@ type MessageUtmGlobalPosition struct {
     Flags UTM_DATA_AVAIL_FLAGS `mavenum:"uint8"`
 }
 
-func (*MessageUtmGlobalPosition) GetId() uint32 {
+func (m *MessageUtmGlobalPosition) GetId() uint32 {
     return 340
+}
+
+func (m *MessageUtmGlobalPosition) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Large debug/prototyping array. The message uses the maximum available payload for data. The array_id and name fields are used to discriminate between messages in code and in user interfaces (respectively). Do not use in production code.
@@ -8142,8 +8830,12 @@ type MessageDebugFloatArray struct {
     Data [58]float32 `mavext:"true"`
 }
 
-func (*MessageDebugFloatArray) GetId() uint32 {
+func (m *MessageDebugFloatArray) GetId() uint32 {
     return 350
+}
+
+func (m *MessageDebugFloatArray) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Vehicle status report that is sent out while orbit execution is in progress (see MAV_CMD_DO_ORBIT).
@@ -8162,8 +8854,12 @@ type MessageOrbitExecutionStatus struct {
     Z float32
 }
 
-func (*MessageOrbitExecutionStatus) GetId() uint32 {
+func (m *MessageOrbitExecutionStatus) GetId() uint32 {
     return 360
+}
+
+func (m *MessageOrbitExecutionStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Smart Battery information (static/infrequent update). Use for updates from: smart battery to flight stack, flight stack to GCS. Use instead of BATTERY_STATUS for smart batteries.
@@ -8190,8 +8886,12 @@ type MessageSmartBatteryInfo struct {
     RestingMinimumVoltage uint16
 }
 
-func (*MessageSmartBatteryInfo) GetId() uint32 {
+func (m *MessageSmartBatteryInfo) GetId() uint32 {
     return 370
+}
+
+func (m *MessageSmartBatteryInfo) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Smart Battery information (dynamic). Use for updates from: smart battery to flight stack, flight stack to GCS. Use instead of BATTERY_STATUS for smart batteries.
@@ -8214,8 +8914,12 @@ type MessageSmartBatteryStatus struct {
     Voltages [16]uint16
 }
 
-func (*MessageSmartBatteryStatus) GetId() uint32 {
+func (m *MessageSmartBatteryStatus) GetId() uint32 {
     return 371
+}
+
+func (m *MessageSmartBatteryStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // The raw values of the actuator outputs (e.g. on Pixhawk, from MAIN, AUX ports). This message supersedes SERVO_OUTPUT_RAW.
@@ -8228,8 +8932,12 @@ type MessageActuatorOutputStatus struct {
     Actuator [32]float32
 }
 
-func (*MessageActuatorOutputStatus) GetId() uint32 {
+func (m *MessageActuatorOutputStatus) GetId() uint32 {
     return 375
+}
+
+func (m *MessageActuatorOutputStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Time/duration estimates for various events and actions given the current vehicle state and position.
@@ -8246,8 +8954,12 @@ type MessageTimeEstimateToTarget struct {
     CommandedAction int32
 }
 
-func (*MessageTimeEstimateToTarget) GetId() uint32 {
+func (m *MessageTimeEstimateToTarget) GetId() uint32 {
     return 380
+}
+
+func (m *MessageTimeEstimateToTarget) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message for transporting "arbitrary" variable-length data from one component to another (broadcast is not forbidden, but discouraged). The encoding of the data is usually extension specific, i.e. determined by the source, and is usually not documented as part of the MAVLink specification.
@@ -8264,8 +8976,12 @@ type MessageTunnel struct {
     Payload [128]uint8
 }
 
-func (*MessageTunnel) GetId() uint32 {
+func (m *MessageTunnel) GetId() uint32 {
     return 385
+}
+
+func (m *MessageTunnel) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Hardware status sent by an onboard computer.
@@ -8312,8 +9028,12 @@ type MessageOnboardComputerStatus struct {
     LinkRxMax [6]uint32
 }
 
-func (*MessageOnboardComputerStatus) GetId() uint32 {
+func (m *MessageOnboardComputerStatus) GetId() uint32 {
     return 390
+}
+
+func (m *MessageOnboardComputerStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Information about a component. For camera components instead use CAMERA_INFORMATION, and for autopilots use AUTOPILOT_VERSION. Components including GCSes should consider supporting requests of this message via MAV_CMD_REQUEST_MESSAGE.
@@ -8336,8 +9056,12 @@ type MessageComponentInformation struct {
     ComponentDefinitionUri string `mavlen:"140"`
 }
 
-func (*MessageComponentInformation) GetId() uint32 {
+func (m *MessageComponentInformation) GetId() uint32 {
     return 395
+}
+
+func (m *MessageComponentInformation) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Play vehicle tone/tune (buzzer). Supersedes message PLAY_TUNE.
@@ -8352,8 +9076,12 @@ type MessagePlayTuneV2 struct {
     Tune string `mavlen:"248"`
 }
 
-func (*MessagePlayTuneV2) GetId() uint32 {
+func (m *MessagePlayTuneV2) GetId() uint32 {
     return 400
+}
+
+func (m *MessagePlayTuneV2) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Tune formats supported by vehicle. This should be emitted as response to MAV_CMD_REQUEST_MESSAGE.
@@ -8366,8 +9094,12 @@ type MessageSupportedTunes struct {
     Format TUNE_FORMAT `mavenum:"uint32"`
 }
 
-func (*MessageSupportedTunes) GetId() uint32 {
+func (m *MessageSupportedTunes) GetId() uint32 {
     return 401
+}
+
+func (m *MessageSupportedTunes) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Cumulative distance traveled for each reported wheel.
@@ -8380,8 +9112,12 @@ type MessageWheelDistance struct {
     Distance [16]float64
 }
 
-func (*MessageWheelDistance) GetId() uint32 {
+func (m *MessageWheelDistance) GetId() uint32 {
     return 9000
+}
+
+func (m *MessageWheelDistance) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data for filling the OpenDroneID Basic ID message. This and the below messages are primarily meant for feeding data to/from an OpenDroneID implementation. E.g. https://github.com/opendroneid/opendroneid-core-c
@@ -8394,8 +9130,12 @@ type MessageOpenDroneIdBasicId struct {
     UasId [20]uint8
 }
 
-func (*MessageOpenDroneIdBasicId) GetId() uint32 {
+func (m *MessageOpenDroneIdBasicId) GetId() uint32 {
     return 12900
+}
+
+func (m *MessageOpenDroneIdBasicId) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data for filling the OpenDroneID Location message. The float data types are 32-bit IEEE 754. The Location message provides the location, altitude, direction and speed of the aircraft.
@@ -8434,8 +9174,12 @@ type MessageOpenDroneIdLocation struct {
     TimestampAccuracy MAV_ODID_TIME_ACC `mavenum:"uint8"`
 }
 
-func (*MessageOpenDroneIdLocation) GetId() uint32 {
+func (m *MessageOpenDroneIdLocation) GetId() uint32 {
     return 12901
+}
+
+func (m *MessageOpenDroneIdLocation) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data for filling the OpenDroneID Authentication message. The Authentication Message defines a field that can provide a means of authenticity for the identity of the UAS (Unmanned Aircraft System). The Authentication message can have two different formats. Five data pages are supported. For data page 0, the fields PageCount, Length and TimeStamp are present and AuthData is only 17 bytes. For data page 1 through 4, PageCount,Length and TimeStamp are not present and the size of AuthData is 23 bytes.
@@ -8454,8 +9198,12 @@ type MessageOpenDroneIdAuthentication struct {
     AuthenticationData [23]uint8
 }
 
-func (*MessageOpenDroneIdAuthentication) GetId() uint32 {
+func (m *MessageOpenDroneIdAuthentication) GetId() uint32 {
     return 12902
+}
+
+func (m *MessageOpenDroneIdAuthentication) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data for filling the OpenDroneID Self ID message. The Self ID Message is an opportunity for the operator to (optionally) declare their identity and purpose of the flight. This message can provide additional information that could reduce the threat profile of a UA (Unmanned Aircraft) flying in a particular area or manner.
@@ -8466,8 +9214,12 @@ type MessageOpenDroneIdSelfId struct {
     Description string `mavlen:"23"`
 }
 
-func (*MessageOpenDroneIdSelfId) GetId() uint32 {
+func (m *MessageOpenDroneIdSelfId) GetId() uint32 {
     return 12903
+}
+
+func (m *MessageOpenDroneIdSelfId) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data for filling the OpenDroneID System message. The System Message contains general system information including the operator location and possible aircraft group information.
@@ -8488,8 +9240,12 @@ type MessageOpenDroneIdSystem struct {
     AreaFloor float32
 }
 
-func (*MessageOpenDroneIdSystem) GetId() uint32 {
+func (m *MessageOpenDroneIdSystem) GetId() uint32 {
     return 12904
+}
+
+func (m *MessageOpenDroneIdSystem) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data for filling the OpenDroneID Operator ID message, which contains the CAA (Civil Aviation Authority) issued operator ID.
@@ -8500,8 +9256,12 @@ type MessageOpenDroneIdOperatorId struct {
     OperatorId string `mavlen:"20"`
 }
 
-func (*MessageOpenDroneIdOperatorId) GetId() uint32 {
+func (m *MessageOpenDroneIdOperatorId) GetId() uint32 {
     return 12905
+}
+
+func (m *MessageOpenDroneIdOperatorId) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // An OpenDroneID message pack is a container for multiple encoded OpenDroneID messages (i.e. not in the format given for the above messages descriptions but after encoding into the compressed OpenDroneID byte format). Used e.g. when transmitting on Bluetooth 5.0 Long Range/Extended Advertising or on WiFi Neighbor Aware Networking.
@@ -8514,8 +9274,12 @@ type MessageOpenDroneIdMessagePack struct {
     Messages [250]uint8
 }
 
-func (*MessageOpenDroneIdMessagePack) GetId() uint32 {
+func (m *MessageOpenDroneIdMessagePack) GetId() uint32 {
     return 12915
+}
+
+func (m *MessageOpenDroneIdMessagePack) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 
@@ -8542,8 +9306,12 @@ type MessageUavionixAdsbOutCfg struct {
     Rfselect UAVIONIX_ADSB_OUT_RF_SELECT `mavenum:"uint8" mavname:"rfSelect"`
 }
 
-func (*MessageUavionixAdsbOutCfg) GetId() uint32 {
+func (m *MessageUavionixAdsbOutCfg) GetId() uint32 {
     return 10001
+}
+
+func (m *MessageUavionixAdsbOutCfg) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Dynamic data used to generate ADS-B out transponder data (send at 5Hz)
@@ -8582,8 +9350,12 @@ type MessageUavionixAdsbOutDynamic struct {
     Squawk uint16
 }
 
-func (*MessageUavionixAdsbOutDynamic) GetId() uint32 {
+func (m *MessageUavionixAdsbOutDynamic) GetId() uint32 {
     return 10002
+}
+
+func (m *MessageUavionixAdsbOutDynamic) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Transceiver heartbeat with health report (updated every 10s)
@@ -8592,8 +9364,12 @@ type MessageUavionixAdsbTransceiverHealthReport struct {
     Rfhealth UAVIONIX_ADSB_RF_HEALTH `mavenum:"uint8" mavname:"rfHealth"`
 }
 
-func (*MessageUavionixAdsbTransceiverHealthReport) GetId() uint32 {
+func (m *MessageUavionixAdsbTransceiverHealthReport) GetId() uint32 {
     return 10003
+}
+
+func (m *MessageUavionixAdsbTransceiverHealthReport) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 
@@ -8606,8 +9382,12 @@ type MessageIcarousHeartbeat struct {
     Status ICAROUS_FMS_STATE `mavenum:"uint8"`
 }
 
-func (*MessageIcarousHeartbeat) GetId() uint32 {
+func (m *MessageIcarousHeartbeat) GetId() uint32 {
     return 42000
+}
+
+func (m *MessageIcarousHeartbeat) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Kinematic multi bands (track) output from Daidalus
@@ -8646,8 +9426,12 @@ type MessageIcarousKinematicBands struct {
     Max5 float32
 }
 
-func (*MessageIcarousKinematicBands) GetId() uint32 {
+func (m *MessageIcarousKinematicBands) GetId() uint32 {
     return 42001
+}
+
+func (m *MessageIcarousKinematicBands) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 
@@ -8682,8 +9466,12 @@ type MessageSensorOffsets struct {
     AccelCalZ float32
 }
 
-func (*MessageSensorOffsets) GetId() uint32 {
+func (m *MessageSensorOffsets) GetId() uint32 {
     return 150
+}
+
+func (m *MessageSensorOffsets) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Set the magnetometer offsets
@@ -8700,8 +9488,12 @@ type MessageSetMagOffsets struct {
     MagOfsZ int16
 }
 
-func (*MessageSetMagOffsets) GetId() uint32 {
+func (m *MessageSetMagOffsets) GetId() uint32 {
     return 151
+}
+
+func (m *MessageSetMagOffsets) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // State of APM memory.
@@ -8714,8 +9506,12 @@ type MessageMeminfo struct {
     Freemem32 uint32 `mavext:"true"`
 }
 
-func (*MessageMeminfo) GetId() uint32 {
+func (m *MessageMeminfo) GetId() uint32 {
     return 152
+}
+
+func (m *MessageMeminfo) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Raw ADC output.
@@ -8734,8 +9530,12 @@ type MessageApAdc struct {
     Adc6 uint16
 }
 
-func (*MessageApAdc) GetId() uint32 {
+func (m *MessageApAdc) GetId() uint32 {
     return 153
+}
+
+func (m *MessageApAdc) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Configure on-board Camera Control System.
@@ -8764,8 +9564,12 @@ type MessageDigicamConfigure struct {
     ExtraValue float32
 }
 
-func (*MessageDigicamConfigure) GetId() uint32 {
+func (m *MessageDigicamConfigure) GetId() uint32 {
     return 154
+}
+
+func (m *MessageDigicamConfigure) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Control on-board Camera Control System to take shots.
@@ -8792,8 +9596,12 @@ type MessageDigicamControl struct {
     ExtraValue float32
 }
 
-func (*MessageDigicamControl) GetId() uint32 {
+func (m *MessageDigicamControl) GetId() uint32 {
     return 155
+}
+
+func (m *MessageDigicamControl) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message to configure a camera mount, directional antenna, etc.
@@ -8812,8 +9620,12 @@ type MessageMountConfigure struct {
     StabYaw uint8
 }
 
-func (*MessageMountConfigure) GetId() uint32 {
+func (m *MessageMountConfigure) GetId() uint32 {
     return 156
+}
+
+func (m *MessageMountConfigure) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message to control a camera mount, directional antenna, etc.
@@ -8832,8 +9644,12 @@ type MessageMountControl struct {
     SavePosition uint8
 }
 
-func (*MessageMountControl) GetId() uint32 {
+func (m *MessageMountControl) GetId() uint32 {
     return 157
+}
+
+func (m *MessageMountControl) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Message with some status from APM to GCS about camera or antenna mount.
@@ -8850,8 +9666,12 @@ type MessageMountStatus struct {
     PointingC int32
 }
 
-func (*MessageMountStatus) GetId() uint32 {
+func (m *MessageMountStatus) GetId() uint32 {
     return 158
+}
+
+func (m *MessageMountStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // A fence point. Used to set a point when from GCS -> MAV. Also used to return a point from MAV -> GCS.
@@ -8870,8 +9690,12 @@ type MessageFencePoint struct {
     Lng float32
 }
 
-func (*MessageFencePoint) GetId() uint32 {
+func (m *MessageFencePoint) GetId() uint32 {
     return 160
+}
+
+func (m *MessageFencePoint) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request a current fence point from MAV.
@@ -8884,8 +9708,12 @@ type MessageFenceFetchPoint struct {
     Idx uint8
 }
 
-func (*MessageFenceFetchPoint) GetId() uint32 {
+func (m *MessageFenceFetchPoint) GetId() uint32 {
     return 161
+}
+
+func (m *MessageFenceFetchPoint) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of DCM attitude estimator.
@@ -8906,8 +9734,12 @@ type MessageAhrs struct {
     ErrorYaw float32
 }
 
-func (*MessageAhrs) GetId() uint32 {
+func (m *MessageAhrs) GetId() uint32 {
     return 163
+}
+
+func (m *MessageAhrs) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of simulation environment, if used.
@@ -8936,8 +9768,12 @@ type MessageSimstate struct {
     Lng int32
 }
 
-func (*MessageSimstate) GetId() uint32 {
+func (m *MessageSimstate) GetId() uint32 {
     return 164
+}
+
+func (m *MessageSimstate) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of key hardware.
@@ -8948,8 +9784,12 @@ type MessageHwstatus struct {
     I2cerr uint8 `mavname:"I2Cerr"`
 }
 
-func (*MessageHwstatus) GetId() uint32 {
+func (m *MessageHwstatus) GetId() uint32 {
     return 165
+}
+
+func (m *MessageHwstatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status generated by radio.
@@ -8970,8 +9810,12 @@ type MessageRadio struct {
     Fixed uint16
 }
 
-func (*MessageRadio) GetId() uint32 {
+func (m *MessageRadio) GetId() uint32 {
     return 166
+}
+
+func (m *MessageRadio) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of AP_Limits. Sent in extended status stream when AP_Limits is enabled.
@@ -8996,8 +9840,12 @@ type MessageLimitsStatus struct {
     ModsTriggered LIMIT_MODULE `mavenum:"uint8"`
 }
 
-func (*MessageLimitsStatus) GetId() uint32 {
+func (m *MessageLimitsStatus) GetId() uint32 {
     return 167
+}
+
+func (m *MessageLimitsStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Wind estimation.
@@ -9010,8 +9858,12 @@ type MessageWind struct {
     SpeedZ float32
 }
 
-func (*MessageWind) GetId() uint32 {
+func (m *MessageWind) GetId() uint32 {
     return 168
+}
+
+func (m *MessageWind) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data packet, size 16.
@@ -9024,8 +9876,12 @@ type MessageData16 struct {
     Data [16]uint8
 }
 
-func (*MessageData16) GetId() uint32 {
+func (m *MessageData16) GetId() uint32 {
     return 169
+}
+
+func (m *MessageData16) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data packet, size 32.
@@ -9038,8 +9894,12 @@ type MessageData32 struct {
     Data [32]uint8
 }
 
-func (*MessageData32) GetId() uint32 {
+func (m *MessageData32) GetId() uint32 {
     return 170
+}
+
+func (m *MessageData32) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data packet, size 64.
@@ -9052,8 +9912,12 @@ type MessageData64 struct {
     Data [64]uint8
 }
 
-func (*MessageData64) GetId() uint32 {
+func (m *MessageData64) GetId() uint32 {
     return 171
+}
+
+func (m *MessageData64) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Data packet, size 96.
@@ -9066,8 +9930,12 @@ type MessageData96 struct {
     Data [96]uint8
 }
 
-func (*MessageData96) GetId() uint32 {
+func (m *MessageData96) GetId() uint32 {
     return 172
+}
+
+func (m *MessageData96) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Rangefinder reporting.
@@ -9078,8 +9946,12 @@ type MessageRangefinder struct {
     Voltage float32
 }
 
-func (*MessageRangefinder) GetId() uint32 {
+func (m *MessageRangefinder) GetId() uint32 {
     return 173
+}
+
+func (m *MessageRangefinder) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Airspeed auto-calibration.
@@ -9110,8 +9982,12 @@ type MessageAirspeedAutocal struct {
     Pcz float32 `mavname:"Pcz"`
 }
 
-func (*MessageAirspeedAutocal) GetId() uint32 {
+func (m *MessageAirspeedAutocal) GetId() uint32 {
     return 174
+}
+
+func (m *MessageAirspeedAutocal) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // A rally point. Used to set a point when from GCS -> MAV. Also used to return a point from MAV -> GCS.
@@ -9138,8 +10014,12 @@ type MessageRallyPoint struct {
     Flags RALLY_FLAGS `mavenum:"uint8"`
 }
 
-func (*MessageRallyPoint) GetId() uint32 {
+func (m *MessageRallyPoint) GetId() uint32 {
     return 175
+}
+
+func (m *MessageRallyPoint) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request a current rally point from MAV. MAV should respond with a RALLY_POINT message. MAV should not respond if the request is invalid.
@@ -9152,8 +10032,12 @@ type MessageRallyFetchPoint struct {
     Idx uint8
 }
 
-func (*MessageRallyFetchPoint) GetId() uint32 {
+func (m *MessageRallyFetchPoint) GetId() uint32 {
     return 176
+}
+
+func (m *MessageRallyFetchPoint) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of compassmot calibration.
@@ -9172,8 +10056,12 @@ type MessageCompassmotStatus struct {
     Compensationz float32 `mavname:"CompensationZ"`
 }
 
-func (*MessageCompassmotStatus) GetId() uint32 {
+func (m *MessageCompassmotStatus) GetId() uint32 {
     return 177
+}
+
+func (m *MessageCompassmotStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of secondary AHRS filter if available.
@@ -9192,8 +10080,12 @@ type MessageAhrs2 struct {
     Lng int32
 }
 
-func (*MessageAhrs2) GetId() uint32 {
+func (m *MessageAhrs2) GetId() uint32 {
     return 178
+}
+
+func (m *MessageAhrs2) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Camera Event.
@@ -9218,8 +10110,12 @@ type MessageCameraStatus struct {
     P4 float32
 }
 
-func (*MessageCameraStatus) GetId() uint32 {
+func (m *MessageCameraStatus) GetId() uint32 {
     return 179
+}
+
+func (m *MessageCameraStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Camera Capture Feedback.
@@ -9254,8 +10150,12 @@ type MessageCameraFeedback struct {
     CompletedCaptures uint16 `mavext:"true"`
 }
 
-func (*MessageCameraFeedback) GetId() uint32 {
+func (m *MessageCameraFeedback) GetId() uint32 {
     return 180
+}
+
+func (m *MessageCameraFeedback) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // 2nd Battery status
@@ -9266,8 +10166,12 @@ type MessageBattery2 struct {
     CurrentBattery int16
 }
 
-func (*MessageBattery2) GetId() uint32 {
+func (m *MessageBattery2) GetId() uint32 {
     return 181
+}
+
+func (m *MessageBattery2) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Status of third AHRS filter if available. This is for ANU research group (Ali and Sean).
@@ -9294,8 +10198,12 @@ type MessageAhrs3 struct {
     V4 float32
 }
 
-func (*MessageAhrs3) GetId() uint32 {
+func (m *MessageAhrs3) GetId() uint32 {
     return 182
+}
+
+func (m *MessageAhrs3) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request the autopilot version from the system/component.
@@ -9306,8 +10214,12 @@ type MessageAutopilotVersionRequest struct {
     TargetComponent uint8
 }
 
-func (*MessageAutopilotVersionRequest) GetId() uint32 {
+func (m *MessageAutopilotVersionRequest) GetId() uint32 {
     return 183
+}
+
+func (m *MessageAutopilotVersionRequest) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Send a block of log data to remote location.
@@ -9322,8 +10234,12 @@ type MessageRemoteLogDataBlock struct {
     Data [200]uint8
 }
 
-func (*MessageRemoteLogDataBlock) GetId() uint32 {
+func (m *MessageRemoteLogDataBlock) GetId() uint32 {
     return 184
+}
+
+func (m *MessageRemoteLogDataBlock) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Send Status of each log block that autopilot board might have sent.
@@ -9338,8 +10254,12 @@ type MessageRemoteLogBlockStatus struct {
     Status MAV_REMOTE_LOG_DATA_BLOCK_STATUSES `mavenum:"uint8"`
 }
 
-func (*MessageRemoteLogBlockStatus) GetId() uint32 {
+func (m *MessageRemoteLogBlockStatus) GetId() uint32 {
     return 185
+}
+
+func (m *MessageRemoteLogBlockStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Control vehicle LEDs.
@@ -9358,8 +10278,12 @@ type MessageLedControl struct {
     CustomBytes [24]uint8
 }
 
-func (*MessageLedControl) GetId() uint32 {
+func (m *MessageLedControl) GetId() uint32 {
     return 186
+}
+
+func (m *MessageLedControl) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Reports progress of compass calibration.
@@ -9384,8 +10308,12 @@ type MessageMagCalProgress struct {
     DirectionZ float32
 }
 
-func (*MessageMagCalProgress) GetId() uint32 {
+func (m *MessageMagCalProgress) GetId() uint32 {
     return 191
+}
+
+func (m *MessageMagCalProgress) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Reports results of completed compass calibration. Sent until MAG_CAL_ACK received.
@@ -9428,8 +10356,12 @@ type MessageMagCalReport struct {
     ScaleFactor float32 `mavext:"true"`
 }
 
-func (*MessageMagCalReport) GetId() uint32 {
+func (m *MessageMagCalReport) GetId() uint32 {
     return 192
+}
+
+func (m *MessageMagCalReport) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // EKF Status message including flags and variances.
@@ -9450,8 +10382,12 @@ type MessageEkfStatusReport struct {
     AirspeedVariance float32 `mavext:"true"`
 }
 
-func (*MessageEkfStatusReport) GetId() uint32 {
+func (m *MessageEkfStatusReport) GetId() uint32 {
     return 193
+}
+
+func (m *MessageEkfStatusReport) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // PID tuning information.
@@ -9472,8 +10408,12 @@ type MessagePidTuning struct {
     D float32 `mavname:"D"`
 }
 
-func (*MessagePidTuning) GetId() uint32 {
+func (m *MessagePidTuning) GetId() uint32 {
     return 194
+}
+
+func (m *MessagePidTuning) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Deepstall path planning.
@@ -9500,8 +10440,12 @@ type MessageDeepstall struct {
     Stage DEEPSTALL_STAGE `mavenum:"uint8"`
 }
 
-func (*MessageDeepstall) GetId() uint32 {
+func (m *MessageDeepstall) GetId() uint32 {
     return 195
+}
+
+func (m *MessageDeepstall) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // 3 axis gimbal measurements.
@@ -9532,8 +10476,12 @@ type MessageGimbalReport struct {
     JointAz float32
 }
 
-func (*MessageGimbalReport) GetId() uint32 {
+func (m *MessageGimbalReport) GetId() uint32 {
     return 200
+}
+
+func (m *MessageGimbalReport) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Control message for rate gimbal.
@@ -9550,8 +10498,12 @@ type MessageGimbalControl struct {
     DemandedRateZ float32
 }
 
-func (*MessageGimbalControl) GetId() uint32 {
+func (m *MessageGimbalControl) GetId() uint32 {
     return 201
+}
+
+func (m *MessageGimbalControl) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // 100 Hz gimbal torque command telemetry.
@@ -9568,8 +10520,12 @@ type MessageGimbalTorqueCmdReport struct {
     AzTorqueCmd int16
 }
 
-func (*MessageGimbalTorqueCmdReport) GetId() uint32 {
+func (m *MessageGimbalTorqueCmdReport) GetId() uint32 {
     return 214
+}
+
+func (m *MessageGimbalTorqueCmdReport) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Heartbeat from a HeroBus attached GoPro.
@@ -9582,8 +10538,12 @@ type MessageGoproHeartbeat struct {
     Flags GOPRO_HEARTBEAT_FLAGS `mavenum:"uint8"`
 }
 
-func (*MessageGoproHeartbeat) GetId() uint32 {
+func (m *MessageGoproHeartbeat) GetId() uint32 {
     return 215
+}
+
+func (m *MessageGoproHeartbeat) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request a GOPRO_COMMAND response from the GoPro.
@@ -9596,8 +10556,12 @@ type MessageGoproGetRequest struct {
     CmdId GOPRO_COMMAND `mavenum:"uint8"`
 }
 
-func (*MessageGoproGetRequest) GetId() uint32 {
+func (m *MessageGoproGetRequest) GetId() uint32 {
     return 216
+}
+
+func (m *MessageGoproGetRequest) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Response from a GOPRO_COMMAND get request.
@@ -9610,8 +10574,12 @@ type MessageGoproGetResponse struct {
     Value [4]uint8
 }
 
-func (*MessageGoproGetResponse) GetId() uint32 {
+func (m *MessageGoproGetResponse) GetId() uint32 {
     return 217
+}
+
+func (m *MessageGoproGetResponse) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Request to set a GOPRO_COMMAND with a desired.
@@ -9626,8 +10594,12 @@ type MessageGoproSetRequest struct {
     Value [4]uint8
 }
 
-func (*MessageGoproSetRequest) GetId() uint32 {
+func (m *MessageGoproSetRequest) GetId() uint32 {
     return 218
+}
+
+func (m *MessageGoproSetRequest) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Response from a GOPRO_COMMAND set request.
@@ -9638,8 +10610,12 @@ type MessageGoproSetResponse struct {
     Status GOPRO_REQUEST_STATUS `mavenum:"uint8"`
 }
 
-func (*MessageGoproSetResponse) GetId() uint32 {
+func (m *MessageGoproSetResponse) GetId() uint32 {
     return 219
+}
+
+func (m *MessageGoproSetResponse) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // EFI status output
@@ -9680,8 +10656,12 @@ type MessageEfiStatus struct {
     PtCompensation float32
 }
 
-func (*MessageEfiStatus) GetId() uint32 {
+func (m *MessageEfiStatus) GetId() uint32 {
     return 225
+}
+
+func (m *MessageEfiStatus) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // RPM sensor output.
@@ -9692,8 +10672,12 @@ type MessageRpm struct {
     Rpm2 float32
 }
 
-func (*MessageRpm) GetId() uint32 {
+func (m *MessageRpm) GetId() uint32 {
     return 226
+}
+
+func (m *MessageRpm) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Read registers for a device.
@@ -9718,8 +10702,12 @@ type MessageDeviceOpRead struct {
     Count uint8
 }
 
-func (*MessageDeviceOpRead) GetId() uint32 {
+func (m *MessageDeviceOpRead) GetId() uint32 {
     return 11000
+}
+
+func (m *MessageDeviceOpRead) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Read registers reply.
@@ -9736,8 +10724,12 @@ type MessageDeviceOpReadReply struct {
     Data [128]uint8
 }
 
-func (*MessageDeviceOpReadReply) GetId() uint32 {
+func (m *MessageDeviceOpReadReply) GetId() uint32 {
     return 11001
+}
+
+func (m *MessageDeviceOpReadReply) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Write registers for a device.
@@ -9764,8 +10756,12 @@ type MessageDeviceOpWrite struct {
     Data [128]uint8
 }
 
-func (*MessageDeviceOpWrite) GetId() uint32 {
+func (m *MessageDeviceOpWrite) GetId() uint32 {
     return 11002
+}
+
+func (m *MessageDeviceOpWrite) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Write registers reply.
@@ -9776,8 +10772,12 @@ type MessageDeviceOpWriteReply struct {
     Result uint8
 }
 
-func (*MessageDeviceOpWriteReply) GetId() uint32 {
+func (m *MessageDeviceOpWriteReply) GetId() uint32 {
     return 11003
+}
+
+func (m *MessageDeviceOpWriteReply) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Adaptive Controller tuning information.
@@ -9810,8 +10810,12 @@ type MessageAdapTuning struct {
     U float32
 }
 
-func (*MessageAdapTuning) GetId() uint32 {
+func (m *MessageAdapTuning) GetId() uint32 {
     return 11010
+}
+
+func (m *MessageAdapTuning) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Camera vision based attitude and position deltas.
@@ -9828,8 +10832,12 @@ type MessageVisionPositionDelta struct {
     Confidence float32
 }
 
-func (*MessageVisionPositionDelta) GetId() uint32 {
+func (m *MessageVisionPositionDelta) GetId() uint32 {
     return 11011
+}
+
+func (m *MessageVisionPositionDelta) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Angle of Attack and Side Slip Angle.
@@ -9842,8 +10850,12 @@ type MessageAoaSsa struct {
     Ssa float32 `mavname:"SSA"`
 }
 
-func (*MessageAoaSsa) GetId() uint32 {
+func (m *MessageAoaSsa) GetId() uint32 {
     return 11020
+}
+
+func (m *MessageAoaSsa) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // ESC Telemetry Data for ESCs 1 to 4, matching data sent by BLHeli ESCs.
@@ -9862,8 +10874,12 @@ type MessageEscTelemetry_1To_4 struct {
     Count [4]uint16
 }
 
-func (*MessageEscTelemetry_1To_4) GetId() uint32 {
+func (m *MessageEscTelemetry_1To_4) GetId() uint32 {
     return 11030
+}
+
+func (m *MessageEscTelemetry_1To_4) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // ESC Telemetry Data for ESCs 5 to 8, matching data sent by BLHeli ESCs.
@@ -9882,8 +10898,12 @@ type MessageEscTelemetry_5To_8 struct {
     Count [4]uint16
 }
 
-func (*MessageEscTelemetry_5To_8) GetId() uint32 {
+func (m *MessageEscTelemetry_5To_8) GetId() uint32 {
     return 11031
+}
+
+func (m *MessageEscTelemetry_5To_8) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // ESC Telemetry Data for ESCs 9 to 12, matching data sent by BLHeli ESCs.
@@ -9902,8 +10922,12 @@ type MessageEscTelemetry_9To_12 struct {
     Count [4]uint16
 }
 
-func (*MessageEscTelemetry_9To_12) GetId() uint32 {
+func (m *MessageEscTelemetry_9To_12) GetId() uint32 {
     return 11032
+}
+
+func (m *MessageEscTelemetry_9To_12) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 

@@ -83,7 +83,7 @@ type NodeConf struct {
 
 	// (optional) the dialect which contains the messages that will be encoded and decoded.
 	// If not provided, messages are decoded in the MessageRaw struct.
-	Dialect *Dialect
+	D Dialect
 
 	// (optional) the secret key used to validate incoming frames.
 	// Non signed frames are discarded, as well as frames with a version < 2.0.

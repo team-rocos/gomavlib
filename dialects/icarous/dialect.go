@@ -9,7 +9,7 @@ import (
 var Dialect = dialect
 
 // dialect is not exposed directly such that it is not displayed in godoc.
-var dialect = gomavlib.MustDialect(0, []gomavlib.Message{
+var dialect = gomavlib.MustDialectCT(0, []gomavlib.Message{
     // icarous.xml
     &MessageIcarousHeartbeat{},
     &MessageIcarousKinematicBands{},
@@ -57,8 +57,12 @@ type MessageIcarousHeartbeat struct {
     Status ICAROUS_FMS_STATE `mavenum:"uint8"`
 }
 
-func (*MessageIcarousHeartbeat) GetId() uint32 {
+func (m *MessageIcarousHeartbeat) GetId() uint32 {
     return 42000
+}
+
+func (m *MessageIcarousHeartbeat) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 // Kinematic multi bands (track) output from Daidalus
@@ -97,8 +101,12 @@ type MessageIcarousKinematicBands struct {
     Max5 float32
 }
 
-func (*MessageIcarousKinematicBands) GetId() uint32 {
+func (m *MessageIcarousKinematicBands) GetId() uint32 {
     return 42001
+}
+
+func (m *MessageIcarousKinematicBands) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 
 

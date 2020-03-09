@@ -1,7 +1,6 @@
 package gomavlib
 
 import (
-	"reflect"
 	"time"
 )
 
@@ -17,13 +16,13 @@ func newNodeHeartbeat(n *Node) *nodeHeartbeat {
 	}
 
 	// dialect must be enabled
-	if n.conf.Dialect == nil {
+	if n.conf.D == nil {
 		return nil
 	}
 
 	// heartbeat message must exist in dialect and correspond to standard
-	mp, ok := n.conf.Dialect.messages[0]
-	if ok == false || mp.crcExtra != 50 {
+	mp, ok := (n.conf.D).getMsgById(0)
+	if ok == false || (*mp).getCRCExtra() != 50 {
 		return nil
 	}
 
@@ -42,8 +41,8 @@ func (h *nodeHeartbeat) close() {
 func (h *nodeHeartbeat) run() {
 	// take version from dialect if possible
 	mavlinkVersion := uint64(3)
-	if h.n.conf.Dialect != nil {
-		mavlinkVersion = uint64(h.n.conf.Dialect.version)
+	if h.n.conf.D != nil {
+		mavlinkVersion = uint64(h.n.conf.D.getVersion())
 	}
 
 	ticker := time.NewTicker(h.n.conf.HeartbeatPeriod)
@@ -52,14 +51,15 @@ func (h *nodeHeartbeat) run() {
 	for {
 		select {
 		case <-ticker.C:
-			msg := reflect.New(h.n.conf.Dialect.messages[0].elemType)
-			msg.Elem().FieldByName("Type").SetInt(int64(h.n.conf.HeartbeatSystemType))
-			msg.Elem().FieldByName("Autopilot").SetInt(int64(h.n.conf.HeartbeatAutopilotType))
-			msg.Elem().FieldByName("BaseMode").SetInt(0)
-			msg.Elem().FieldByName("CustomMode").SetUint(0)
-			msg.Elem().FieldByName("SystemStatus").SetInt(4) // MAV_STATE_ACTIVE
-			msg.Elem().FieldByName("MavlinkVersion").SetUint(mavlinkVersion)
-			h.n.WriteMessageAll(msg.Interface().(Message))
+			dm, _ := h.n.conf.D.getMsgById(0)
+			msg := (*dm).newMsg()
+			(*msg).SetField("Type", int8(h.n.conf.HeartbeatSystemType))
+			(*msg).SetField("Autopilot", int8(h.n.conf.HeartbeatAutopilotType))
+			(*msg).SetField("BaseMode", int8(0))
+			(*msg).SetField("CustomMode", uint32(0))
+			(*msg).SetField("SystemStatus", int8(4)) // MAV_STATE_ACTIVE
+			(*msg).SetField("MavlinkVersion", uint8(mavlinkVersion))
+			h.n.WriteMessageAll(*msg)
 
 		case <-h.terminate:
 			return

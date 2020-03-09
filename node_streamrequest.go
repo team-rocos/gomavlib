@@ -30,19 +30,19 @@ func newNodeStreamRequest(n *Node) *nodeStreamRequest {
 	}
 
 	// dialect must be enabled
-	if n.conf.Dialect == nil {
+	if n.conf.D == nil {
 		return nil
 	}
 
 	// heartbeat message must exist in dialect and correspond to standard
-	mp, ok := n.conf.Dialect.messages[0]
-	if ok == false || mp.crcExtra != 50 {
+	mp, ok := n.conf.D.getMsgById(0)
+	if ok == false || (*mp).getCRCExtra() != 50 {
 		return nil
 	}
 
 	// request data stream message must exist in dialect and correspond to standard
-	mp, ok = n.conf.Dialect.messages[66]
-	if ok == false || mp.crcExtra != 148 {
+	mp, ok = n.conf.D.getMsgById(66)
+	if ok == false || (*mp).getCRCExtra() != 148 {
 		return nil
 	}
 
@@ -130,13 +130,14 @@ func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
 		}
 
 		for _, stream := range streams {
-			msg := reflect.New(sr.n.conf.Dialect.messages[66].elemType)
-			msg.Elem().FieldByName("TargetSystem").SetUint(uint64(evt.SystemId()))
-			msg.Elem().FieldByName("TargetComponent").SetUint(uint64(evt.ComponentId()))
-			msg.Elem().FieldByName("ReqStreamId").SetUint(uint64(stream))
-			msg.Elem().FieldByName("ReqMessageRate").SetUint(uint64(sr.n.conf.StreamRequestFrequency))
-			msg.Elem().FieldByName("StartStop").SetUint(uint64(1))
-			sr.n.WriteMessageTo(evt.Channel, msg.Interface().(Message))
+			dm, _ := sr.n.conf.D.getMsgById(66)
+			msg := (*dm).newMsg()
+			(*msg).SetField("TargetSystem", uint8(evt.SystemId()))
+			(*msg).SetField("TargetComponent", uint8(evt.ComponentId()))
+			(*msg).SetField("ReqStreamId", uint8(stream))
+			(*msg).SetField("ReqMessageRate", uint16(sr.n.conf.StreamRequestFrequency))
+			(*msg).SetField("StartStop", uint8(1))
+			sr.n.WriteMessageTo(evt.Channel, *msg)
 		}
 
 		sr.n.eventsOut <- &EventStreamRequested{
