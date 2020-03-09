@@ -1,23 +1,26 @@
-package main
+package libgen
 
 import (
 	"encoding/xml"
 	"strconv"
 )
 
-type definitionEnumValue struct {
+// DefinitionEnumValue : Exported type
+type DefinitionEnumValue struct {
 	Value       string `xml:"value,attr"`
 	Name        string `xml:"name,attr"`
 	Description string `xml:"description"`
 }
 
-type definitionEnum struct {
+// DefinitionEnum : Exported type
+type DefinitionEnum struct {
 	Name        string                 `xml:"name,attr"`
 	Description string                 `xml:"description"`
-	Values      []*definitionEnumValue `xml:"entry"`
+	Values      []*DefinitionEnumValue `xml:"entry"`
 }
 
-type dialectField struct {
+// DialectField : Exported type
+type DialectField struct {
 	Extension   bool   `xml:"-"`
 	Type        string `xml:"type,attr"`
 	Name        string `xml:"name,attr"`
@@ -25,16 +28,17 @@ type dialectField struct {
 	Description string `xml:",innerxml"`
 }
 
-type definitionMessage struct {
+// DefinitionMessage : Exported type
+type DefinitionMessage struct {
 	Id          int
 	Name        string
 	Description string
-	Fields      []*dialectField
+	Fields      []*DialectField
 }
 
 // UnmarshalXML implements xml.Unmarshaler
 // we must unmarshal manually due to extension fields
-func (m *definitionMessage) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (m *DefinitionMessage) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	// unmarshal attributes
 	for _, a := range start.Attr {
 		switch a.Name.Local {
@@ -65,7 +69,7 @@ func (m *definitionMessage) UnmarshalXML(d *xml.Decoder, start xml.StartElement)
 				inExtensions = true
 
 			case "field":
-				field := &dialectField{Extension: inExtensions}
+				field := &DialectField{Extension: inExtensions}
 				err := d.DecodeElement(&field, &se)
 				if err != nil {
 					return err
@@ -77,16 +81,18 @@ func (m *definitionMessage) UnmarshalXML(d *xml.Decoder, start xml.StartElement)
 	return nil
 }
 
-type definition struct {
+// Definition :
+type Definition struct {
 	Version  string               `xml:"version"`
 	Dialect  int                  `xml:"dialect"`
 	Includes []string             `xml:"include"`
-	Enums    []*definitionEnum    `xml:"enums>enum"`
-	Messages []*definitionMessage `xml:"messages>message"`
+	Enums    []*DefinitionEnum    `xml:"enums>enum"`
+	Messages []*DefinitionMessage `xml:"messages>message"`
 }
 
-func definitionDecode(content []byte) (*definition, error) {
-	def := &definition{}
+// DefinitionDecode :
+func DefinitionDecode(content []byte) (*Definition, error) {
+	def := &Definition{}
 	err := xml.Unmarshal(content, def)
 	return def, err
 }
