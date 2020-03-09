@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -111,10 +110,11 @@ type OutDefinition struct {
 func do(preamble string, mainDefAddr string, commonAddr string) ([]*OutDefinition, string, error) {
 	version := ""
 	defsProcessed := make(map[string]struct{})
-	isRemote := func() bool {
-		_, err := url.ParseRequestURI(mainDefAddr)
-		return err == nil
-	}()
+	//isRemote := func() bool {
+	//	_, err := url.ParseRequestURI(mainDefAddr)
+	//	return err == nil
+	//}()
+	isRemote := false
 
 	// parse all definitions recursively
 	outDefs, err := definitionProcess(&version, defsProcessed, isRemote, mainDefAddr, commonAddr)

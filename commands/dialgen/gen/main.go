@@ -29,7 +29,7 @@ import (
 var Dialect = dialect
 
 // dialect is not exposed directly such that it is not displayed in godoc.
-var dialect = gomavlib.MustDialect({{.Version}}, []gomavlib.Message{
+var dialect = gomavlib.MustDialectCT({{.Version}}, []gomavlib.Message{
 {{- range .Defs }}
     // {{ .Name }}
 {{- range .Messages }}
@@ -63,8 +63,12 @@ type Message{{ .Name }} struct {
 {{- end }}
 }
 
-func (*Message{{ .Name }}) GetId() uint32 {
+func (m *Message{{ .Name }}) GetId() uint32 {
     return {{ .Id }}
+}
+
+func (m *Message{{ .Name }}) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 {{ end }}
 {{ end }}
