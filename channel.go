@@ -23,7 +23,7 @@ func newChannel(n *Node, e Endpoint, label string, rwc io.ReadWriteCloser) (*Cha
 	parser, err := NewParser(ParserConf{
 		Reader:             rwc,
 		Writer:             rwc,
-		Dialect:            n.conf.Dialect,
+		D:                  n.conf.D,
 		InKey:              n.conf.InKey,
 		OutSystemId:        n.conf.OutSystemId,
 		OutVersion:         n.conf.OutVersion,

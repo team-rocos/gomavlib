@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -103,7 +102,7 @@ import (
 var Dialect = dialect
 
 // dialect is not exposed directly such that it is not displayed in godoc.
-var dialect = gomavlib.MustDialect({{.Version}}, []gomavlib.Message{
+var dialect = gomavlib.MustDialectCT({{.Version}}, []gomavlib.Message{
 {{- range .Defs }}
     // {{ .Name }}
 {{- range .Messages }}
@@ -137,8 +136,12 @@ type Message{{ .Name }} struct {
 {{- end }}
 }
 
-func (*Message{{ .Name }}) GetId() uint32 {
+func (m *Message{{ .Name }}) GetId() uint32 {
     return {{ .Id }}
+}
+
+func (m *Message{{ .Name }}) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
 }
 {{ end }}
 {{ end }}
@@ -162,10 +165,11 @@ func main() {
 func do(preamble string, mainDefAddr string) error {
 	version := ""
 	defsProcessed := make(map[string]struct{})
-	isRemote := func() bool {
-		_, err := url.ParseRequestURI(mainDefAddr)
-		return err == nil
-	}()
+	//isRemote := func() bool {
+	//	_, err := url.ParseRequestURI(mainDefAddr)
+	//	return err == nil
+	//}()
+	isRemote := false
 
 	// parse all definitions recursively
 	outDefs, err := definitionProcess(&version, defsProcessed, isRemote, mainDefAddr)

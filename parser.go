@@ -46,7 +46,7 @@ type ParserConf struct {
 
 	// (optional) the dialect which contains the messages that will be encoded and decoded.
 	// If not provided, messages are decoded in the MessageRaw struct.
-	Dialect *Dialect
+	D Dialect
 
 	// (optional) the secret key used to validate incoming frames.
 	// Non-signed frames are discarded. This feature requires v2 frames.
@@ -135,7 +135,8 @@ func (p *Parser) checksum(f Frame) uint16 {
 	}
 
 	// CRC_EXTRA byte is added at the end of the data
-	h.Write([]byte{p.conf.Dialect.messages[msg.GetId()].crcExtra})
+	m, _ := p.conf.D.getMsgById(msg.GetId())
+	h.Write([]byte{(*m).getCRCExtra()})
 
 	return h.Sum16()
 }
@@ -301,15 +302,15 @@ func (p *Parser) Read() (Frame, error) {
 	}
 
 	// decode message if in dialect and validate checksum
-	if p.conf.Dialect != nil {
-		if mp, ok := p.conf.Dialect.messages[f.GetMessage().GetId()]; ok {
+	if p.conf.D != nil {
+		if mp, ok := p.conf.D.getMsgById(f.GetMessage().GetId()); ok {
 			if sum := p.checksum(f); sum != f.GetChecksum() {
 				return nil, newParserError("wrong checksum (expected %.4x, got %.4x, id=%d)",
 					sum, f.GetChecksum(), f.GetMessage().GetId())
 			}
 
 			_, isFrameV2 := f.(*FrameV2)
-			msg, err := mp.decode(f.GetMessage().(*MessageRaw).Content, isFrameV2)
+			msg, err := (*mp).decode(f.GetMessage().(*MessageRaw).Content, isFrameV2)
 			if err != nil {
 				return nil, newParserError(err.Error())
 			}
@@ -372,17 +373,17 @@ func (p *Parser) writeFrameAndFill(frame Frame) error {
 
 	// encode message if it is not already encoded
 	if _, ok := safeFrame.GetMessage().(*MessageRaw); !ok {
-		if p.conf.Dialect == nil {
+		if p.conf.D == nil {
 			return fmt.Errorf("message cannot be encoded since dialect is nil")
 		}
 
-		mp, ok := p.conf.Dialect.messages[safeFrame.GetMessage().GetId()]
+		mp, ok := p.conf.D.getMsgById(safeFrame.GetMessage().GetId())
 		if ok == false {
 			return fmt.Errorf("message cannot be encoded since it is not in the dialect")
 		}
 
 		_, isFrameV2 := safeFrame.(*FrameV2)
-		byt, err := mp.encode(safeFrame.GetMessage(), isFrameV2)
+		byt, err := (*mp).encode(safeFrame.GetMessage(), isFrameV2)
 		if err != nil {
 			return err
 		}
@@ -427,17 +428,17 @@ func (p *Parser) WriteFrame(frame Frame) error {
 	// encode message if it is not already encoded
 	msg := frame.GetMessage()
 	if _, ok := msg.(*MessageRaw); !ok {
-		if p.conf.Dialect == nil {
+		if p.conf.D == nil {
 			return fmt.Errorf("message cannot be encoded since dialect is nil")
 		}
 
-		mp, ok := p.conf.Dialect.messages[msg.GetId()]
+		mp, ok := p.conf.D.getMsgById(msg.GetId())
 		if ok == false {
 			return fmt.Errorf("message cannot be encoded since it is not in the dialect")
 		}
 
 		_, isFrameV2 := frame.(*FrameV2)
-		byt, err := mp.encode(msg, isFrameV2)
+		byt, err := (*mp).encode(msg, isFrameV2)
 		if err != nil {
 			return err
 		}

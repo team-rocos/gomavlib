@@ -12,7 +12,7 @@ import (
 
 var casesParser = []struct {
 	name    string
-	dialect *Dialect
+	dialect Dialect
 	key     *Key
 	frame   Frame
 	raw     []byte
@@ -180,7 +180,7 @@ func TestParserDecode(t *testing.T) {
 			parser, err := NewParser(ParserConf{
 				Reader:      bytes.NewReader(c.raw),
 				Writer:      bytes.NewBuffer(nil),
-				Dialect:     c.dialect,
+				D:           c.dialect,
 				OutVersion:  V2,
 				OutSystemId: 1,
 				InKey:       c.key,
@@ -202,7 +202,7 @@ func TestParserEncode(t *testing.T) {
 				Writer:      buf,
 				OutVersion:  V2,
 				OutSystemId: 1,
-				Dialect:     c.dialect,
+				D:           c.dialect,
 			})
 			require.NoError(t, err)
 			err = parser.WriteFrame(c.frame)
@@ -257,7 +257,7 @@ func TestParserWriteMessage(t *testing.T) {
 			parser, err := NewParser(ParserConf{
 				Reader:      bytes.NewBuffer(nil),
 				Writer:      buf,
-				Dialect:     testDialect,
+				D:           testDialect,
 				OutVersion:  c.ver,
 				OutSystemId: 1,
 				OutKey:      c.key,
@@ -276,7 +276,7 @@ func TestParserEncodeNilMsg(t *testing.T) {
 	parser, err := NewParser(ParserConf{
 		Reader:      bytes.NewReader(nil),
 		Writer:      bytes.NewBuffer(nil),
-		Dialect:     nil,
+		D:           nil,
 		OutVersion:  V2,
 		OutSystemId: 1,
 	})
@@ -293,7 +293,7 @@ func TestParserWriteFrameIsConst(t *testing.T) {
 	parser, err := NewParser(ParserConf{
 		Reader:      bytes.NewReader(nil),
 		Writer:      bytes.NewBuffer(nil),
-		Dialect:     MustDialect(3, []Message{&MessageHeartbeat{}}),
+		D:           MustDialectCT(3, []Message{&MessageHeartbeat{}}),
 		OutVersion:  V2,
 		OutSystemId: 1,
 		OutKey:      NewKey(bytes.Repeat([]byte("\x7C"), 32)),
