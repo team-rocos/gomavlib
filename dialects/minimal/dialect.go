@@ -76,7 +76,7 @@ type MAV_COMPONENT int
 const (
 	// Used to broadcast messages to all components of the receiving system. Components should attempt to process messages with this component ID and forward to components on any other interfaces.
 	MAV_COMP_ID_ALL MAV_COMPONENT = 0
-	// System flight controller component ("autopilot"). Only one autopilot is expected in a particular system.
+	// System flight controller component (&#34;autopilot&#34;). Only one autopilot is expected in a particular system.
 	MAV_COMP_ID_AUTOPILOT1 MAV_COMPONENT = 1
 	// Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.
 	MAV_COMP_ID_USER1 MAV_COMPONENT = 25
@@ -460,15 +460,15 @@ const (
 // The heartbeat message shows that a system or component is present and responding. The type and autopilot fields (along with the message component id), allow the receiving system to treat further messages from this system appropriately (e.g. by laying out the user interface based on the autopilot). This microservice is documented at https://mavlink.io/en/services/heartbeat.html
 type MessageHeartbeat struct {
 	// Type of the system (quadrotor, helicopter, etc.). Components use the same type as their associated system.
-    Type MAV_TYPE `mavenum:"uint8"`
+    Type MAV_TYPE `mavenum:&#34;uint8&#34;`
 	// Autopilot type / class.
-    Autopilot MAV_AUTOPILOT `mavenum:"uint8"`
+    Autopilot MAV_AUTOPILOT `mavenum:&#34;uint8&#34;`
 	// System mode bitmap.
-    BaseMode MAV_MODE_FLAG `mavenum:"uint8"`
+    BaseMode MAV_MODE_FLAG `mavenum:&#34;uint8&#34;`
 	// A bitfield for use for autopilot-specific flags
     CustomMode uint32
 	// System status flag.
-    SystemStatus MAV_STATE `mavenum:"uint8"`
+    SystemStatus MAV_STATE `mavenum:&#34;uint8&#34;`
 	// MAVLink version, not writable by user, gets added by protocol because of magic data type: uint8_t_mavlink_version
     MavlinkVersion uint8
 }

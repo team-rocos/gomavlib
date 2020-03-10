@@ -2,11 +2,13 @@ package libgen
 
 import (
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 
 	"regexp"
 	"strings"
@@ -25,14 +27,10 @@ func XMLToFields(filePathXML string, filePathCommonXML string) ([]*OutDefinition
 
 /////////////// Code copied from original main.go in aler9/gomavlib/commands/dialgen below here... //////////////////////////////////////////
 
-// ReMsgName : Exported Variable
-var ReMsgName = regexp.MustCompile("^[A-Z0-9_]+$")
+var reMsgName = regexp.MustCompile("^[A-Z0-9_]+$")
+var reTypeIsArray = regexp.MustCompile("^(.+?)\\[([0-9]+)\\]$")
 
-// ReTypeIsArray : Exported Variable
-var ReTypeIsArray = regexp.MustCompile("^(.+?)\\[([0-9]+)\\]$")
-
-// DialectTypeToGo : Exported Variable
-var DialectTypeToGo = map[string]string{
+var dialectTypeToGo = map[string]string{
 	"double":   "float64",
 	"uint64_t": "uint64",
 	"int64_t":  "int64",
@@ -46,20 +44,17 @@ var DialectTypeToGo = map[string]string{
 	"char":     "string",
 }
 
-// DialectFieldGoToDef : Exported Function
-func DialectFieldGoToDef(in string) string {
+func dialectFieldGoToDef(in string) string {
 	re := regexp.MustCompile("([A-Z])")
 	in = re.ReplaceAllString(in, "_${1}")
 	return strings.ToLower(in[1:])
 }
 
-// DialectFieldDefToGo : Exported Function
-func DialectFieldDefToGo(in string) string {
-	return DialectMsgDefToGo(in)
+func dialectFieldDefToGo(in string) string {
+	return dialectMsgDefToGo(in)
 }
 
-// DialectMsgDefToGo : Exported Function
-func DialectMsgDefToGo(in string) string {
+func dialectMsgDefToGo(in string) string {
 	re := regexp.MustCompile("_[a-z]")
 	in = strings.ToLower(in)
 	in = re.ReplaceAllStringFunc(in, func(match string) string {
@@ -68,39 +63,39 @@ func DialectMsgDefToGo(in string) string {
 	return strings.ToUpper(in[:1]) + in[1:]
 }
 
-// FilterDesc : Exported Function
-func FilterDesc(in string) string {
+func filterDesc(in string) string {
 	return strings.Replace(in, "\n", "", -1)
 }
 
-// OutEnumValue : Exported type
+// OutEnumValue : Exported struct
 type OutEnumValue struct {
 	Value       string
 	Name        string
 	Description string
 }
 
-// OutEnum : Exported type
+// OutEnum : Exported struct
 type OutEnum struct {
 	Name        string
 	Description string
 	Values      []*OutEnumValue
 }
 
-type outField struct {
+// OutField : Exported struct
+type OutField struct {
 	Description string
 	Line        string
 }
 
-// OutMessage : Exported type
+// OutMessage : Exported struct
 type OutMessage struct {
 	Name        string
 	Description string
 	Id          int
-	Fields      []*outField
+	Fields      []*OutField
 }
 
-// OutDefinition : Exported type
+// OutDefinition : Exported struct
 type OutDefinition struct {
 	Name     string
 	Enums    []*OutEnum
@@ -167,7 +162,7 @@ func definitionProcess(version *string, defsProcessed map[string]struct{}, isRem
 		if (inc == "common.xml") && (commonAddr != "") {
 			inc = commonAddr
 		} else {
-			// If common.xml location not specified (Or other included xml file), then use same directory as main xml file specified
+			// If common.xml (Or other included xml file) location not specified, then assume same directory as main xml file specified
 			inc = filepath.Dir(defAddr) + "/" + inc
 		}
 		subDefs, err := definitionProcess(version, defsProcessed, isRemote, inc, commonAddr)
@@ -185,13 +180,13 @@ func definitionProcess(version *string, defsProcessed map[string]struct{}, isRem
 	for _, enum := range def.Enums {
 		oute := &OutEnum{
 			Name:        enum.Name,
-			Description: FilterDesc(enum.Description),
+			Description: filterDesc(enum.Description),
 		}
 		for _, val := range enum.Values {
 			oute.Values = append(oute.Values, &OutEnumValue{
 				Value:       val.Value,
 				Name:        val.Name,
-				Description: FilterDesc(val.Description),
+				Description: filterDesc(val.Description),
 			})
 		}
 		outDef.Enums = append(outDef.Enums, oute)
@@ -245,13 +240,13 @@ func urlDownload(desturl string) ([]byte, error) {
 }
 
 func messageProcess(msg *DefinitionMessage) (*OutMessage, error) {
-	if m := ReMsgName.FindStringSubmatch(msg.Name); m == nil {
+	if m := reMsgName.FindStringSubmatch(msg.Name); m == nil {
 		return nil, fmt.Errorf("unsupported message name: %s", msg.Name)
 	}
 
 	outMsg := &OutMessage{
-		Name:        DialectMsgDefToGo(msg.Name),
-		Description: FilterDesc(msg.Description),
+		Name:        dialectMsgDefToGo(msg.Name),
+		Description: filterDesc(msg.Description),
 		Id:          msg.Id,
 	}
 
@@ -266,16 +261,16 @@ func messageProcess(msg *DefinitionMessage) (*OutMessage, error) {
 	return outMsg, nil
 }
 
-func fieldProcess(field *DialectField) (*outField, error) {
-	outF := &outField{
-		Description: FilterDesc(field.Description),
+func fieldProcess(field *DialectField) (*OutField, error) {
+	outF := &OutField{
+		Description: filterDesc(field.Description),
 	}
 	tags := make(map[string]string)
 
-	newname := DialectFieldDefToGo(field.Name)
+	newname := dialectFieldDefToGo(field.Name)
 
 	// name conversion is not univoque: add tag
-	if DialectFieldGoToDef(newname) != field.Name {
+	if dialectFieldGoToDef(newname) != field.Name {
 		tags["mavname"] = field.Name
 	}
 
@@ -289,7 +284,7 @@ func fieldProcess(field *DialectField) (*outField, error) {
 	}
 
 	// string or array
-	if matches := ReTypeIsArray.FindStringSubmatch(typ); matches != nil {
+	if matches := reTypeIsArray.FindStringSubmatch(typ); matches != nil {
 		// string
 		if matches[1] == "char" {
 			tags["mavlen"] = matches[2]
@@ -306,7 +301,7 @@ func fieldProcess(field *DialectField) (*outField, error) {
 		tags["mavext"] = "true"
 	}
 
-	typ = DialectTypeToGo[typ]
+	typ = dialectTypeToGo[typ]
 	if typ == "" {
 		return nil, fmt.Errorf("unknown type: %s", typ)
 	}
@@ -331,4 +326,124 @@ func fieldProcess(field *DialectField) (*outField, error) {
 		outF.Line += " `" + strings.Join(tmp, " ") + "`"
 	}
 	return outF, nil
+}
+
+////////////////////////////// Go Code Generation Functions... ///////////////////////////////////////
+
+var tplDialect = template.Must(template.New("").Parse(
+	`// Autogenerated with dialgen, do not edit.
+{{- if .Preamble }}
+//
+// {{ .Preamble }}
+//
+{{- end }}
+package {{ .PkgName }}
+
+import (
+	"github.com/team-rocos/gomavlib"
+)
+
+// Dialect contains the dialect object that can be passed to the library.
+var Dialect = dialect
+
+// dialect is not exposed directly such that it is not displayed in godoc.
+var dialect = gomavlib.MustDialectCT({{.Version}}, []gomavlib.Message{
+{{- range .Defs }}
+    // {{ .Name }}
+{{- range .Messages }}
+    &Message{{ .Name }}{},
+{{- end }}
+{{- end }}
+})
+
+{{ range .Enums }}
+// {{ .Description }}
+type {{ .Name }} int
+
+const (
+{{- $pn := .Name }}
+{{- range .Values }}
+	// {{ .Description }}
+	{{ .Name }} {{ $pn }} = {{ .Value }}
+{{- end }}
+)
+{{ end }}
+
+{{ range .Defs }}
+// {{ .Name }}
+
+{{ range .Messages }}
+// {{ .Description }}
+type Message{{ .Name }} struct {
+{{- range .Fields }}
+	// {{ .Description }}
+    {{ .Line }}
+{{- end }}
+}
+
+func (m *Message{{ .Name }}) GetId() uint32 {
+    return {{ .Id }}
+}
+
+func (m *Message{{ .Name }}) SetField(field string, value interface{}) error {
+	return gomavlib.SetMessageField(m, field, value)
+}
+{{ end }}
+{{ end }}
+`))
+
+// GenerateGoCode : Exported Function
+func GenerateGoCode(preamble string, mainDefAddr string, commonAddr string) error {
+
+	outDefs, version := XMLToFields(mainDefAddr, commonAddr)
+
+	// merge enums together
+	enums := make(map[string]*OutEnum)
+	for _, def := range outDefs {
+		for _, defEnum := range def.Enums {
+			if _, ok := enums[defEnum.Name]; !ok {
+				enums[defEnum.Name] = &OutEnum{
+					Name:        defEnum.Name,
+					Description: defEnum.Description,
+				}
+			}
+			enum := enums[defEnum.Name]
+
+			for _, v := range defEnum.Values {
+				enum.Values = append(enum.Values, v)
+			}
+		}
+	}
+
+	// fill enum missing values
+	for _, enum := range enums {
+		nextVal := 0
+		for _, v := range enum.Values {
+			if v.Value != "" {
+				nextVal, _ = strconv.Atoi(v.Value)
+				nextVal++
+			} else {
+				v.Value = strconv.Itoa(nextVal)
+				nextVal++
+			}
+		}
+	}
+
+	// get package name
+	// remove underscores since they can lead to errors
+	// (for instance, when package name ends with _test)
+	_, inFile := filepath.Split(mainDefAddr)
+	pkgName := strings.TrimSuffix(inFile, ".xml")
+
+	// dump
+	return tplDialect.Execute(os.Stdout, map[string]interface{}{
+		"PkgName":  pkgName,
+		"Preamble": preamble,
+		"Version": func() int {
+			ret, _ := strconv.Atoi(version)
+			return ret
+		}(),
+		"Defs":  outDefs,
+		"Enums": enums,
+	})
 }
