@@ -1,6 +1,7 @@
 package libgen
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -16,13 +17,10 @@ import (
 
 // XMLToFields : This function takes a string of a xml file location, and a string of the location of common.xml as input.
 // It returns []*OutDefinition and a string of version number, which is required for go code generation - see gomavlib/commands/dialgen/gen
-func XMLToFields(filePathXML string, filePathCommonXML string) ([]*OutDefinition, string) {
-	outDefs, version, err := do("", filePathXML, filePathCommonXML)
-	if err != nil {
-		fmt.Println("Error: ", err)
-		os.Exit(1)
-	}
-	return outDefs, version
+func XMLToFields(filePathXML string, includeDirectories []string) ([]*OutDefinition, string, error) {
+	outDefs, version, err := do("", filePathXML, includeDirectories)
+
+	return outDefs, version, err
 }
 
 /////////////// Code copied from original main.go in aler9/gomavlib/commands/dialgen below here... //////////////////////////////////////////
@@ -102,7 +100,7 @@ type OutDefinition struct {
 	Messages []*OutMessage
 }
 
-func do(preamble string, mainDefAddr string, commonAddr string) ([]*OutDefinition, string, error) {
+func do(preamble string, mainDefAddr string, includeDirectories []string) ([]*OutDefinition, string, error) {
 	version := ""
 	defsProcessed := make(map[string]struct{})
 	//isRemote := func() bool {
@@ -112,7 +110,7 @@ func do(preamble string, mainDefAddr string, commonAddr string) ([]*OutDefinitio
 	isRemote := false
 
 	// parse all definitions recursively
-	outDefs, err := definitionProcess(&version, defsProcessed, isRemote, mainDefAddr, commonAddr)
+	outDefs, err := definitionProcess(&version, defsProcessed, isRemote, mainDefAddr, includeDirectories)
 	if err != nil {
 		return outDefs, version, err
 	}
@@ -120,7 +118,7 @@ func do(preamble string, mainDefAddr string, commonAddr string) ([]*OutDefinitio
 	return outDefs, version, nil
 }
 
-func definitionProcess(version *string, defsProcessed map[string]struct{}, isRemote bool, defAddr string, commonAddr string) ([]*OutDefinition, error) {
+func definitionProcess(version *string, defsProcessed map[string]struct{}, isRemote bool, defAddr string, includeDirectories []string) ([]*OutDefinition, error) {
 	// skip already processed
 	if _, ok := defsProcessed[defAddr]; ok {
 		return nil, nil
@@ -158,14 +156,36 @@ func definitionProcess(version *string, defsProcessed map[string]struct{}, isRem
 			inc = addrPath + inc
 		}
 
-		// Due to alternate location of some xml files, specify common.xml address if included in xml in question
-		if (inc == "common.xml") && (commonAddr != "") {
-			inc = commonAddr
+		// For each include file specified in the xml file, search for its location in each includeDirectory until found
+		includeFileFound := false
+		if len(includeDirectories) != 0 {
+			for _, dir := range includeDirectories {
+				if dir[len(dir)-1] != '/' {
+					dir += "/"
+				}
+				file := dir + inc
+				_, err := os.Stat(file)
+				if os.IsNotExist(err) {
+					continue
+				} else {
+					includeFileFound = true
+					inc = file
+					break
+				}
+			}
+			// Finished searching through specified directories, but include file not found
+			if !includeFileFound {
+				errString := "Include file " + inc + " not found in include directories specified"
+				err := errors.New(errString)
+				return outDefs, err
+			}
+
 		} else {
-			// If common.xml (Or other included xml file) location not specified, then assume same directory as main xml file specified
-			inc = filepath.Dir(defAddr) + "/" + inc
+			// No include directories specified as command line arguments
+			err := errors.New("No include directories specified in command line arguments, and there are include files specified in xml file")
+			return outDefs, err
 		}
-		subDefs, err := definitionProcess(version, defsProcessed, isRemote, inc, commonAddr)
+		subDefs, err := definitionProcess(version, defsProcessed, isRemote, inc, includeDirectories)
 		if err != nil {
 			return nil, err
 		}
@@ -393,9 +413,12 @@ func (m *Message{{ .Name }}) SetField(field string, value interface{}) error {
 `))
 
 // GenerateGoCode : Exported Function
-func GenerateGoCode(preamble string, mainDefAddr string, commonAddr string) error {
+func GenerateGoCode(preamble string, mainDefAddr string, includeDirectories []string) error {
 
-	outDefs, version := XMLToFields(mainDefAddr, commonAddr)
+	outDefs, version, err := XMLToFields(mainDefAddr, includeDirectories)
+	if err != nil {
+		return err
+	}
 
 	// merge enums together
 	enums := make(map[string]*OutEnum)
