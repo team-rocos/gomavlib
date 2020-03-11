@@ -28,7 +28,8 @@ func main() {
 
 	var includeDirectories []string
 
-	// Note: First value in os.Args (os.Args[0]) shows the mode of running the code (e.g. debug) and is not used as an argument for this code's functionality
+	// Note: First value in os.Args (os.Args[0]) shows the temporary exe file and mode of running the code (e.g. debug) and
+	// is not used as an argument for this code's functionality
 	mainDefAddr := os.Args[1]
 	if len(os.Args) >= 3 {
 		includeDirectories = os.Args[2:]
