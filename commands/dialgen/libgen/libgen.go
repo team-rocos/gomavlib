@@ -17,10 +17,14 @@ import (
 
 // XMLToFields : This function takes a string of a xml file location, and a string of the location of common.xml as input.
 // It returns []*OutDefinition and a string of version number, which is required for go code generation - see gomavlib/commands/dialgen/gen
-func XMLToFields(filePathXML string, includeDirectories []string) ([]*OutDefinition, string, error) {
+func XMLToFields(filePathXML string, includeDirectories []string) ([]*OutDefinition, uint, error) {
 	outDefs, version, err := do("", filePathXML, includeDirectories)
-
-	return outDefs, version, err
+	versionInt, _ := strconv.Atoi(version)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
+	return outDefs, uint(versionInt), err
 }
 
 /////////////// Code copied from original main.go in aler9/gomavlib/commands/dialgen below here... //////////////////////////////////////////
@@ -83,6 +87,11 @@ type OutEnum struct {
 type OutField struct {
 	Description string
 	Line        string
+	Name        string
+	Type        string
+	IsEnum      bool
+	Index       int
+	IsExtension bool
 }
 
 // OutMessage : Exported struct
@@ -270,8 +279,8 @@ func messageProcess(msg *DefinitionMessage) (*OutMessage, error) {
 		Id:          msg.Id,
 	}
 
-	for _, f := range msg.Fields {
-		OutField, err := fieldProcess(f)
+	for i, f := range msg.Fields {
+		OutField, err := fieldProcess(f, i)
 		if err != nil {
 			return nil, err
 		}
@@ -281,14 +290,16 @@ func messageProcess(msg *DefinitionMessage) (*OutMessage, error) {
 	return outMsg, nil
 }
 
-func fieldProcess(field *DialectField) (*OutField, error) {
+func fieldProcess(field *DialectField, index int) (*OutField, error) {
 	outF := &OutField{
 		Description: filterDesc(field.Description),
+		Index:       index,
+		IsExtension: field.Extension,
 	}
 	tags := make(map[string]string)
 
 	newname := dialectFieldDefToGo(field.Name)
-
+	outF.Name = newname
 	// name conversion is not univoque: add tag
 	if dialectFieldGoToDef(newname) != field.Name {
 		tags["mavname"] = field.Name
@@ -322,6 +333,7 @@ func fieldProcess(field *DialectField) (*OutField, error) {
 	}
 
 	typ = dialectTypeToGo[typ]
+	outF.Type = typ
 	if typ == "" {
 		return nil, fmt.Errorf("unknown type: %s", typ)
 	}
@@ -333,8 +345,10 @@ func fieldProcess(field *DialectField) (*OutField, error) {
 	if field.Enum != "" {
 		outF.Line += field.Enum
 		tags["mavenum"] = typ
+		outF.IsEnum = true
 	} else {
 		outF.Line += typ
+		outF.IsEnum = false
 	}
 
 	if len(tags) > 0 {
@@ -463,7 +477,7 @@ func GenerateGoCode(preamble string, mainDefAddr string, includeDirectories []st
 		"PkgName":  pkgName,
 		"Preamble": preamble,
 		"Version": func() int {
-			ret, _ := strconv.Atoi(version)
+			ret := int(version)
 			return ret
 		}(),
 		"Defs":  outDefs,

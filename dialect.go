@@ -78,6 +78,7 @@ func dialectMsgGoToDef(in string) string {
 	return strings.ToUpper(in[1:])
 }
 
+// Dialect : Interface
 type Dialect interface {
 	getVersion() uint
 	getMsgById(id uint32) (*dialectMessage, bool)
