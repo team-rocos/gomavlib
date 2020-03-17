@@ -21,22 +21,27 @@ func main() {
 	//kingpin.Parse()
 
 	// Specifying include directories as command line arguments is only necessary if the main xml file includes other xml files.
-	if len(os.Args) < 2 {
-		fmt.Println("Error: Not enough input command line arguments showing xml file locations")
+	if len(os.Args) < 3 {
+		fmt.Fprintln(os.Stderr, "Error: Not enough input command line arguments showing xml file locations")
 		os.Exit(1)
 	}
 
 	var includeDirectories []string
 
-	// Note: First value in os.Args (os.Args[0]) shows the temporary exe file and mode of running the code (e.g. debug) and
-	// is not used as an argument for this code's functionality
+	// First arg is the XML file path.
 	mainDefAddr := os.Args[1]
+	// Second arg is true/false for test code generation.
+	var test bool
+	if os.Args[2] == "true" {
+		test = true
+	}
+	// Subsequent args are include directories.
 	if len(os.Args) >= 3 {
 		includeDirectories = os.Args[2:]
 	}
 
 	preamble := ""
-	err := libgen.GenerateGoCode(preamble, mainDefAddr, includeDirectories)
+	err := libgen.GenerateGoCode(preamble, mainDefAddr, includeDirectories, test)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERR: %s\n", err)
