@@ -94,7 +94,7 @@ type dialectMessageField struct {
 }
 
 type dialectMessage interface {
-	newMsg() *Message
+	newMsg() Message
 	getFields() []*dialectMessageField
 	getCRCExtra() byte
 	decode(buf []byte, isFrameV2 bool) (Message, error)

@@ -236,10 +236,10 @@ func newDialectMessage(msg Message) (*dialectMessageCT, error) {
 
 // DEFINE PRIVATE RECEIVER FUNCTIONS.
 
-func (mp *dialectMessageCT) newMsg() *Message {
+func (mp *dialectMessageCT) newMsg() Message {
 	ref := reflect.New(mp.elemType)
 	msg := ref.Interface().(Message)
-	return &msg
+	return msg
 }
 
 func (mp *dialectMessageCT) getFields() []*dialectMessageField {
