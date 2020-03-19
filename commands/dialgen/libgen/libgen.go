@@ -86,21 +86,24 @@ type OutEnum struct {
 
 // OutField : Exported struct
 type OutField struct {
-	Description string
-	Line        string
-	Name        string
-	Type        string
-	IsEnum      bool
-	Index       int
-	IsExtension bool
+	Description  string
+	Line         string
+	Name         string
+	OriginalName string
+	Type         string
+	IsEnum       bool
+	Index        int
+	IsExtension  bool
+	ArrayLength  int
 }
 
 // OutMessage : Exported struct
 type OutMessage struct {
-	Name        string
-	Description string
-	Id          int
-	Fields      []*OutField
+	Name         string
+	OriginalName string
+	Description  string
+	Id           int
+	Fields       []*OutField
 }
 
 // OutDefinition : Exported struct
@@ -275,9 +278,10 @@ func messageProcess(msg *DefinitionMessage) (*OutMessage, error) {
 	}
 
 	outMsg := &OutMessage{
-		Name:        dialectMsgDefToGo(msg.Name),
-		Description: filterDesc(msg.Description),
-		Id:          msg.Id,
+		Name:         dialectMsgDefToGo(msg.Name),
+		OriginalName: msg.Name,
+		Description:  filterDesc(msg.Description),
+		Id:           msg.Id,
 	}
 
 	for i, f := range msg.Fields {
@@ -293,9 +297,10 @@ func messageProcess(msg *DefinitionMessage) (*OutMessage, error) {
 
 func fieldProcess(field *DialectField, index int) (*OutField, error) {
 	outF := &OutField{
-		Description: filterDesc(field.Description),
-		Index:       index,
-		IsExtension: field.Extension,
+		Description:  filterDesc(field.Description),
+		Index:        index,
+		OriginalName: field.Name,
+		IsExtension:  field.Extension,
 	}
 	tags := make(map[string]string)
 
@@ -326,6 +331,13 @@ func fieldProcess(field *DialectField, index int) (*OutField, error) {
 			arrayLen = matches[2]
 			typ = matches[1]
 		}
+		var err error
+		outF.ArrayLength, err = strconv.Atoi(matches[2])
+		if err != nil {
+			fmt.Println("Error: ", err)
+		}
+	} else {
+		outF.ArrayLength = 0
 	}
 
 	// extension

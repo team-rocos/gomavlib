@@ -73,7 +73,7 @@ func NewDialectRT(version uint, outDefs []*libgen.OutDefinition) (*DialectRT, er
 			// Work out what the CRC-extra value should be: https://mavlink.io/en/guide/serialization.html#crc_extra
 			var crcExtra byte = func() byte {
 				h := NewX25()
-				h.Write([]byte(msg.Name + " ")) // TODO - This might be broken, because the "name" field might have been converted into a 'Go-like' name, whereas the CRC calc probably needs to use the original MAVLink-like form.
+				h.Write([]byte(msg.OriginalName + " ")) // Using 'OriginalName' to ensure original Mavlink style name used
 
 				for _, f := range msg.Fields {
 					// skip extensions
@@ -82,13 +82,11 @@ func NewDialectRT(version uint, outDefs []*libgen.OutDefinition) (*DialectRT, er
 					}
 
 					h.Write([]byte(dialectFieldTypeString[dialectFieldTypeFromGo[f.Type]] + " "))
-					h.Write([]byte(f.Name + " ")) // TODO - This might be broken, because the "name" field might have been converted into a 'Go-like' name, whereas the CRC calc probably needs to use the original MAVLink-like form.
 
-					// TODO - Need to support arrays, but not sure how that happens: libgen.OutField doesn't seem to contain info about array types?
-
-					//if f.arrayLength > 0 {
-					//	h.Write([]byte{f.arrayLength})
-					//}
+					h.Write([]byte(f.OriginalName + " ")) // Using 'OriginalName' to ensure original Mavlink style name used
+					if f.ArrayLength > 0 {
+						h.Write([]byte{byte(f.ArrayLength)})
+					}
 				}
 				sum := h.Sum16()
 				return byte((sum & 0xFF) ^ (sum >> 8))
@@ -100,6 +98,10 @@ func NewDialectRT(version uint, outDefs []*libgen.OutDefinition) (*DialectRT, er
 			for _, f := range msg.Fields {
 				// Work out how big this field will be.
 				var size uint = uint(dialectFieldTypeSizes[dialectFieldTypeFromGo[f.Type]])
+
+				if f.ArrayLength > 0 {
+					size = size * uint(f.ArrayLength)
+				}
 
 				// Extension fields count towards towards the extended size, but not the normal size.
 				sizeExtended += size
