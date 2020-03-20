@@ -153,6 +153,7 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 		if v.Name == field {
 			// This is the field we are after, so remember it.
 			fieldInfo = v
+			break
 		}
 	}
 
@@ -164,78 +165,203 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 	// Else, need to check that the object we've been passed is the right type for the matching field.
 	switch fieldInfo.Type {
 	case "int8":
-		// Try to convert the value into an int.
-		if v, ok := value.(int8); ok {
-			// This is the correct type, so save it into our message.
-			d.Fields[field] = v
+		// Try to convert the value into an int8.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]int8); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []int8")
+			}
 		} else {
-			// The value was the wrong type.
-			return errors.New("incorrect type for field: " + field + " - expected int")
+			if v, ok := value.(int8); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected int8")
+			}
 		}
 	case "uint8":
-		// Try to convert the value into an int.
-		if v, ok := value.(uint8); ok {
-			// This is the correct type, so save it into our message.
-			d.Fields[field] = v
+		// Try to convert the value into an uint8.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]uint8); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []uint8")
+			}
 		} else {
-			// The value was the wrong type.
-			return errors.New("incorrect type for field: " + field + " - expected int")
+			if v, ok := value.(uint8); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected uint8")
+			}
 		}
 	case "int16":
-		// Try to convert the value into an int.
-		if v, ok := value.(int16); ok {
-			// This is the correct type, so save it into our message.
-			d.Fields[field] = v
+		// Try to convert the value into an int16.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]int16); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []int16")
+			}
 		} else {
-			// The value was the wrong type.
-			return errors.New("incorrect type for field: " + field + " - expected int")
+			if v, ok := value.(int16); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected int16")
+			}
 		}
 	case "uint16":
-		// Try to convert the value into an int.
-		if v, ok := value.(uint16); ok {
-			// This is the correct type, so save it into our message.
-			d.Fields[field] = v
+		// Try to convert the value into an uint16.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]uint16); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []uint16")
+			}
 		} else {
-			// The value was the wrong type.
-			return errors.New("incorrect type for field: " + field + " - expected int")
+			if v, ok := value.(uint16); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected uint16")
+			}
 		}
 	case "int32":
-		// Try to convert the value into an int.
-		if v, ok := value.(int32); ok {
-			// This is the correct type, so save it into our message.
-			d.Fields[field] = v
+		// Try to convert the value into an int32.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]int32); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []int32")
+			}
 		} else {
-			// The value was the wrong type.
-			return errors.New("incorrect type for field: " + field + " - expected int")
+			if v, ok := value.(int32); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected int32")
+			}
 		}
 	case "uint32":
-		// Try to convert the value into an int.
-		if v, ok := value.(uint32); ok {
-			// This is the correct type, so save it into our message.
-			d.Fields[field] = v
+		// Try to convert the value into an uint32.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]uint32); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []uint32")
+			}
 		} else {
-			// The value was the wrong type.
-			return errors.New("incorrect type for field: " + field + " - expected int")
+			if v, ok := value.(uint32); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected uint32")
+			}
 		}
 	case "int64":
-		// Try to convert the value into an int.
-		if v, ok := value.(int64); ok {
-			// This is the correct type, so save it into our message.
-			d.Fields[field] = v
+		// Try to convert the value into an int64.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]int64); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []int64")
+			}
 		} else {
-			// The value was the wrong type.
-			return errors.New("incorrect type for field: " + field + " - expected int")
+			if v, ok := value.(int64); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected int64")
+			}
 		}
 	case "uint64":
-		// Try to convert the value into an int.
-		if v, ok := value.(uint64); ok {
-			// This is the correct type, so save it into our message.
-			d.Fields[field] = v
+		// Try to convert the value into an uint64.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]uint64); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []uint64")
+			}
 		} else {
-			// The value was the wrong type.
-			return errors.New("incorrect type for field: " + field + " - expected int")
+			if v, ok := value.(uint64); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected uint64")
+			}
 		}
-	// TODO - All the other cases.
+	case "float64":
+		// Try to convert the value into an float64.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]float64); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []float64")
+			}
+		} else {
+			if v, ok := value.(float64); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected float64")
+			}
+		}
+	case "float32":
+		// Try to convert the value into an float32.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]float32); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []float32")
+			}
+		} else {
+			if v, ok := value.(float32); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected float32")
+			}
+		}
+	case "string":
+		// Try to convert the value into a string.
+		if fieldInfo.ArrayLength != 0 {
+			if v, ok := value.([]string); ok {
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected []string")
+			}
+		} else {
+			if v, ok := value.(string); ok {
+				// This is the correct type, so save it into our message.
+				d.Fields[field] = v
+			} else {
+				// The value was the wrong type.
+				return errors.New("incorrect type for field: " + field + " - expected string")
+			}
+		}
 	default:
 		return errors.New("unsupported field type in dynamic MAVLink message")
 	}
@@ -305,73 +431,250 @@ func (mp *dialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 			continue
 		}
 
-		// Need to handle each type of field separately.
+		// Need to handle each type of field separately, and handle each type based on whether or not it is an array.
 		switch fieldDef.Type {
 		case "int8":
-			var val int8
-			if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-				return nil, errors.Wrap(err, "failed to read field: "+fieldDef.Name+" : ")
-			}
-			if err := dm.SetField(fieldDef.Name, val); err != nil {
-				return nil, errors.Wrap(err, "failed to set field: "+fieldDef.Name+" : ")
+			if fieldDef.ArrayLength != 0 {
+				var allVals []int8
+				var val int8
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val int8
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
 			}
 		case "uint8":
-			var val uint8
-			if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-				return nil, errors.Wrap(err, "failed to read field: "+fieldDef.Name+" : ")
-			}
-			if err := dm.SetField(fieldDef.Name, val); err != nil {
-				return nil, errors.Wrap(err, "failed to set field: "+fieldDef.Name+" : ")
+			if fieldDef.ArrayLength != 0 {
+				var allVals []uint8
+				var val uint8
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val uint8
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
 			}
 		case "int16":
-			var val int16
-			if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-				return nil, errors.Wrap(err, "failed to read field: "+fieldDef.Name+" : ")
-			}
-			if err := dm.SetField(fieldDef.Name, val); err != nil {
-				return nil, errors.Wrap(err, "failed to set field: "+fieldDef.Name+" : ")
+			if fieldDef.ArrayLength != 0 {
+				var allVals []int16
+				var val int16
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val int16
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
 			}
 		case "uint16":
-			var val uint16
-			if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-				return nil, errors.Wrap(err, "failed to read field: "+fieldDef.Name+" : ")
-			}
-			if err := dm.SetField(fieldDef.Name, val); err != nil {
-				return nil, errors.Wrap(err, "failed to set field: "+fieldDef.Name+" : ")
+			if fieldDef.ArrayLength != 0 {
+				var allVals []uint16
+				var val uint16
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val uint16
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
 			}
 		case "int32":
-			var val int32
-			if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-				return nil, errors.Wrap(err, "failed to read field: "+fieldDef.Name+" : ")
-			}
-			if err := dm.SetField(fieldDef.Name, val); err != nil {
-				return nil, errors.Wrap(err, "failed to set field: "+fieldDef.Name+" : ")
+			if fieldDef.ArrayLength != 0 {
+				var allVals []int32
+				var val int32
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val int32
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
 			}
 		case "uint32":
-			var val uint32
-			if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-				return nil, errors.Wrap(err, "failed to read field: "+fieldDef.Name+" : ")
-			}
-			if err := dm.SetField(fieldDef.Name, val); err != nil {
-				return nil, errors.Wrap(err, "failed to set field: "+fieldDef.Name+" : ")
+			if fieldDef.ArrayLength != 0 {
+				var allVals []uint32
+				var val uint32
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val uint32
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
 			}
 		case "int64":
-			var val int64
-			if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-				return nil, errors.Wrap(err, "failed to read field: "+fieldDef.Name+" : ")
-			}
-			if err := dm.SetField(fieldDef.Name, val); err != nil {
-				return nil, errors.Wrap(err, "failed to set field: "+fieldDef.Name+" : ")
+			if fieldDef.ArrayLength != 0 {
+				var allVals []int64
+				var val int64
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val int64
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
 			}
 		case "uint64":
-			var val uint64
-			if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-				return nil, errors.Wrap(err, "failed to read field: "+fieldDef.Name+" : ")
+			if fieldDef.ArrayLength != 0 {
+				var allVals []uint64
+				var val uint64
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val uint64
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
 			}
-			if err := dm.SetField(fieldDef.Name, val); err != nil {
-				return nil, errors.Wrap(err, "failed to set field: "+fieldDef.Name+" : ")
+		case "float64":
+			if fieldDef.ArrayLength != 0 {
+				var allVals []float64
+				var val float64
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val float64
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
 			}
-		// TODO - Support the other types.
+		case "float32":
+			if fieldDef.ArrayLength != 0 {
+				var allVals []float32
+				var val float32
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val float32
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			}
+		case "string":
+			if fieldDef.ArrayLength != 0 {
+				var allVals []string
+				var val string
+				for i := 0; i < fieldDef.ArrayLength; i++ {
+					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					}
+					allVals = append(allVals, val)
+				}
+				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			} else {
+				var val string
+				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+				}
+				if err := dm.SetField(fieldDef.Name, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				}
+			}
 		default:
 			// We don't know what to do with this type.
 			return nil, errors.New("unsupported field type: " + fieldDef.Name)
@@ -384,13 +687,13 @@ func (mp *dialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 
 func (mp *dialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) {
 	// Make sure the message we're encoding matches the type of the dialectMessage being used to do the encoding.
-	var dm DynamicMessage
+	var dm *DynamicMessage
 	var ok bool
-	if dm, ok = msg.(DynamicMessage); !ok {
-		return nil, errors.New("message was not a DynamicMessage")
+	if dm, ok = msg.(*DynamicMessage); !ok {
+		return nil, errors.New("message was not a *DynamicMessage")
 	}
 	if dm.t != mp {
-		return nil, errors.New("wrong DynamicMessage type")
+		return nil, errors.New("wrong *DynamicMessage type")
 	}
 
 	// We're filling a buffer byte by byte.
@@ -402,85 +705,235 @@ func (mp *dialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 		switch fieldDef.Type {
 		case "int8":
 			// Look up the actual value for this field.
-			var val int8
-			if v, ok := dm.Fields[fieldDef.Name]; ok {
-				if val, ok = v.(int8); !ok {
-					// The value stored for this field wasn't the right type.
-					return nil, errors.New("invalid value for field: " + fieldDef.Name)
-				}
-			} // Else just use the default value.
-			binary.Write(buf, binary.LittleEndian, val)
+			if fieldDef.ArrayLength != 0 {
+				var val []int8
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]int8); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val int8
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(int8); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
 		case "uint8":
 			// Look up the actual value for this field.
-			var val uint8
-			if v, ok := dm.Fields[fieldDef.Name]; ok {
-				if val, ok = v.(uint8); !ok {
-					// The value stored for this field wasn't the right type.
-					return nil, errors.New("invalid value for field: " + fieldDef.Name)
-				}
-			} // Else just use the default value.
-			binary.Write(buf, binary.LittleEndian, val)
+			if fieldDef.ArrayLength != 0 {
+				var val []uint8
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]uint8); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val uint8
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(uint8); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
 		case "int16":
 			// Look up the actual value for this field.
-			var val int16
-			if v, ok := dm.Fields[fieldDef.Name]; ok {
-				if val, ok = v.(int16); !ok {
-					// The value stored for this field wasn't the right type.
-					return nil, errors.New("invalid value for field: " + fieldDef.Name)
-				}
-			} // Else just use the default value.
-			binary.Write(buf, binary.LittleEndian, val)
+			if fieldDef.ArrayLength != 0 {
+				var val []int16
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]int16); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val int16
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(int16); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
 		case "uint16":
 			// Look up the actual value for this field.
-			var val uint16
-			if v, ok := dm.Fields[fieldDef.Name]; ok {
-				if val, ok = v.(uint16); !ok {
-					// The value stored for this field wasn't the right type.
-					return nil, errors.New("invalid value for field: " + fieldDef.Name)
-				}
-			} // Else just use the default value.
-			binary.Write(buf, binary.LittleEndian, val)
+			if fieldDef.ArrayLength != 0 {
+				var val []uint16
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]uint16); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val uint16
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(uint16); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
 		case "int32":
 			// Look up the actual value for this field.
-			var val int32
-			if v, ok := dm.Fields[fieldDef.Name]; ok {
-				if val, ok = v.(int32); !ok {
-					// The value stored for this field wasn't the right type.
-					return nil, errors.New("invalid value for field: " + fieldDef.Name)
-				}
-			} // Else just use the default value.
-			binary.Write(buf, binary.LittleEndian, val)
+			if fieldDef.ArrayLength != 0 {
+				var val []int32
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]int32); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val int32
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(int32); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
 		case "uint32":
 			// Look up the actual value for this field.
-			var val uint32
-			if v, ok := dm.Fields[fieldDef.Name]; ok {
-				if val, ok = v.(uint32); !ok {
-					// The value stored for this field wasn't the right type.
-					return nil, errors.New("invalid value for field: " + fieldDef.Name)
-				}
-			} // Else just use the default value.
-			binary.Write(buf, binary.LittleEndian, val)
+			if fieldDef.ArrayLength != 0 {
+				var val []uint32
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]uint32); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val uint32
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(uint32); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
 		case "int64":
 			// Look up the actual value for this field.
-			var val int64
-			if v, ok := dm.Fields[fieldDef.Name]; ok {
-				if val, ok = v.(int64); !ok {
-					// The value stored for this field wasn't the right type.
-					return nil, errors.New("invalid value for field: " + fieldDef.Name)
-				}
-			} // Else just use the default value.
-			binary.Write(buf, binary.LittleEndian, val)
+			if fieldDef.ArrayLength != 0 {
+				var val []int64
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]int64); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val int64
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(int64); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
 		case "uint64":
 			// Look up the actual value for this field.
-			var val uint64
-			if v, ok := dm.Fields[fieldDef.Name]; ok {
-				if val, ok = v.(uint64); !ok {
-					// The value stored for this field wasn't the right type.
-					return nil, errors.New("invalid value for field: " + fieldDef.Name)
-				}
-			} // Else just use the default value.
-			binary.Write(buf, binary.LittleEndian, val)
-		// TODO - Support the other types.
+			if fieldDef.ArrayLength != 0 {
+				var val []uint64
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]uint64); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val uint64
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(uint64); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
+		case "float64":
+			// Look up the actual value for this field.
+			if fieldDef.ArrayLength != 0 {
+				var val []float64
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]float64); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val float64
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(float64); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
+		case "float32":
+			// Look up the actual value for this field.
+			if fieldDef.ArrayLength != 0 {
+				var val []float32
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]float32); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val float32
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(float32); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
+		case "string":
+			// Look up the actual value for this field.
+			if fieldDef.ArrayLength != 0 {
+				var val []string
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.([]string); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			} else {
+				var val string
+				if v, ok := dm.Fields[fieldDef.Name]; ok {
+					if val, ok = v.(string); !ok {
+						// The value stored for this field wasn't the right type.
+						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					}
+				} // Else just use the default value.
+				binary.Write(buf, binary.LittleEndian, val)
+			}
 		default:
 			// We don't know what to do with this type.
 			return nil, errors.New("unsupported field type: " + fieldDef.Name)
