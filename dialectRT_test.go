@@ -87,7 +87,7 @@ func TestDecodeAndEncodeRT0(t *testing.T) {
 
 	// Decode bytes using RT
 	includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("TestingXMLFiles/testing0.xml", includeDirs)
+	defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
@@ -172,6 +172,49 @@ func TestDecodeAndEncodeRT2(t *testing.T) {
 	require.Equal(t, c.raw, bytesEncodedByRT)
 }
 
+func TestDecodeAndEncodeRT3(t *testing.T) {
+	// Encode using CT
+	c := casesMsgsTest[3]
+	dMsgCT, err := newDialectMessage(c.parsed)
+	require.NoError(t, err)
+	bytesEncoded, err := dMsgCT.encode(c.parsed, c.isV2)
+	require.NoError(t, err)
+	fmt.Println([]byte(bytesEncoded))
+
+	b := "\\"
+	for _, integer := range bytesEncoded {
+		b += fmt.Sprintf("x%X", integer)
+		b += "\\"
+	}
+	fmt.Println("manual bytes conversion:")
+	fmt.Println(b)
+	fmt.Println("...................................")
+
+	require.Equal(t, c.raw, bytesEncoded)
+
+	// Decode bytes using RT
+	includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
+	defs, version, err := libgen.XMLToFields("TestingXMLFiles/testing3.xml", includeDirs)
+	require.NoError(t, err)
+
+	// Create dialect from the parsed defs.
+	dRT, err := NewDialectRT(version, defs)
+	dMsgRT := dRT.messages[74]
+	require.NoError(t, err)
+	require.Equal(t, uint(3), dRT.getVersion())
+
+	// Decode Bytes using RT
+	msgDecoded, err := dMsgRT.decode(bytesEncoded, c.isV2)
+	require.NoError(t, err)
+	fmt.Printf("%+v\n", msgDecoded)
+
+	// Try encoding using RT
+	bytesEncodedByRT, err := dMsgRT.encode(msgDecoded, c.isV2)
+	require.NoError(t, err)
+	fmt.Println(bytesEncodedByRT)
+	require.Equal(t, c.raw, bytesEncodedByRT)
+}
+
 var casesMsgsTest = []struct {
 	name   string
 	isV2   bool
@@ -228,6 +271,19 @@ var casesMsgsTest = []struct {
 			Covariance: [9]float32{1, 1, 1, 1, 1, 1, 1, 1, 1},
 		},
 		append([]byte("\x02\x00\x00\x00\x00\x00\x00\x00"), bytes.Repeat([]byte("\x00\x00\x80\x3F"), 16)...),
+	},
+	{
+		"V2 message 74",
+		true,
+		&MessageVfrHud{
+			Airspeed:    1234,
+			Groundspeed: 1234,
+			Heading:     12,
+			Throttle:    123,
+			Alt:         1234,
+			Climb:       1234,
+		},
+		[]byte("\x00\x40\x9A\x44\x00\x40\x9A\x44\x00\x40\x9A\x44\x00\x40\x9A\x44\x0C\x00\x7B"), // Need to change this
 	},
 }
 

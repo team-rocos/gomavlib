@@ -940,8 +940,21 @@ func (mp *dialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 		}
 	}
 
+	newBuf := buf.Bytes()
+	// empty-byte truncation
+	// even with truncation, message length must be at least 1 byte
+	// https://github.com/mavlink/c_library_v2/blob/master/mavlink_helpers.h#L103
+	if isFrameV2 == true {
+		end := len(newBuf)
+		for end > 1 && newBuf[end-1] == 0x00 {
+			end--
+		}
+		newBuf = newBuf[:end]
+	}
+
 	// All done.
-	return buf.Bytes(), nil
+	//fmt.Println(buf.Bytes())
+	return newBuf, nil
 }
 
 // ALL DONE.
