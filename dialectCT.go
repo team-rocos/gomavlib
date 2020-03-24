@@ -12,6 +12,8 @@ import (
 // DEFINE PUBLIC TYPES AND STRUCTURES.
 
 // Dialect contains available messages and the configuration needed to encode and decode them.
+
+// DialectCT : compile time dialect struct
 type DialectCT struct {
 	version  uint
 	messages map[uint32]*dialectMessageCT
@@ -35,7 +37,7 @@ var _ dialectMessage = &dialectMessageCT{}
 
 // DEFINE PUBLIC STATUC FUNCTIONS.
 
-// NewDialect allocates a Dialect.
+// NewDialectCT allocates a Dialect.
 func NewDialectCT(version uint, messages []Message) (*DialectCT, error) {
 	d := &DialectCT{
 		version:  version,
@@ -53,7 +55,7 @@ func NewDialectCT(version uint, messages []Message) (*DialectCT, error) {
 	return d, nil
 }
 
-// MustDialect is like NewDialect but panics in case of error.
+// MustDialectCT is like NewDialect but panics in case of error.
 func MustDialectCT(version uint, messages []Message) *DialectCT {
 	d, err := NewDialectCT(version, messages)
 	if err != nil {
@@ -234,10 +236,10 @@ func newDialectMessage(msg Message) (*dialectMessageCT, error) {
 
 // DEFINE PRIVATE RECEIVER FUNCTIONS.
 
-func (mp *dialectMessageCT) newMsg() *Message {
+func (mp *dialectMessageCT) newMsg() Message {
 	ref := reflect.New(mp.elemType)
 	msg := ref.Interface().(Message)
-	return &msg
+	return msg
 }
 
 func (mp *dialectMessageCT) getFields() []*dialectMessageField {

@@ -78,6 +78,7 @@ func dialectMsgGoToDef(in string) string {
 	return strings.ToUpper(in[1:])
 }
 
+// Dialect : Interface
 type Dialect interface {
 	getVersion() uint
 	getMsgById(id uint32) (*dialectMessage, bool)
@@ -93,7 +94,7 @@ type dialectMessageField struct {
 }
 
 type dialectMessage interface {
-	newMsg() *Message
+	newMsg() Message
 	getFields() []*dialectMessageField
 	getCRCExtra() byte
 	decode(buf []byte, isFrameV2 bool) (Message, error)

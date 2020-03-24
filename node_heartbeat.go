@@ -53,13 +53,13 @@ func (h *nodeHeartbeat) run() {
 		case <-ticker.C:
 			dm, _ := h.n.conf.D.getMsgById(0)
 			msg := (*dm).newMsg()
-			(*msg).SetField("Type", int8(h.n.conf.HeartbeatSystemType))
-			(*msg).SetField("Autopilot", int8(h.n.conf.HeartbeatAutopilotType))
-			(*msg).SetField("BaseMode", int8(0))
-			(*msg).SetField("CustomMode", uint32(0))
-			(*msg).SetField("SystemStatus", int8(4)) // MAV_STATE_ACTIVE
-			(*msg).SetField("MavlinkVersion", uint8(mavlinkVersion))
-			h.n.WriteMessageAll(*msg)
+			msg.SetField("Type", int8(h.n.conf.HeartbeatSystemType))
+			msg.SetField("Autopilot", int8(h.n.conf.HeartbeatAutopilotType))
+			msg.SetField("BaseMode", int8(0))
+			msg.SetField("CustomMode", uint32(0))
+			msg.SetField("SystemStatus", int8(4)) // MAV_STATE_ACTIVE
+			msg.SetField("MavlinkVersion", uint8(mavlinkVersion))
+			h.n.WriteMessageAll(msg)
 
 		case <-h.terminate:
 			return

@@ -132,12 +132,12 @@ func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
 		for _, stream := range streams {
 			dm, _ := sr.n.conf.D.getMsgById(66)
 			msg := (*dm).newMsg()
-			(*msg).SetField("TargetSystem", uint8(evt.SystemId()))
-			(*msg).SetField("TargetComponent", uint8(evt.ComponentId()))
-			(*msg).SetField("ReqStreamId", uint8(stream))
-			(*msg).SetField("ReqMessageRate", uint16(sr.n.conf.StreamRequestFrequency))
-			(*msg).SetField("StartStop", uint8(1))
-			sr.n.WriteMessageTo(evt.Channel, *msg)
+			msg.SetField("TargetSystem", uint8(evt.SystemId()))
+			msg.SetField("TargetComponent", uint8(evt.ComponentId()))
+			msg.SetField("ReqStreamId", uint8(stream))
+			msg.SetField("ReqMessageRate", uint16(sr.n.conf.StreamRequestFrequency))
+			msg.SetField("StartStop", uint8(1))
+			sr.n.WriteMessageTo(evt.Channel, msg)
 		}
 
 		sr.n.eventsOut <- &EventStreamRequested{
