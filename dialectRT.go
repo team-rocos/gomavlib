@@ -3,6 +3,7 @@ package gomavlib
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -22,6 +23,7 @@ type DialectRT struct {
 // Assert to check we're implementing the interfaces we expect to be.
 var _ Dialect = &DialectRT{}
 
+// DynamicMessage : Used for RT message generation
 type DynamicMessage struct {
 	t      *dialectMessageRT
 	Fields map[string]interface{}
@@ -141,11 +143,13 @@ func (d *DialectRT) getMsgById(id uint32) (*dialectMessage, bool) {
 
 // DynamicMessage :: Message
 
+// GetId : DynamicMessage function to meet Message interface requirements
 func (d DynamicMessage) GetId() uint32 {
 	// Just look up the Id and return it.
 	return uint32(d.t.msg.Id)
 }
 
+// SetField : DynamicMessage function to meet Message interface requirements
 func (d DynamicMessage) SetField(field string, value interface{}) error {
 	// Search through the list of fields that the message is supposed to have.
 	var fieldInfo *libgen.OutField
@@ -368,6 +372,171 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 
 	// If we make it here, should mean everything went ok.
 	return nil
+}
+
+// GetName : returns OriginalName (in mavlink format)
+func (d DynamicMessage) GetName() string {
+	return d.t.msg.OriginalName
+}
+
+// GenerateJSONSchema : DynamicMessage exported function
+func (d DynamicMessage) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
+	return d.t.GenerateJSONSchema(prefix, topic)
+}
+
+func (d DynamicMessage) generateJSONSchemaProperties(topic string) (map[string]interface{}, error) {
+	return d.t.generateJSONSchemaProperties(topic)
+}
+
+// JSON Methods
+const (
+	//Sep is a namespace separator string
+	Sep = "/"
+	//GlobalNS is the global namespace initial separator string
+	GlobalNS = "/"
+	//PrivateNS is private namespace initial separator string
+	PrivateNS = "~"
+)
+
+// GenerateJSONSchema generates a (primitive) JSON schema for the associated DynamicMessageType; however note that since
+// we are mostly interested in making schema's for particular _topics_, the function takes a string prefix, and string topic name, which are
+// used to id the resulting schema.
+func (mp *dialectMessageRT) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
+	// The JSON schema for a message consist of the (recursive) properties names/types:
+	schemaItems, err := mp.generateJSONSchemaProperties(prefix + topic)
+	if err != nil {
+		return nil, err
+	}
+
+	// Plus some extra keywords:
+	schemaItems["$schema"] = "https://json-schema.org/draft-07/schema#"
+	schemaItems["$id"] = prefix + topic
+
+	// The schema itself is created from the map of properties.
+	schemaString, err := json.Marshal(schemaItems)
+	if err != nil {
+		return nil, err
+	}
+
+	// All done.
+	return schemaString, errors.New("GenerateJSONSchema not yet written")
+}
+
+func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[string]interface{}, error) {
+	// // Each message's schema indicates that it is an 'object' with some nested properties: those properties are the fields and their types.
+	//properties := make(map[string]interface{})
+	schemaItems := make(map[string]interface{})
+	// schemaItems["type"] = "object"
+	// schemaItems["title"] = topic
+	// schemaItems["properties"] = properties
+
+	// // Iterate over each of the fields in the message.
+	// for _, field := range mp.msg.Fields {
+	// 	if field.ArrayLength != 0 {
+	// 		// It's an array.
+	// 		propertyContent := make(map[string]interface{})
+	// 		properties[field.Name] = propertyContent
+
+	// 		if field.Type == "uint8" {
+	// 			propertyContent["title"] = topic + Sep + field.Name
+	// 			propertyContent["type"] = "string"
+	// 		} else {
+	// 			// Arrays all have a type of 'array', regardless of that the hold, then the 'item' keyword determines what type goes in the array.
+	// 			propertyContent["type"] = "array"
+	// 			propertyContent["title"] = topic + Sep + field.Name
+	// 			arrayItems := make(map[string]interface{})
+	// 			propertyContent["items"] = arrayItems
+
+	// 			// Need to handle each type appropriately.
+	// 			if field.Type == "string" {
+	// 				arrayItems["type"] = "string"
+	// 			} else if field.Type == "time" {
+	// 				timeItems := make(map[string]interface{})
+	// 				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+	// 				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+	// 				arrayItems["type"] = "object"
+	// 				arrayItems["properties"] = timeItems
+	// 			} else if field.Type == "duration" {
+	// 				timeItems := make(map[string]interface{})
+	// 				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+	// 				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+	// 				arrayItems["type"] = "object"
+	// 				arrayItems["properties"] = timeItems
+	// 			} else {
+	// 				// It's a primitive.
+	// 				var jsonType string
+	// 				if field.Type == "int8" || field.Type == "int16" || field.Type == "uint16" ||
+	// 					field.Type == "int32" || field.Type == "uint32" || field.Type == "int64" || field.Type == "uint64" {
+	// 					jsonType = "integer"
+	// 				} else if field.Type == "float32" || field.Type == "float64" {
+	// 					jsonType = "number"
+	// 				} else if field.Type == "bool" {
+	// 					jsonType = "bool"
+	// 				} else {
+	// 					// Something went wrong.
+	// 					return nil, errors.New("we haven't implemented this primitive yet")
+	// 				}
+	// 				arrayItems["type"] = jsonType
+	// 			}
+	// 		}
+	// 	} else {
+	// 		// It's a scalar.
+	// 		propertyContent := make(map[string]interface{})
+	// 		properties[field.Name] = propertyContent
+	// 		propertyContent["title"] = topic + Sep + field.Name
+
+	// 		if field.Type == "string" {
+	// 			propertyContent["type"] = "string"
+	// 		} else if field.Type == "time" {
+	// 			timeItems := make(map[string]interface{})
+	// 			timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+	// 			timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+	// 			propertyContent["type"] = "object"
+	// 			propertyContent["properties"] = timeItems
+	// 		} else if field.Type == "duration" {
+	// 			timeItems := make(map[string]interface{})
+	// 			timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+	// 			timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+	// 			propertyContent["type"] = "object"
+	// 			propertyContent["properties"] = timeItems
+	// 		} else {
+	// 			// It's a primitive.
+	// 			var jsonType string
+	// 			if field.Type == "int8" || field.Type == "uint8" || field.Type == "int16" || field.Type == "uint16" ||
+	// 				field.Type == "int32" || field.Type == "uint32" || field.Type == "int64" || field.Type == "uint64" {
+	// 				jsonType = "integer"
+	// 				jsonType = "integer"
+	// 				jsonType = "integer"
+	// 			} else if field.Type == "float32" || field.Type == "float64" {
+	// 				jsonType = "number"
+	// 			} else if field.Type == "bool" {
+	// 				jsonType = "bool"
+	// 			} else {
+	// 				// Something went wrong.
+	// 				return nil, errors.New("we haven't implemented this primitive yet")
+	// 			}
+	// 			propertyContent["type"] = jsonType
+	// 		}
+	// 	}
+	// }
+
+	// All done.
+	return schemaItems, nil
+}
+
+// MarshalJSON provides a custom implementation of JSON marshalling, so that when the DynamicMessage is recursively
+// marshalled using the standard Go json.marshal() mechanism, the resulting JSON representation is a compact representation
+// of just the important message payload (and not the message definition).  It's important that this representation matches
+// the schema generated by GenerateJSONSchema().
+func (d *DynamicMessage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Fields)
+}
+
+//UnmarshalJSON provides a custom implementation of JSON unmarshalling. Using the dynamicMessage provided, Msgspec is used to
+//determine the individual parsing of each JSON encoded payload item into the correct Go type. It is important each type is
+//correct so that the message serializes correctly and is understood by the ROS system
+func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
+	return errors.New("UnmarshalJSON function not yet written")
 }
 
 // DEFINE PRIVATE STATIC FUNCTIONS.
