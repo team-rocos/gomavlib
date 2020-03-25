@@ -141,15 +141,51 @@ func (d *DialectRT) getMsgById(id uint32) (*dialectMessage, bool) {
 	return &msg, ok
 }
 
+// CreateMessageById returns a DynamicMessage created from finding the message in the DialectRT given corresponding to id.
+func (d *DialectRT) CreateMessageById(id uint32) (*DynamicMessage, error) {
+	dm := &DynamicMessage{}
+	var fields map[string]interface{}
+	msg, ok := d.messages[id]
+	if !ok {
+		errorString := fmt.Sprintf("message with id=%d does not exist in this dialectRT", id)
+		return dm, errors.New(errorString)
+	}
+	dm.t = msg
+	dm.Fields = fields
+	return dm, nil
+}
+
+// CreateMessageByName returns a DynamicMessage created from finding the message in the DialectRT given corresponding to name.
+func (d *DialectRT) CreateMessageByName(name string) (*DynamicMessage, error) {
+	dm := &DynamicMessage{}
+	var fields map[string]interface{}
+	var msg *dialectMessageRT
+	foundMessage := false
+	for _, m := range d.messages {
+		if m.msg.OriginalName == name {
+			msg = m
+			foundMessage = true
+			break
+		}
+	}
+	if !foundMessage {
+		errorString := "message with name " + name + " does not exist in this dialectRT"
+		return dm, errors.New(errorString)
+	}
+	dm.t = msg
+	dm.Fields = fields
+	return dm, nil
+}
+
 // DynamicMessage :: Message
 
-// GetId : DynamicMessage function to meet Message interface requirements
+// GetId returns the MAVLink message ID (mID) of the DynamicMessage.
 func (d DynamicMessage) GetId() uint32 {
 	// Just look up the Id and return it.
 	return uint32(d.t.msg.Id)
 }
 
-// SetField : DynamicMessage function to meet Message interface requirements
+// SetField sets DynamicMessage field matching field string, and based on its Type
 func (d DynamicMessage) SetField(field string, value interface{}) error {
 	// Search through the list of fields that the message is supposed to have.
 	var fieldInfo *libgen.OutField
@@ -374,12 +410,12 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 	return nil
 }
 
-// GetName : returns OriginalName (in mavlink format)
+// GetName returns OriginalName (in mavlink format)
 func (d DynamicMessage) GetName() string {
 	return d.t.msg.OriginalName
 }
 
-// GenerateJSONSchema : DynamicMessage exported function
+// GenerateJSONSchema DynamicMessage exported function
 func (d DynamicMessage) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
 	return d.t.GenerateJSONSchema(prefix, topic)
 }
@@ -419,106 +455,106 @@ func (mp *dialectMessageRT) GenerateJSONSchema(prefix string, topic string) ([]b
 	}
 
 	// All done.
-	return schemaString, errors.New("GenerateJSONSchema not yet written")
+	return schemaString, nil
 }
 
 func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[string]interface{}, error) {
 	// // Each message's schema indicates that it is an 'object' with some nested properties: those properties are the fields and their types.
-	//properties := make(map[string]interface{})
+	properties := make(map[string]interface{})
 	schemaItems := make(map[string]interface{})
-	// schemaItems["type"] = "object"
-	// schemaItems["title"] = topic
-	// schemaItems["properties"] = properties
+	schemaItems["type"] = "object"
+	schemaItems["title"] = topic
+	schemaItems["properties"] = properties
 
-	// // Iterate over each of the fields in the message.
-	// for _, field := range mp.msg.Fields {
-	// 	if field.ArrayLength != 0 {
-	// 		// It's an array.
-	// 		propertyContent := make(map[string]interface{})
-	// 		properties[field.Name] = propertyContent
+	// Iterate over each of the fields in the message.
+	for _, field := range mp.msg.Fields {
+		if field.ArrayLength != 0 {
+			// It's an array.
+			propertyContent := make(map[string]interface{})
+			properties[field.Name] = propertyContent
 
-	// 		if field.Type == "uint8" {
-	// 			propertyContent["title"] = topic + Sep + field.Name
-	// 			propertyContent["type"] = "string"
-	// 		} else {
-	// 			// Arrays all have a type of 'array', regardless of that the hold, then the 'item' keyword determines what type goes in the array.
-	// 			propertyContent["type"] = "array"
-	// 			propertyContent["title"] = topic + Sep + field.Name
-	// 			arrayItems := make(map[string]interface{})
-	// 			propertyContent["items"] = arrayItems
+			if field.Type == "uint8" {
+				propertyContent["title"] = topic + Sep + field.Name
+				propertyContent["type"] = "string"
+			} else {
+				// Arrays all have a type of 'array', regardless of that the hold, then the 'item' keyword determines what type goes in the array.
+				propertyContent["type"] = "array"
+				propertyContent["title"] = topic + Sep + field.Name
+				arrayItems := make(map[string]interface{})
+				propertyContent["items"] = arrayItems
 
-	// 			// Need to handle each type appropriately.
-	// 			if field.Type == "string" {
-	// 				arrayItems["type"] = "string"
-	// 			} else if field.Type == "time" {
-	// 				timeItems := make(map[string]interface{})
-	// 				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-	// 				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-	// 				arrayItems["type"] = "object"
-	// 				arrayItems["properties"] = timeItems
-	// 			} else if field.Type == "duration" {
-	// 				timeItems := make(map[string]interface{})
-	// 				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-	// 				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-	// 				arrayItems["type"] = "object"
-	// 				arrayItems["properties"] = timeItems
-	// 			} else {
-	// 				// It's a primitive.
-	// 				var jsonType string
-	// 				if field.Type == "int8" || field.Type == "int16" || field.Type == "uint16" ||
-	// 					field.Type == "int32" || field.Type == "uint32" || field.Type == "int64" || field.Type == "uint64" {
-	// 					jsonType = "integer"
-	// 				} else if field.Type == "float32" || field.Type == "float64" {
-	// 					jsonType = "number"
-	// 				} else if field.Type == "bool" {
-	// 					jsonType = "bool"
-	// 				} else {
-	// 					// Something went wrong.
-	// 					return nil, errors.New("we haven't implemented this primitive yet")
-	// 				}
-	// 				arrayItems["type"] = jsonType
-	// 			}
-	// 		}
-	// 	} else {
-	// 		// It's a scalar.
-	// 		propertyContent := make(map[string]interface{})
-	// 		properties[field.Name] = propertyContent
-	// 		propertyContent["title"] = topic + Sep + field.Name
+				// Need to handle each type appropriately.
+				if field.Type == "string" {
+					arrayItems["type"] = "string"
+				} else if field.Type == "time" {
+					timeItems := make(map[string]interface{})
+					timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+					timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+					arrayItems["type"] = "object"
+					arrayItems["properties"] = timeItems
+				} else if field.Type == "duration" {
+					timeItems := make(map[string]interface{})
+					timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+					timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+					arrayItems["type"] = "object"
+					arrayItems["properties"] = timeItems
+				} else {
+					// It's a primitive.
+					var jsonType string
+					if field.Type == "int8" || field.Type == "int16" || field.Type == "uint16" ||
+						field.Type == "int32" || field.Type == "uint32" || field.Type == "int64" || field.Type == "uint64" {
+						jsonType = "integer"
+					} else if field.Type == "float32" || field.Type == "float64" {
+						jsonType = "number"
+					} else if field.Type == "bool" {
+						jsonType = "bool"
+					} else {
+						// Something went wrong.
+						return nil, errors.New("we haven't implemented this primitive yet")
+					}
+					arrayItems["type"] = jsonType
+				}
+			}
+		} else {
+			// It's a scalar.
+			propertyContent := make(map[string]interface{})
+			properties[field.Name] = propertyContent
+			propertyContent["title"] = topic + Sep + field.Name
 
-	// 		if field.Type == "string" {
-	// 			propertyContent["type"] = "string"
-	// 		} else if field.Type == "time" {
-	// 			timeItems := make(map[string]interface{})
-	// 			timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-	// 			timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-	// 			propertyContent["type"] = "object"
-	// 			propertyContent["properties"] = timeItems
-	// 		} else if field.Type == "duration" {
-	// 			timeItems := make(map[string]interface{})
-	// 			timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-	// 			timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-	// 			propertyContent["type"] = "object"
-	// 			propertyContent["properties"] = timeItems
-	// 		} else {
-	// 			// It's a primitive.
-	// 			var jsonType string
-	// 			if field.Type == "int8" || field.Type == "uint8" || field.Type == "int16" || field.Type == "uint16" ||
-	// 				field.Type == "int32" || field.Type == "uint32" || field.Type == "int64" || field.Type == "uint64" {
-	// 				jsonType = "integer"
-	// 				jsonType = "integer"
-	// 				jsonType = "integer"
-	// 			} else if field.Type == "float32" || field.Type == "float64" {
-	// 				jsonType = "number"
-	// 			} else if field.Type == "bool" {
-	// 				jsonType = "bool"
-	// 			} else {
-	// 				// Something went wrong.
-	// 				return nil, errors.New("we haven't implemented this primitive yet")
-	// 			}
-	// 			propertyContent["type"] = jsonType
-	// 		}
-	// 	}
-	// }
+			if field.Type == "string" {
+				propertyContent["type"] = "string"
+			} else if field.Type == "time" {
+				timeItems := make(map[string]interface{})
+				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+				propertyContent["type"] = "object"
+				propertyContent["properties"] = timeItems
+			} else if field.Type == "duration" {
+				timeItems := make(map[string]interface{})
+				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+				propertyContent["type"] = "object"
+				propertyContent["properties"] = timeItems
+			} else {
+				// It's a primitive.
+				var jsonType string
+				if field.Type == "int8" || field.Type == "uint8" || field.Type == "int16" || field.Type == "uint16" ||
+					field.Type == "int32" || field.Type == "uint32" || field.Type == "int64" || field.Type == "uint64" {
+					jsonType = "integer"
+					jsonType = "integer"
+					jsonType = "integer"
+				} else if field.Type == "float32" || field.Type == "float64" {
+					jsonType = "number"
+				} else if field.Type == "bool" {
+					jsonType = "bool"
+				} else {
+					// Something went wrong.
+					return nil, errors.New("we haven't implemented this primitive yet")
+				}
+				propertyContent["type"] = jsonType
+			}
+		}
+	}
 
 	// All done.
 	return schemaItems, nil
@@ -532,7 +568,7 @@ func (d *DynamicMessage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.Fields)
 }
 
-//UnmarshalJSON provides a custom implementation of JSON unmarshalling. Using the dynamicMessage provided, Msgspec is used to
+//UnmarshalJSON provides a custom implementation of JSON unmarshalling. Using the DynamicMessage provided, Msgspec is used to
 //determine the individual parsing of each JSON encoded payload item into the correct Go type. It is important each type is
 //correct so that the message serializes correctly and is understood by the ROS system
 func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {

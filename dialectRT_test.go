@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	libgen "github.com/team-rocos/gomavlib/commands/dialgen/libgen"
 )
@@ -13,6 +14,83 @@ import (
 
 // DEFINE PRIVATE TYPES AND STRUCTURES.
 // DEFINE PUBLIC STATIC FUNCTIONS.
+func TestCreateMessageById(t *testing.T) {
+	includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
+	defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+	require.NoError(t, err)
+
+	// Create dialect from the parsed defs.
+	dRT, err := NewDialectRT(version, defs)
+	require.NoError(t, err)
+
+	// Create dynamic message using id of each message in dRT
+	for _, mRT := range dRT.messages {
+		dm, err := dRT.CreateMessageById(uint32(mRT.msg.Id))
+		require.NoError(t, err)
+		require.Equal(t, mRT, dm.t)
+	}
+
+	// CreateMessageById using invalid id. Assert that error is returned
+	_, err = dRT.CreateMessageById(40000000)
+	assert.Error(t, err)
+}
+
+func TestCreateMessageByName(t *testing.T) {
+	includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
+	defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+	require.NoError(t, err)
+
+	// Create dialect from the parsed defs.
+	dRT, err := NewDialectRT(version, defs)
+	require.NoError(t, err)
+
+	// Create dynamic message by name using name from each mRT in dRT
+	for _, mRT := range dRT.messages {
+		dm, err := dRT.CreateMessageByName(mRT.msg.Name)
+		require.NoError(t, err)
+		require.Equal(t, mRT, dm.t)
+	}
+
+	// Create dynamic message using invalid name. Assert that error is returned
+	_, err = dRT.CreateMessageByName("abcdefghijklmnop***")
+	assert.Error(t, err)
+}
+
+func TestJSONMarshal(t *testing.T) {
+	for i, c := range casesMsgsTest {
+		dMsgCT, err := newDialectMessage(c.parsed)
+		require.NoError(t, err)
+		bytesEncoded, err := dMsgCT.encode(c.parsed, c.isV2)
+		require.NoError(t, err)
+		require.Equal(t, c.raw, bytesEncoded)
+
+		// Decode bytes using RT
+		includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
+		defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+		require.NoError(t, err)
+
+		fmt.Println(i, "...................................................................")
+
+		// Create dialect from the parsed defs.
+		dRT, err := NewDialectRT(version, defs)
+		dMsgRT := dRT.messages[c.id]
+		require.NoError(t, err)
+		require.Equal(t, uint(3), dRT.getVersion())
+
+		// Decode bytes using RT
+		msgDecoded, err := dMsgRT.decode(c.raw, c.isV2)
+		require.NoError(t, err)
+
+		bytesCreated, err := msgDecoded.(*DynamicMessage).MarshalJSON()
+		require.NoError(t, err)
+		fmt.Println(string(bytesCreated))
+		fmt.Println()
+		schemaBytes, err := msgDecoded.(*DynamicMessage).GenerateJSONSchema("/mavlink", "/topic")
+		require.NoError(t, err)
+		fmt.Println(string(schemaBytes))
+	}
+}
+
 func TestDialectRTCommonXML(t *testing.T) {
 	// Parse the XML file.
 	includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
@@ -71,12 +149,10 @@ func TestDialectRTCommonXML(t *testing.T) {
 			require.Equal(t, fCT.index, fRT.Index)
 			require.Equal(t, fCT.isExtension, fRT.IsExtension)
 		}
-
 	}
 }
 
 func TestDecodeAndEncodeRT0(t *testing.T) {
-
 	// Encode using CT
 	c := casesMsgsTest[0]
 	dMsgCT, err := newDialectMessage(c.parsed)
@@ -220,6 +296,7 @@ var casesMsgsTest = []struct {
 	isV2   bool
 	parsed Message
 	raw    []byte
+	id     uint32
 }{
 	{
 		"v1 message with array of enums",
@@ -241,6 +318,7 @@ var casesMsgsTest = []struct {
 			Command:     [5]MAV_CMD{1, 2, 3, 4, 5},
 		},
 		[]byte("\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x00\x00\x80\x3f\x00\x00\x00\x40\x00\x00\x40\x40\x00\x00\x80\x40\x00\x00\xa0\x40\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x02"),
+		332,
 	},
 	{
 		"v2 message with extensions",
@@ -258,6 +336,7 @@ var casesMsgsTest = []struct {
 			FlowRateY:      1,
 		},
 		[]byte("\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x3F\x00\x00\x80\x3F\x00\x00\x80\x3F\x07\x00\x08\x00\x09\x0A\x00\x00\x80\x3F\x00\x00\x80\x3F"),
+		100,
 	},
 	{
 		"v1 message with array",
@@ -271,6 +350,7 @@ var casesMsgsTest = []struct {
 			Covariance: [9]float32{1, 1, 1, 1, 1, 1, 1, 1, 1},
 		},
 		append([]byte("\x02\x00\x00\x00\x00\x00\x00\x00"), bytes.Repeat([]byte("\x00\x00\x80\x3F"), 16)...),
+		61,
 	},
 	{
 		"V2 message 74",
@@ -283,7 +363,25 @@ var casesMsgsTest = []struct {
 			Alt:         1234,
 			Climb:       1234,
 		},
-		[]byte("\x00\x40\x9A\x44\x00\x40\x9A\x44\x00\x40\x9A\x44\x00\x40\x9A\x44\x0C\x00\x7B"), // Need to change this
+		[]byte("\x00\x40\x9A\x44\x00\x40\x9A\x44\x00\x40\x9A\x44\x00\x40\x9A\x44\x0C\x00\x7B"),
+		74,
+	},
+	{
+		"V2 Message 311 with string",
+		true,
+		&MessageUavcanNodeInfo{
+			TimeUsec:       1,
+			UptimeSec:      2,
+			Name:           "sapog.px4.io",
+			HwVersionMajor: 3,
+			HwVersionMinor: 4,
+			HwUniqueId:     [16]uint8{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			SwVersionMajor: 5,
+			SwVersionMinor: 6,
+			SwVcsCommit:    7,
+		},
+		[]byte("\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x07\x00\x00\x00\x73\x61\x70\x6F\x67\x2E\x70\x78\x34\x2E\x69\x6F\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x04\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x05\x06"),
+		311,
 	},
 }
 
