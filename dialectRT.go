@@ -147,7 +147,7 @@ func (d *DialectRT) CreateMessageById(id uint32) (*DynamicMessage, error) {
 	var fields map[string]interface{}
 	msg, ok := d.messages[id]
 	if !ok {
-		errorString := fmt.Sprintf("Message with id=%d does not exist in this dialectRT", id)
+		errorString := fmt.Sprintf("message with id=%d does not exist in this dialectRT", id)
 		return dm, errors.New(errorString)
 	}
 	dm.t = msg
@@ -162,14 +162,14 @@ func (d *DialectRT) CreateMessageByName(name string) (*DynamicMessage, error) {
 	var msg *dialectMessageRT
 	foundMessage := false
 	for _, m := range d.messages {
-		if m.msg.Name == name {
+		if m.msg.OriginalName == name {
 			msg = m
 			foundMessage = true
 			break
 		}
 	}
 	if !foundMessage {
-		errorString := "Message with name " + name + " does not exist in this dialectRT"
+		errorString := "message with name " + name + " does not exist in this dialectRT"
 		return dm, errors.New(errorString)
 	}
 	dm.t = msg
@@ -185,7 +185,7 @@ func (d DynamicMessage) GetId() uint32 {
 	return uint32(d.t.msg.Id)
 }
 
-// SetField : sets DynamicMessage field matching field string, and based on its Type
+// SetField sets DynamicMessage field matching field string, and based on its Type
 func (d DynamicMessage) SetField(field string, value interface{}) error {
 	// Search through the list of fields that the message is supposed to have.
 	var fieldInfo *libgen.OutField
@@ -410,12 +410,12 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 	return nil
 }
 
-// GetName : returns OriginalName (in mavlink format)
+// GetName returns OriginalName (in mavlink format)
 func (d DynamicMessage) GetName() string {
 	return d.t.msg.OriginalName
 }
 
-// GenerateJSONSchema : DynamicMessage exported function
+// GenerateJSONSchema DynamicMessage exported function
 func (d DynamicMessage) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
 	return d.t.GenerateJSONSchema(prefix, topic)
 }
