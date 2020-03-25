@@ -69,6 +69,11 @@ type EventFrame struct {
 	Channel *Channel
 }
 
+// GetSeq returns the SequenceId of the frame. Works for both V1 and V2 frames.
+func (res *EventFrame) GetSeq() byte {
+	return res.Frame.GetSequenceId()
+}
+
 func (*EventFrame) isEventOut() {}
 
 // SystemId returns the frame system id.
