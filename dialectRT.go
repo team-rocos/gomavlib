@@ -379,6 +379,15 @@ func (d DynamicMessage) GetName() string {
 	return d.t.msg.OriginalName
 }
 
+// GenerateJSONSchema : DynamicMessage exported function
+func (d DynamicMessage) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
+	return d.t.GenerateJSONSchema(prefix, topic)
+}
+
+func (d DynamicMessage) generateJSONSchemaProperties(topic string) (map[string]interface{}, error) {
+	return d.t.generateJSONSchemaProperties(topic)
+}
+
 // JSON Methods
 const (
 	//Sep is a namespace separator string
@@ -415,7 +424,7 @@ func (mp *dialectMessageRT) GenerateJSONSchema(prefix string, topic string) ([]b
 
 func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[string]interface{}, error) {
 	// // Each message's schema indicates that it is an 'object' with some nested properties: those properties are the fields and their types.
-	// properties := make(map[string]interface{})
+	//properties := make(map[string]interface{})
 	schemaItems := make(map[string]interface{})
 	// schemaItems["type"] = "object"
 	// schemaItems["title"] = topic
@@ -472,58 +481,41 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 	// 		}
 	// 	} else {
 	// 		// It's a scalar.
-	// 		if field.IsBuiltin {
-	// 			propertyContent := make(map[string]interface{})
-	// 			properties[field.Name] = propertyContent
-	// 			propertyContent["title"] = topic + Sep + field.Name
+	// 		propertyContent := make(map[string]interface{})
+	// 		properties[field.Name] = propertyContent
+	// 		propertyContent["title"] = topic + Sep + field.Name
 
-	// 			if field.Type == "string" {
-	// 				propertyContent["type"] = "string"
-	// 			} else if field.Type == "time" {
-	// 				timeItems := make(map[string]interface{})
-	// 				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-	// 				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-	// 				propertyContent["type"] = "object"
-	// 				propertyContent["properties"] = timeItems
-	// 			} else if field.Type == "duration" {
-	// 				timeItems := make(map[string]interface{})
-	// 				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-	// 				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-	// 				propertyContent["type"] = "object"
-	// 				propertyContent["properties"] = timeItems
-	// 			} else {
-	// 				// It's a primitive.
-	// 				var jsonType string
-	// 				if field.GoType == "int8" || field.GoType == "uint8" || field.GoType == "int16" || field.GoType == "uint16" ||
-	// 					field.GoType == "int32" || field.GoType == "uint32" || field.GoType == "int64" || field.GoType == "uint64" {
-	// 					jsonType = "integer"
-	// 					jsonType = "integer"
-	// 					jsonType = "integer"
-	// 				} else if field.GoType == "float32" || field.GoType == "float64" {
-	// 					jsonType = "number"
-	// 				} else if field.GoType == "bool" {
-	// 					jsonType = "bool"
-	// 				} else {
-	// 					// Something went wrong.
-	// 					return nil, errors.New("we haven't implemented this primitive yet")
-	// 				}
-	// 				propertyContent["type"] = jsonType
-	// 			}
+	// 		if field.Type == "string" {
+	// 			propertyContent["type"] = "string"
+	// 		} else if field.Type == "time" {
+	// 			timeItems := make(map[string]interface{})
+	// 			timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+	// 			timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+	// 			propertyContent["type"] = "object"
+	// 			propertyContent["properties"] = timeItems
+	// 		} else if field.Type == "duration" {
+	// 			timeItems := make(map[string]interface{})
+	// 			timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
+	// 			timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
+	// 			propertyContent["type"] = "object"
+	// 			propertyContent["properties"] = timeItems
 	// 		} else {
-	// 			// It's another nested message.
-
-	// 			// Generate the nested type.
-	// 			msgType, err := newDynamicMessageTypeNested(field.Type, field.Package)
-	// 			if err != nil {
-	// 				return nil, errors.Wrap(err, "Schema Field: "+field.Name)
+	// 			// It's a primitive.
+	// 			var jsonType string
+	// 			if field.Type == "int8" || field.Type == "uint8" || field.Type == "int16" || field.Type == "uint16" ||
+	// 				field.Type == "int32" || field.Type == "uint32" || field.Type == "int64" || field.Type == "uint64" {
+	// 				jsonType = "integer"
+	// 				jsonType = "integer"
+	// 				jsonType = "integer"
+	// 			} else if field.Type == "float32" || field.Type == "float64" {
+	// 				jsonType = "number"
+	// 			} else if field.Type == "bool" {
+	// 				jsonType = "bool"
+	// 			} else {
+	// 				// Something went wrong.
+	// 				return nil, errors.New("we haven't implemented this primitive yet")
 	// 			}
-
-	// 			// Recursively generate schema information for the nested type.
-	// 			schemaElement, err := msgType.generateJSONSchemaProperties(topic + Sep + field.Name)
-	// 			if err != nil {
-	// 				return nil, errors.Wrap(err, "Schema Field:"+field.Name)
-	// 			}
-	// 			properties[field.Name] = schemaElement
+	// 			propertyContent["type"] = jsonType
 	// 		}
 	// 	}
 	// }
