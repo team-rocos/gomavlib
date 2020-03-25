@@ -20,6 +20,8 @@ type Frame interface {
 	GetChecksum() uint16
 	// generate a clone of the frame
 	Clone() Frame
+	// the sequence id of the frame
+	GetSequenceId() byte
 }
 
 // FrameV1 represents a 1.0 frame.
@@ -29,6 +31,11 @@ type FrameV1 struct {
 	ComponentId byte
 	Message     Message
 	Checksum    uint16
+}
+
+// GetSequenceId returns the SequenceId of the frame
+func (f *FrameV1) GetSequenceId() byte {
+	return f.SequenceId
 }
 
 // Clone is part of the Frame interface.
@@ -79,6 +86,11 @@ type FrameV2 struct {
 	SignatureLinkId     byte
 	SignatureTimestamp  uint64
 	Signature           *Signature
+}
+
+// GetSequenceId returns the SequenceId of the frame
+func (f *FrameV2) GetSequenceId() byte {
+	return f.SequenceId
 }
 
 // Clone is part of the Frame interface.
