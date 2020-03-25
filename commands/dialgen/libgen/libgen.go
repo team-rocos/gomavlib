@@ -138,8 +138,6 @@ func definitionProcess(version *string, defsProcessed map[string]struct{}, isRem
 	}
 	defsProcessed[defAddr] = struct{}{}
 
-	fmt.Fprintf(os.Stderr, "definition %s\n", defAddr)
-
 	content, err := definitionGet(isRemote, defAddr)
 	if err != nil {
 		return nil, err
@@ -188,14 +186,14 @@ func definitionProcess(version *string, defsProcessed map[string]struct{}, isRem
 			}
 			// Finished searching through specified directories, but include file not found
 			if !includeFileFound {
-				errString := "Include file " + inc + " not found in include directories specified"
+				errString := "include file " + inc + " not found in include directories specified"
 				err := errors.New(errString)
 				return outDefs, err
 			}
 
 		} else {
 			// No include directories specified as command line arguments
-			err := errors.New("No include directories specified in command line arguments, and there are include files specified in xml file")
+			err := errors.New("no include directories specified in command line arguments, and there are include files specified in xml file")
 			return outDefs, err
 		}
 		subDefs, err := definitionProcess(version, defsProcessed, isRemote, inc, includeDirectories)
@@ -331,11 +329,8 @@ func fieldProcess(field *DialectField, index int) (*OutField, error) {
 			arrayLen = matches[2]
 			typ = matches[1]
 		}
-		var err error
-		outF.ArrayLength, err = strconv.Atoi(matches[2])
-		if err != nil {
-			fmt.Println("Error: ", err)
-		}
+		// Ignore error from strconv.Atoi - If there is an error, outF.ArrayLength is simply yyset to 0.
+		outF.ArrayLength, _ = strconv.Atoi(matches[2])
 	} else {
 		outF.ArrayLength = 0
 	}
