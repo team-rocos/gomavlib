@@ -386,21 +386,12 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 		}
 	case "string":
 		// Try to convert the value into a string.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]string); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []string")
-			}
+		if v, ok := value.(string); ok {
+			// This is the correct type, so save it into our message.
+			d.Fields[field] = v
 		} else {
-			if v, ok := value.(string); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected string")
-			}
+			// The value was the wrong type.
+			return errors.New("incorrect type for field: " + field + " - expected string")
 		}
 	default:
 		return errors.New("unsupported field type in dynamic MAVLink message")
@@ -629,7 +620,6 @@ func (mp *dialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 	// Create the dynamic message which we're gonna fill up.
 	dm := mp.newMsg()
 
-	// Decode field by field.
 	for _, fieldDef := range mp.msg.Fields { // TODO - Hmm, this implies that mp.msg.Fields is in order?  In that case, why do we need orderedFields?
 		// Skip extensions in V1 frames.
 		if isFrameV2 == false && fieldDef.IsExtension == true {
@@ -859,26 +849,19 @@ func (mp *dialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				}
 			}
 		case "string":
-			if fieldDef.ArrayLength != 0 {
-				var allVals []string
-				var val string
-				for i := 0; i < fieldDef.ArrayLength; i++ {
-					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
-					}
-					allVals = append(allVals, val)
-				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
-				}
-			} else {
-				var val string
+			var allVals string
+			var val uint8 // ASCII represented chars
+			for i := 0; i < fieldDef.ArrayLength; i++ {
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
 					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if val == 0 {
+					continue // Conitnue reading until end of string as determined by fieldDef.ArrayLength
 				}
+				allVals += string(val)
+			}
+			if err := dm.SetField(fieldDef.Name, allVals); err != nil {
+				return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
 			}
 		default:
 			// We don't know what to do with this type.
@@ -1120,24 +1103,22 @@ func (mp *dialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			}
 		case "string":
 			// Look up the actual value for this field.
-			if fieldDef.ArrayLength != 0 {
-				var val []string
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
-					if val, ok = v.([]string); !ok {
-						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
-					}
-				} // Else just use the default value.
-				binary.Write(buf, binary.LittleEndian, val)
-			} else {
-				var val string
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
-					if val, ok = v.(string); !ok {
-						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
-					}
-				} // Else just use the default value.
-				binary.Write(buf, binary.LittleEndian, val)
+			var val string
+			if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if val, ok = v.(string); !ok {
+					// The value stored for this field wasn't the right type.
+					return nil, errors.New("invalid value for field: " + fieldDef.Name)
+				}
+			} // Else just use the default value.
+			numberWritten := 0
+			for _, c := range val {
+				binary.Write(buf, binary.LittleEndian, uint8(c))
+				numberWritten++
+			}
+			// Write remaining zeros if not yet filled up to ArrayLength
+			for numberWritten < fieldDef.ArrayLength {
+				binary.Write(buf, binary.LittleEndian, uint8(0x0))
+				numberWritten++
 			}
 		default:
 			// We don't know what to do with this type.
