@@ -23,15 +23,6 @@ type DialectRT struct {
 // Assert to check we're implementing the interfaces we expect to be.
 var _ Dialect = &DialectRT{}
 
-// DynamicMessage : Used for RT message generation
-type DynamicMessage struct {
-	t      *dialectMessageRT
-	Fields map[string]interface{}
-}
-
-// Assert to check we're implementing the interfaces we expect to be.
-var _ Message = &DynamicMessage{}
-
 // DEFINE PRIVATE TYPES AND STRUCTURES.
 
 type dialectMessageRT struct {
@@ -142,9 +133,10 @@ func (d *DialectRT) getMsgById(id uint32) (*dialectMessage, bool) {
 }
 
 // CreateMessageById returns a DynamicMessage created from finding the message in the DialectRT given corresponding to id.
+// The Fields map in the DynamicMessage created is empty.
 func (d *DialectRT) CreateMessageById(id uint32) (*DynamicMessage, error) {
 	dm := &DynamicMessage{}
-	var fields map[string]interface{}
+	fields := make(map[string]interface{})
 	msg, ok := d.messages[id]
 	if !ok {
 		errorString := fmt.Sprintf("message with id=%d does not exist in this dialectRT", id)
@@ -156,9 +148,10 @@ func (d *DialectRT) CreateMessageById(id uint32) (*DynamicMessage, error) {
 }
 
 // CreateMessageByName returns a DynamicMessage created from finding the message in the DialectRT given corresponding to name.
+// The Fields map in the DynamicMessage created is empty.
 func (d *DialectRT) CreateMessageByName(name string) (*DynamicMessage, error) {
 	dm := &DynamicMessage{}
-	var fields map[string]interface{}
+	fields := make(map[string]interface{})
 	var msg *dialectMessageRT
 	foundMessage := false
 	for _, m := range d.messages {
@@ -177,245 +170,7 @@ func (d *DialectRT) CreateMessageByName(name string) (*DynamicMessage, error) {
 	return dm, nil
 }
 
-// DynamicMessage :: Message
-
-// GetId returns the MAVLink message ID (mID) of the DynamicMessage.
-func (d DynamicMessage) GetId() uint32 {
-	// Just look up the Id and return it.
-	return uint32(d.t.msg.Id)
-}
-
-// SetField sets DynamicMessage field matching field string, and based on its Type
-func (d DynamicMessage) SetField(field string, value interface{}) error {
-	// Search through the list of fields that the message is supposed to have.
-	var fieldInfo *libgen.OutField
-	for _, v := range d.t.msg.Fields {
-		if v.Name == field {
-			// This is the field we are after, so remember it.
-			fieldInfo = v
-			break
-		}
-	}
-
-	// If we didn't find anything, that means this type of message isn't supposed to have a field with that name.
-	if fieldInfo == nil {
-		return errors.New("invalid field name: " + field)
-	}
-
-	// Else, need to check that the object we've been passed is the right type for the matching field.
-	switch fieldInfo.Type {
-	case "int8":
-		// Try to convert the value into an int8.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]int8); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []int8")
-			}
-		} else {
-			if v, ok := value.(int8); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected int8")
-			}
-		}
-	case "uint8":
-		// Try to convert the value into an uint8.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]uint8); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []uint8")
-			}
-		} else {
-			if v, ok := value.(uint8); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected uint8")
-			}
-		}
-	case "int16":
-		// Try to convert the value into an int16.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]int16); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []int16")
-			}
-		} else {
-			if v, ok := value.(int16); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected int16")
-			}
-		}
-	case "uint16":
-		// Try to convert the value into an uint16.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]uint16); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []uint16")
-			}
-		} else {
-			if v, ok := value.(uint16); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected uint16")
-			}
-		}
-	case "int32":
-		// Try to convert the value into an int32.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]int32); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []int32")
-			}
-		} else {
-			if v, ok := value.(int32); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected int32")
-			}
-		}
-	case "uint32":
-		// Try to convert the value into an uint32.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]uint32); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []uint32")
-			}
-		} else {
-			if v, ok := value.(uint32); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected uint32")
-			}
-		}
-	case "int64":
-		// Try to convert the value into an int64.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]int64); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []int64")
-			}
-		} else {
-			if v, ok := value.(int64); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected int64")
-			}
-		}
-	case "uint64":
-		// Try to convert the value into an uint64.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]uint64); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []uint64")
-			}
-		} else {
-			if v, ok := value.(uint64); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected uint64")
-			}
-		}
-	case "float64":
-		// Try to convert the value into an float64.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]float64); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []float64")
-			}
-		} else {
-			if v, ok := value.(float64); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected float64")
-			}
-		}
-	case "float32":
-		// Try to convert the value into an float32.
-		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]float32); ok {
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []float32")
-			}
-		} else {
-			if v, ok := value.(float32); ok {
-				// This is the correct type, so save it into our message.
-				d.Fields[field] = v
-			} else {
-				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected float32")
-			}
-		}
-	case "string":
-		// Try to convert the value into a string.
-		if v, ok := value.(string); ok {
-			// This is the correct type, so save it into our message.
-			d.Fields[field] = v
-		} else {
-			// The value was the wrong type.
-			return errors.New("incorrect type for field: " + field + " - expected string")
-		}
-	default:
-		return errors.New("unsupported field type in dynamic MAVLink message")
-	}
-
-	// If we make it here, should mean everything went ok.
-	return nil
-}
-
-// GetName returns OriginalName (in mavlink format)
-func (d DynamicMessage) GetName() string {
-	return d.t.msg.OriginalName
-}
-
-// GenerateJSONSchema DynamicMessage exported function
-func (d DynamicMessage) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
-	return d.t.GenerateJSONSchema(prefix, topic)
-}
-
-func (d DynamicMessage) generateJSONSchemaProperties(topic string) (map[string]interface{}, error) {
-	return d.t.generateJSONSchemaProperties(topic)
-}
-
-// JSON Methods
+// JSON Variables
 const (
 	//Sep is a namespace separator string
 	Sep = "/"
@@ -425,7 +180,7 @@ const (
 	PrivateNS = "~"
 )
 
-// GenerateJSONSchema generates a (primitive) JSON schema for the associated DynamicMessageType; however note that since
+// GenerateJSONSchema generates a (primitive) JSON schema for the associated DynamicMessage; however note that since
 // we are mostly interested in making schema's for particular _topics_, the function takes a string prefix, and string topic name, which are
 // used to id the resulting schema.
 func (mp *dialectMessageRT) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
@@ -459,7 +214,7 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 
 	// Iterate over each of the fields in the message.
 	for _, field := range mp.msg.Fields {
-		if field.ArrayLength != 0 {
+		if field.ArrayLength != 0 && field.Type != "string" {
 			// It's an array.
 			propertyContent := make(map[string]interface{})
 			properties[field.Name] = propertyContent
@@ -468,6 +223,7 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 				propertyContent["title"] = topic + Sep + field.Name
 				propertyContent["type"] = "string"
 			} else {
+
 				// Arrays all have a type of 'array', regardless of that the hold, then the 'item' keyword determines what type goes in the array.
 				propertyContent["type"] = "array"
 				propertyContent["title"] = topic + Sep + field.Name
@@ -477,18 +233,6 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 				// Need to handle each type appropriately.
 				if field.Type == "string" {
 					arrayItems["type"] = "string"
-				} else if field.Type == "time" {
-					timeItems := make(map[string]interface{})
-					timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-					timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-					arrayItems["type"] = "object"
-					arrayItems["properties"] = timeItems
-				} else if field.Type == "duration" {
-					timeItems := make(map[string]interface{})
-					timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-					timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-					arrayItems["type"] = "object"
-					arrayItems["properties"] = timeItems
 				} else {
 					// It's a primitive.
 					var jsonType string
@@ -514,18 +258,6 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 
 			if field.Type == "string" {
 				propertyContent["type"] = "string"
-			} else if field.Type == "time" {
-				timeItems := make(map[string]interface{})
-				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-				propertyContent["type"] = "object"
-				propertyContent["properties"] = timeItems
-			} else if field.Type == "duration" {
-				timeItems := make(map[string]interface{})
-				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-				propertyContent["type"] = "object"
-				propertyContent["properties"] = timeItems
 			} else {
 				// It's a primitive.
 				var jsonType string
@@ -549,21 +281,6 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 
 	// All done.
 	return schemaItems, nil
-}
-
-// MarshalJSON provides a custom implementation of JSON marshalling, so that when the DynamicMessage is recursively
-// marshalled using the standard Go json.marshal() mechanism, the resulting JSON representation is a compact representation
-// of just the important message payload (and not the message definition).  It's important that this representation matches
-// the schema generated by GenerateJSONSchema().
-func (d *DynamicMessage) MarshalJSON() ([]byte, error) {
-	return json.Marshal(d.Fields)
-}
-
-//UnmarshalJSON provides a custom implementation of JSON unmarshalling. Using the DynamicMessage provided, Msgspec is used to
-//determine the individual parsing of each JSON encoded payload item into the correct Go type. It is important each type is
-//correct so that the message serializes correctly and is understood by the ROS system
-func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
-	return errors.New("UnmarshalJSON function not yet written")
 }
 
 // DEFINE PRIVATE STATIC FUNCTIONS.
@@ -856,7 +573,7 @@ func (mp *dialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
 				}
 				if val == 0 {
-					continue // Conitnue reading until end of string as determined by fieldDef.ArrayLength
+					continue // Continue reading until end of string as determined by fieldDef.ArrayLength
 				}
 				allVals += string(val)
 			}
