@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	libgen "github.com/team-rocos/gomavlib/commands/dialgen/libgen"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 // DEFINE PUBLIC TYPES AND STRUCTURES.
@@ -61,7 +62,6 @@ func TestCreateMessageByName(t *testing.T) {
 
 func TestJSONMarshalandUnmarshal(t *testing.T) {
 	for i, c := range casesMsgsTest {
-		//fmt.Println(JSONTest[i])
 		dMsgCT, err := newDialectMessage(c.parsed)
 		require.NoError(t, err)
 		bytesEncoded, err := dMsgCT.encode(c.parsed, c.isV2)
@@ -84,16 +84,36 @@ func TestJSONMarshalandUnmarshal(t *testing.T) {
 		// Decode bytes using RT
 		msgDecoded, err := dMsgRT.decode(c.raw, c.isV2)
 		require.NoError(t, err)
-		//fmt.Printf("%+v\n", msgDecoded)
+
+		// Marshal JSON
 		bytesCreated, err := msgDecoded.(*DynamicMessage).MarshalJSON()
 		require.NoError(t, err)
-		require.Equal(t, JSONTest[i], string(bytesCreated))
-		//fmt.Println(string(bytesCreated))
-		//fmt.Println()
+		if i == 7 || i == 8 { // Test cases with altered JSON
+			require.NotEqual(t, JSONTest[i], string(bytesCreated))
+		} else {
+			require.Equal(t, JSONTest[i], string(bytesCreated))
+		}
+
+		// Generate JSON Schema
 		schemaBytes, err := msgDecoded.(*DynamicMessage).GenerateJSONSchema("/mavlink", "/topic")
 		require.NoError(t, err)
-		require.Equal(t, schemasTest[i], string(schemaBytes))
-		//fmt.Println(string(schemaBytes))
+		if i == 7 { // Test case with altered schema example
+			require.NotEqual(t, schemasTest[i], string(schemaBytes))
+		} else {
+			require.Equal(t, schemasTest[i], string(schemaBytes))
+		}
+
+		// Validate JSON document against schema
+		schemaLoader := gojsonschema.NewStringLoader(schemasTest[i])
+		documentLoader := gojsonschema.NewStringLoader(JSONTest[i])
+		result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+		if i == 8 { // JSONTest[8] has a string entry where it should be float32 - should not validate against schemasTest[8]
+			require.NoError(t, err)
+			require.Equal(t, false, result.Valid())
+		} else {
+			require.NoError(t, err)
+			require.Equal(t, true, result.Valid())
+		}
 
 		// Test Unmarshal
 		// Create new DynamicMessage with empty fields for testing unmarshal
@@ -118,7 +138,6 @@ func TestDialectRTCommonXML(t *testing.T) {
 	require.Equal(t, uint(3), dRT.getVersion())
 
 	// Check Individual Messages for RT
-	// Checking Message 5
 	msg := dRT.messages[5].msg
 	require.Equal(t, "ChangeOperatorControl", msg.Name)
 	require.Equal(t, 5, msg.Id)
@@ -198,7 +217,6 @@ func TestDecodeAndEncodeRT(t *testing.T) {
 
 		//Make sure all fields of dMsgCT match equivalent values of RT msgDecoded
 		//Compare all fields of all RT and CT Messages
-		//v := reflect.TypeOf(msgDecodedCT)
 		v := reflect.ValueOf(msgDecodedCT).Elem()
 		for i := 0; i < len(dMsgCT.fields); i++ {
 			fCT := dMsgCT.fields[i]
@@ -206,21 +224,10 @@ func TestDecodeAndEncodeRT(t *testing.T) {
 			fRT := msgDecoded.(*DynamicMessage).Fields[OriginalName]
 			fCTVal := v.FieldByName(OriginalName).Interface()
 			fmt.Println(fRT)
-			fmt.Println(fCTVal) // TODO: Automate comparison - use reflect to extract values?
-			// if reflect.ValueOf(msgDecodedCT).Kind() == reflect.Slice {
-			// 	// fCTVal = reflect.ValueOf(msgDecodedCT).Interface()
-			// 	// fRT = reflect.ValueOf(fRT).Interface()
-			// 	// for i := 0; i < len(fCTVal); i++ {
-			// 	// 	require.Equal(t, fCTVal.Index(i), fRT.Index(i))
-			// 	// }
-			// } else {
-			// 	//require.Equal(t, v.Field(i).Interface(), fRT)
-			// }
-
-			//require.Equal(t, v.Field(i).Interface(), fRT)
+			fmt.Println(fCTVal)
 		}
 
-		// Try encoding using RT
+		// Encode using RT
 		bytesEncodedByRT, err := dMsgRT.encode(msgDecoded, c.isV2)
 		require.NoError(t, err)
 		fmt.Println(bytesEncodedByRT)
@@ -236,6 +243,8 @@ var schemasTest = []string{
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"HwUniqueId\":{\"title\":\"/mavlink/topic/HwUniqueId\",\"type\":\"string\"},\"HwVersionMajor\":{\"title\":\"/mavlink/topic/HwVersionMajor\",\"type\":\"integer\"},\"HwVersionMinor\":{\"title\":\"/mavlink/topic/HwVersionMinor\",\"type\":\"integer\"},\"Name\":{\"title\":\"/mavlink/topic/Name\",\"type\":\"string\"},\"SwVcsCommit\":{\"title\":\"/mavlink/topic/SwVcsCommit\",\"type\":\"integer\"},\"SwVersionMajor\":{\"title\":\"/mavlink/topic/SwVersionMajor\",\"type\":\"integer\"},\"SwVersionMinor\":{\"title\":\"/mavlink/topic/SwVersionMinor\",\"type\":\"integer\"},\"TimeUsec\":{\"title\":\"/mavlink/topic/TimeUsec\",\"type\":\"integer\"},\"UptimeSec\":{\"title\":\"/mavlink/topic/UptimeSec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"ParamId\":{\"title\":\"/mavlink/topic/ParamId\",\"type\":\"string\"},\"ParamIndex\":{\"title\":\"/mavlink/topic/ParamIndex\",\"type\":\"integer\"},\"TargetComponent\":{\"title\":\"/mavlink/topic/TargetComponent\",\"type\":\"integer\"},\"TargetSystem\":{\"title\":\"/mavlink/topic/TargetSystem\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"AngleOffset\":{\"title\":\"/mavlink/topic/AngleOffset\",\"type\":\"number\"},\"Distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/Distances\",\"type\":\"array\"},\"Frame\":{\"title\":\"/mavlink/topic/Frame\",\"type\":\"integer\"},\"Increment\":{\"title\":\"/mavlink/topic/Increment\",\"type\":\"integer\"},\"IncrementF\":{\"title\":\"/mavlink/topic/IncrementF\",\"type\":\"number\"},\"MaxDistance\":{\"title\":\"/mavlink/topic/MaxDistance\",\"type\":\"integer\"},\"MinDistance\":{\"title\":\"/mavlink/topic/MinDistance\",\"type\":\"integer\"},\"SensorType\":{\"title\":\"/mavlink/topic/SensorType\",\"type\":\"integer\"},\"TimeUsec\":{\"title\":\"/mavlink/topic/TimeUsec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
+	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"AngleOff\":{\"title\":\"/mavlink/topic/AngleOffset\",\"type\":\"number\"},\"Distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/Distances\",\"type\":\"array\"},\"Frame\":{\"title\":\"/mavlink/topic/Frame\",\"type\":\"integer\"},\"Increment\":{\"title\":\"/mavlink/topic/Increment\",\"type\":\"integer\"},\"IncrementF\":{\"title\":\"/mavlink/topic/IncrementF\",\"type\":\"number\"},\"MaxDistance\":{\"title\":\"/mavlink/topic/MaxDistance\",\"type\":\"integer\"},\"MinDistance\":{\"title\":\"/mavlink/topic/MinDistance\",\"type\":\"integer\"},\"SensorType\":{\"title\":\"/mavlink/topic/SensorType\",\"type\":\"integer\"},\"TimeUsec\":{\"title\":\"/mavlink/topic/TimeUsec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
+	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"AngleOffset\":{\"title\":\"/mavlink/topic/AngleOffset\",\"type\":\"number\"},\"Distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/Distances\",\"type\":\"array\"},\"Frame\":{\"title\":\"/mavlink/topic/Frame\",\"type\":\"integer\"},\"Increment\":{\"title\":\"/mavlink/topic/Increment\",\"type\":\"integer\"},\"IncrementF\":{\"title\":\"/mavlink/topic/IncrementF\",\"type\":\"number\"},\"MaxDistance\":{\"title\":\"/mavlink/topic/MaxDistance\",\"type\":\"integer\"},\"MinDistance\":{\"title\":\"/mavlink/topic/MinDistance\",\"type\":\"integer\"},\"SensorType\":{\"title\":\"/mavlink/topic/SensorType\",\"type\":\"integer\"},\"TimeUsec\":{\"title\":\"/mavlink/topic/TimeUsec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 }
 var JSONTest = []string{
 	"{\"AccX\":[1,2,3,4,5],\"AccY\":[1,2,3,4,5],\"AccZ\":[1,2,3,4,5],\"Command\":[1,2,3,4,5],\"PosX\":[1,2,3,4,5],\"PosY\":[1,2,3,4,5],\"PosYaw\":[1,2,3,4,5],\"PosZ\":[1,2,3,4,5],\"TimeUsec\":1,\"ValidPoints\":2,\"VelX\":[1,2,3,4,5],\"VelY\":[1,2,3,4,5],\"VelYaw\":[1,2,3,4,5],\"VelZ\":[1,2,3,4,5]}",
@@ -245,6 +254,8 @@ var JSONTest = []string{
 	"{\"HwUniqueId\":\"AQIDBAUGBwgJCgsMDQ4PEA==\",\"HwVersionMajor\":3,\"HwVersionMinor\":4,\"Name\":\"sapog.px4.io\",\"SwVcsCommit\":7,\"SwVersionMajor\":5,\"SwVersionMinor\":6,\"TimeUsec\":1,\"UptimeSec\":2}",
 	"{\"ParamId\":\"hopefullyWorks\",\"ParamIndex\":333,\"TargetComponent\":2,\"TargetSystem\":1}",
 	"{\"AngleOffset\":0,\"Distances\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72],\"Frame\":0,\"Increment\":36,\"IncrementF\":0,\"MaxDistance\":50,\"MinDistance\":1,\"SensorType\":2,\"TimeUsec\":1}",
+	"{\"AngleOffset\":0,\"Distances\":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72],\"Frame\":0,\"Increment\":36,\"IncrementF\":0,\"MaxDistance\":50,\"MinDistance\":1,\"SensorType\":2,\"TimeUsec\":1}",
+	"{\"AngleOffset\":\"invalidString\",\"Distances\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72],\"Frame\":0,\"Increment\":36,\"IncrementF\":0,\"MaxDistance\":50,\"MinDistance\":1,\"SensorType\":2,\"TimeUsec\":1}",
 }
 
 // Function that is not exported so copy and pasted here for testing purposes.
@@ -338,7 +349,7 @@ var casesMsgsTest = []struct {
 		&MessageUavcanNodeInfo{
 			TimeUsec:       1,
 			UptimeSec:      2,
-			Name:           "sapog.px4.io", // Less than 80 so must be null terminated
+			Name:           "sapog.px4.io",
 			HwVersionMajor: 3,
 			HwVersionMinor: 4,
 			HwUniqueId:     [16]uint8{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
@@ -363,6 +374,40 @@ var casesMsgsTest = []struct {
 	},
 	{
 		"V2 Message 330 with array of uint16",
+		true,
+		&MessageObstacleDistance{
+			TimeUsec:    1,
+			SensorType:  2,
+			Distances:   [72]uint16{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72},
+			Increment:   36,
+			MinDistance: 1,
+			MaxDistance: 50,
+			IncrementF:  0,
+			AngleOffset: 0,
+			Frame:       0,
+		},
+		[]byte("\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00\x09\x00\x0A\x00\x0B\x00\x0C\x00\x0D\x00\x0E\x00\x0F\x00\x10\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16\x00\x17\x00\x18\x00\x19\x00\x1A\x00\x1B\x00\x1C\x00\x1D\x00\x1E\x00\x1F\x00\x20\x00\x21\x00\x22\x00\x23\x00\x24\x00\x25\x00\x26\x00\x27\x00\x28\x00\x29\x00\x2A\x00\x2B\x00\x2C\x00\x2D\x00\x2E\x00\x2F\x00\x30\x00\x31\x00\x32\x00\x33\x00\x34\x00\x35\x00\x36\x00\x37\x00\x38\x00\x39\x00\x3A\x00\x3B\x00\x3C\x00\x3D\x00\x3E\x00\x3F\x00\x40\x00\x41\x00\x42\x00\x43\x00\x44\x00\x45\x00\x46\x00\x47\x00\x48\x00\x01\x00\x32\x00\x02\x24"),
+		330,
+	},
+	{
+		"V2 Message 330 with array of uint16 - Schema and JSON given should fail for this test case!",
+		true,
+		&MessageObstacleDistance{
+			TimeUsec:    1,
+			SensorType:  2,
+			Distances:   [72]uint16{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72},
+			Increment:   36,
+			MinDistance: 1,
+			MaxDistance: 50,
+			IncrementF:  0,
+			AngleOffset: 0,
+			Frame:       0,
+		},
+		[]byte("\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00\x09\x00\x0A\x00\x0B\x00\x0C\x00\x0D\x00\x0E\x00\x0F\x00\x10\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16\x00\x17\x00\x18\x00\x19\x00\x1A\x00\x1B\x00\x1C\x00\x1D\x00\x1E\x00\x1F\x00\x20\x00\x21\x00\x22\x00\x23\x00\x24\x00\x25\x00\x26\x00\x27\x00\x28\x00\x29\x00\x2A\x00\x2B\x00\x2C\x00\x2D\x00\x2E\x00\x2F\x00\x30\x00\x31\x00\x32\x00\x33\x00\x34\x00\x35\x00\x36\x00\x37\x00\x38\x00\x39\x00\x3A\x00\x3B\x00\x3C\x00\x3D\x00\x3E\x00\x3F\x00\x40\x00\x41\x00\x42\x00\x43\x00\x44\x00\x45\x00\x46\x00\x47\x00\x48\x00\x01\x00\x32\x00\x02\x24"),
+		330,
+	},
+	{
+		"V2 Message 330 with array of uint16 - JSONTest[8] should not validate to schemasTest[8] for this test case!",
 		true,
 		&MessageObstacleDistance{
 			TimeUsec:    1,
