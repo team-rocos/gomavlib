@@ -2,11 +2,14 @@ package gomavlib
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 
+	"github.com/buger/jsonparser"
 	"github.com/pkg/errors"
 	libgen "github.com/team-rocos/gomavlib/commands/dialgen/libgen"
 )
@@ -142,9 +145,10 @@ func (d *DialectRT) getMsgById(id uint32) (*dialectMessage, bool) {
 }
 
 // CreateMessageById returns a DynamicMessage created from finding the message in the DialectRT given corresponding to id.
+// The Fields map in the DynamicMessage created is empty.
 func (d *DialectRT) CreateMessageById(id uint32) (*DynamicMessage, error) {
 	dm := &DynamicMessage{}
-	var fields map[string]interface{}
+	fields := make(map[string]interface{})
 	msg, ok := d.messages[id]
 	if !ok {
 		errorString := fmt.Sprintf("message with id=%d does not exist in this dialectRT", id)
@@ -156,9 +160,10 @@ func (d *DialectRT) CreateMessageById(id uint32) (*DynamicMessage, error) {
 }
 
 // CreateMessageByName returns a DynamicMessage created from finding the message in the DialectRT given corresponding to name.
+// The Fields map in the DynamicMessage created is empty.
 func (d *DialectRT) CreateMessageByName(name string) (*DynamicMessage, error) {
 	dm := &DynamicMessage{}
-	var fields map[string]interface{}
+	fields := make(map[string]interface{})
 	var msg *dialectMessageRT
 	foundMessage := false
 	for _, m := range d.messages {
@@ -425,7 +430,7 @@ const (
 	PrivateNS = "~"
 )
 
-// GenerateJSONSchema generates a (primitive) JSON schema for the associated DynamicMessageType; however note that since
+// GenerateJSONSchema generates a (primitive) JSON schema for the associated DynamicMessage; however note that since
 // we are mostly interested in making schema's for particular _topics_, the function takes a string prefix, and string topic name, which are
 // used to id the resulting schema.
 func (mp *dialectMessageRT) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
@@ -459,7 +464,7 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 
 	// Iterate over each of the fields in the message.
 	for _, field := range mp.msg.Fields {
-		if field.ArrayLength != 0 {
+		if field.ArrayLength != 0 && field.Type != "string" {
 			// It's an array.
 			propertyContent := make(map[string]interface{})
 			properties[field.Name] = propertyContent
@@ -468,6 +473,7 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 				propertyContent["title"] = topic + Sep + field.Name
 				propertyContent["type"] = "string"
 			} else {
+
 				// Arrays all have a type of 'array', regardless of that the hold, then the 'item' keyword determines what type goes in the array.
 				propertyContent["type"] = "array"
 				propertyContent["title"] = topic + Sep + field.Name
@@ -477,18 +483,6 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 				// Need to handle each type appropriately.
 				if field.Type == "string" {
 					arrayItems["type"] = "string"
-				} else if field.Type == "time" {
-					timeItems := make(map[string]interface{})
-					timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-					timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-					arrayItems["type"] = "object"
-					arrayItems["properties"] = timeItems
-				} else if field.Type == "duration" {
-					timeItems := make(map[string]interface{})
-					timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-					timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-					arrayItems["type"] = "object"
-					arrayItems["properties"] = timeItems
 				} else {
 					// It's a primitive.
 					var jsonType string
@@ -514,18 +508,6 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 
 			if field.Type == "string" {
 				propertyContent["type"] = "string"
-			} else if field.Type == "time" {
-				timeItems := make(map[string]interface{})
-				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-				propertyContent["type"] = "object"
-				propertyContent["properties"] = timeItems
-			} else if field.Type == "duration" {
-				timeItems := make(map[string]interface{})
-				timeItems["sec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "sec"}
-				timeItems["nsec"] = map[string]string{"type": "integer", "title": topic + Sep + field.Name + Sep + "nsec"}
-				propertyContent["type"] = "object"
-				propertyContent["properties"] = timeItems
 			} else {
 				// It's a primitive.
 				var jsonType string
@@ -559,11 +541,196 @@ func (d *DynamicMessage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.Fields)
 }
 
-//UnmarshalJSON provides a custom implementation of JSON unmarshalling. Using the DynamicMessage provided, Msgspec is used to
-//determine the individual parsing of each JSON encoded payload item into the correct Go type. It is important each type is
-//correct so that the message serializes correctly and is understood by the ROS system
+//UnmarshalJSON provides a custom implementation of JSON unmarshalling. Using the DynamicMessage provided, d.t.msg is used to
+//determine the individual parsing of each JSON encoded payload item into the correct Type. It is important each type is
+//correct so that the message serializes correctly and is understood by the MAVlink system
 func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
-	return errors.New("UnmarshalJSON function not yet written")
+	//Delcaring temp variables to be used across the unmarshaller
+	var err error
+	var field *libgen.OutField
+	var keyName []byte
+	var data interface{}
+	var fieldExists bool
+
+	//Declaring jsonparser unmarshalling functions
+	var arrayHandler func([]byte, jsonparser.ValueType, int, error)
+	var objectHandler func([]byte, []byte, jsonparser.ValueType, int) error
+
+	//JSON key is an array
+	arrayHandler = func(key []byte, dataType jsonparser.ValueType, offset int, err error) {
+		switch dataType.String() {
+		//We have a string array
+		case "string":
+			d.Fields[field.Name] = append(d.Fields[field.Name].([]string), string(key))
+		//We have a number or int array.
+		case "number":
+			//We have a float to parse
+			if field.Type == "float64" || field.Type == "float32" {
+				data, err = strconv.ParseFloat(string(key), 64)
+				if err != nil {
+					errors.Wrap(err, "Field: "+field.Name)
+				}
+			} else {
+				data, err = strconv.ParseInt(string(key), 0, 64)
+				if err != nil {
+					errors.Wrap(err, "Field: "+field.Name)
+				}
+			}
+			//Append field to data array
+			switch field.Type {
+			case "int8":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]int8), int8((data.(int64))))
+			case "int16":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]int16), int16((data.(int64))))
+			case "int32":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]int32), int32((data.(int64))))
+			case "int64":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]int64), int64((data.(int64))))
+			case "uint8":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]uint8), uint8((data.(int64))))
+			case "uint16":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]uint16), uint16((data.(int64))))
+			case "uint32":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]uint32), uint32((data.(int64))))
+			case "uint64":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]uint64), uint64((data.(int64))))
+			case "float32":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]float32), float32((data.(float64))))
+			case "float64":
+				d.Fields[field.Name] = append(d.Fields[field.Name].([]float64), float64(data.(float64)))
+			}
+		//We have a bool array
+		case "boolean":
+			data, err := jsonparser.GetBoolean(buf, string(key))
+			_ = err
+			d.Fields[field.Name] = append(d.Fields[field.Name].([]bool), data)
+		}
+
+		//Null error as it is not returned in ArrayEach, requires package modification
+		_ = err
+		//Null keyName to prevent repeat scenarios of same key usage
+		_ = keyName
+
+	}
+
+	//JSON key handler
+	objectHandler = func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		//Store keyName for usage in ArrayEach function
+		keyName = key
+		fieldExists = false
+		//Find message spec field that matches JSON key
+		for _, f := range d.t.msg.Fields {
+			if string(key) == f.Name {
+				field = f
+				fieldExists = true
+			}
+		}
+		if fieldExists == true {
+			//Scalars First
+			switch dataType.String() {
+			//We have a JSON string
+			case "string":
+				//Special case where we have a byte array encoded as JSON string
+				if field.Type == "uint8" {
+					data, err := base64.StdEncoding.DecodeString(string(value))
+					if err != nil {
+						return errors.Wrap(err, "Byte Array Field: "+field.Name)
+					}
+					d.Fields[field.Name] = data
+				} else {
+					d.Fields[field.Name] = string(value)
+				}
+			//We have a JSON number or int
+			case "number":
+				//We have a float to parse
+				if field.Type == "float64" || field.Type == "float32" {
+					data, err = jsonparser.GetFloat(buf, string(key))
+					if err != nil {
+						return errors.Wrap(err, "Field: "+field.Name)
+					}
+					//We have an int to parse
+				} else {
+					data, err = jsonparser.GetInt(buf, string(key))
+					if err != nil {
+						return errors.Wrap(err, "Field: "+field.Name)
+					}
+				}
+				//Copy number value to message field
+				switch field.Type {
+				case "int8":
+					d.Fields[field.Name] = int8(data.(int64))
+				case "int16":
+					d.Fields[field.Name] = int16(data.(int64))
+				case "int32":
+					d.Fields[field.Name] = int32(data.(int64))
+				case "int64":
+					d.Fields[field.Name] = int64(data.(int64))
+				case "uint8":
+					d.Fields[field.Name] = uint8(data.(int64))
+				case "uint16":
+					d.Fields[field.Name] = uint16(data.(int64))
+				case "uint32":
+					d.Fields[field.Name] = uint32(data.(int64))
+				case "uint64":
+					d.Fields[field.Name] = uint64(data.(int64))
+				case "float32":
+					d.Fields[field.Name] = float32(data.(float64))
+				case "float64":
+					d.Fields[field.Name] = float64(data.(float64))
+				}
+			//We have a JSON bool
+			case "boolean":
+				data, err := jsonparser.GetBoolean(buf, string(key))
+				if err != nil {
+					return errors.Wrap(err, "Field: "+field.Name)
+				}
+				d.Fields[field.Name] = data
+			//We have a JSON array
+			case "array":
+				//Redeclare message array fields incase they do not exist
+				switch field.Type {
+				case "bool":
+					d.Fields[field.Name] = make([]bool, 0)
+				case "int8":
+					d.Fields[field.Name] = make([]int8, 0)
+				case "int16":
+					d.Fields[field.Name] = make([]int16, 0)
+				case "int32":
+					d.Fields[field.Name] = make([]int32, 0)
+				case "int64":
+					d.Fields[field.Name] = make([]int64, 0)
+				case "uint8":
+					d.Fields[field.Name] = make([]uint8, 0)
+				case "uint16":
+					d.Fields[field.Name] = make([]uint16, 0)
+				case "uint32":
+					d.Fields[field.Name] = make([]uint32, 0)
+				case "uint64":
+					d.Fields[field.Name] = make([]uint64, 0)
+				case "float32":
+					d.Fields[field.Name] = make([]float32, 0)
+				case "float64":
+					d.Fields[field.Name] = make([]float64, 0)
+				case "string":
+					d.Fields[field.Name] = make([]string, 0)
+				default:
+					//goType is a nested Message array
+					d.Fields[field.Name] = make([]Message, 0)
+				}
+				//Parse JSON array
+				jsonparser.ArrayEach(value, arrayHandler)
+			default:
+				//We do nothing here as blank fields may return value type NotExist or Null
+				err = errors.Wrap(err, "Null field: "+string(key))
+			}
+		} else {
+			return errors.New("Field Unknown: " + string(key))
+		}
+		return err
+	}
+	//Perform JSON object handler function
+	err = jsonparser.ObjectEach(buf, objectHandler)
+	return err
 }
 
 // DEFINE PRIVATE STATIC FUNCTIONS.
