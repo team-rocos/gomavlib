@@ -185,14 +185,14 @@ const (
 // used to id the resulting schema.
 func (mp *dialectMessageRT) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
 	// The JSON schema for a message consist of the (recursive) properties names/types:
-	schemaItems, err := mp.generateJSONSchemaProperties(prefix + topic)
+	schemaItems, err := mp.generateJSONSchemaProperties(prefix + Sep + topic)
 	if err != nil {
 		return nil, err
 	}
 
 	// Plus some extra keywords:
 	schemaItems["$schema"] = "https://json-schema.org/draft-07/schema#"
-	schemaItems["$id"] = prefix + topic
+	schemaItems["$id"] = prefix + Sep + topic
 
 	// The schema itself is created from the map of properties.
 	schemaString, err := json.Marshal(schemaItems)
