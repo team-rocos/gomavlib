@@ -89,9 +89,9 @@ func JSONMarshalAndUnmarshalTest(t *testing.T) {
 		bytesCreated, err := msgDecoded.(*DynamicMessage).MarshalJSON()
 		require.NoError(t, err)
 		if i == 7 || i == 8 { // Test cases with altered JSON
-			require.NotEqual(t, JSONTest[i], string(bytesCreated))
+			require.NotEqual(t, jsonTest[i], string(bytesCreated))
 		} else {
-			require.Equal(t, JSONTest[i], string(bytesCreated))
+			require.Equal(t, jsonTest[i], string(bytesCreated))
 		}
 
 		// Generate JSON Schema
@@ -105,7 +105,7 @@ func JSONMarshalAndUnmarshalTest(t *testing.T) {
 
 		// Validate JSON document against schema
 		schemaLoader := gojsonschema.NewStringLoader(schemasTest[i])
-		documentLoader := gojsonschema.NewStringLoader(JSONTest[i])
+		documentLoader := gojsonschema.NewStringLoader(jsonTest[i])
 		result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 		if i == 8 { // JSONTest[8] has a string entry where it should be float32 - should not validate against schemasTest[8]
 			require.NoError(t, err)
@@ -156,13 +156,13 @@ func DialectRTCommonXMLTest(t *testing.T) {
 	require.Equal(t, "float32", field.Type)
 
 	// Compare with DialectCT
-	dCT, err := NewDialectCT(3, CTMessages)
+	dCT, err := NewDialectCT(3, ctMessages)
 	require.NoError(t, err)
 
 	require.Equal(t, len(dCT.messages), len(dRT.messages))
 
 	// Compare RT and CT for all messages
-	for _, m := range CTMessages {
+	for _, m := range ctMessages {
 		index := m.GetId()
 		// Compare dCT with dRT
 		mCT := dCT.messages[index]
@@ -246,7 +246,7 @@ var schemasTest = []string{
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"AngleOff\":{\"title\":\"/mavlink/topic/AngleOffset\",\"type\":\"number\"},\"Distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/Distances\",\"type\":\"array\"},\"Frame\":{\"title\":\"/mavlink/topic/Frame\",\"type\":\"integer\"},\"Increment\":{\"title\":\"/mavlink/topic/Increment\",\"type\":\"integer\"},\"IncrementF\":{\"title\":\"/mavlink/topic/IncrementF\",\"type\":\"number\"},\"MaxDistance\":{\"title\":\"/mavlink/topic/MaxDistance\",\"type\":\"integer\"},\"MinDistance\":{\"title\":\"/mavlink/topic/MinDistance\",\"type\":\"integer\"},\"SensorType\":{\"title\":\"/mavlink/topic/SensorType\",\"type\":\"integer\"},\"TimeUsec\":{\"title\":\"/mavlink/topic/TimeUsec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"AngleOffset\":{\"title\":\"/mavlink/topic/AngleOffset\",\"type\":\"number\"},\"Distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/Distances\",\"type\":\"array\"},\"Frame\":{\"title\":\"/mavlink/topic/Frame\",\"type\":\"integer\"},\"Increment\":{\"title\":\"/mavlink/topic/Increment\",\"type\":\"integer\"},\"IncrementF\":{\"title\":\"/mavlink/topic/IncrementF\",\"type\":\"number\"},\"MaxDistance\":{\"title\":\"/mavlink/topic/MaxDistance\",\"type\":\"integer\"},\"MinDistance\":{\"title\":\"/mavlink/topic/MinDistance\",\"type\":\"integer\"},\"SensorType\":{\"title\":\"/mavlink/topic/SensorType\",\"type\":\"integer\"},\"TimeUsec\":{\"title\":\"/mavlink/topic/TimeUsec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 }
-var JSONTest = []string{
+var jsonTest = []string{
 	"{\"AccX\":[1,2,3,4,5],\"AccY\":[1,2,3,4,5],\"AccZ\":[1,2,3,4,5],\"Command\":[1,2,3,4,5],\"PosX\":[1,2,3,4,5],\"PosY\":[1,2,3,4,5],\"PosYaw\":[1,2,3,4,5],\"PosZ\":[1,2,3,4,5],\"TimeUsec\":1,\"ValidPoints\":2,\"VelX\":[1,2,3,4,5],\"VelY\":[1,2,3,4,5],\"VelYaw\":[1,2,3,4,5],\"VelZ\":[1,2,3,4,5]}",
 	"{\"FlowCompMX\":1,\"FlowCompMY\":1,\"FlowRateX\":1,\"FlowRateY\":1,\"FlowX\":7,\"FlowY\":8,\"GroundDistance\":1,\"Quality\":10,\"SensorId\":9,\"TimeUsec\":3}",
 	"{\"Covariance\":[1,1,1,1,1,1,1,1,1],\"Pitchspeed\":1,\"Q\":[1,1,1,1],\"Rollspeed\":1,\"TimeUsec\":2,\"Yawspeed\":1}",
@@ -424,8 +424,7 @@ var casesMsgsTest = []struct {
 		330,
 	},
 }
-
-var CTMessages = []Message{
+var ctMessages = []Message{
 	// common.xml
 	&MessageHeartbeat{},
 	&MessageSysStatus{},
