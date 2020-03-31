@@ -128,7 +128,7 @@ func JSONMarshalAndUnmarshalTest(t *testing.T) {
 func DialectRTCommonXMLTest(t *testing.T) {
 	// Parse the XML file.
 	includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+	defs, version, err := libgen.XMLToFields("./testingCommon.xml", includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
