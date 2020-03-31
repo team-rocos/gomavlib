@@ -12,7 +12,7 @@ import (
 
 // DynamicMessage : Used for RT message generation
 type DynamicMessage struct {
-	t      *dialectMessageRT
+	T      *DialectMessageRT
 	Fields map[string]interface{}
 }
 
@@ -24,14 +24,14 @@ var _ Message = &DynamicMessage{}
 // GetId returns the MAVLink message ID (mID) of the DynamicMessage.
 func (d DynamicMessage) GetId() uint32 {
 	// Just look up the Id and return it.
-	return uint32(d.t.msg.Id)
+	return uint32(d.T.Msg.Id)
 }
 
 // SetField sets DynamicMessage field matching field string, and based on its Type
 func (d DynamicMessage) SetField(field string, value interface{}) error {
 	// Search through the list of fields that the message is supposed to have.
 	var fieldInfo *libgen.OutField
-	for _, v := range d.t.msg.Fields {
+	for _, v := range d.T.Msg.Fields {
 		if v.Name == field {
 			// This is the field we are after, so remember it.
 			fieldInfo = v
@@ -245,16 +245,16 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 
 // GetName returns OriginalName (in mavlink format)
 func (d DynamicMessage) GetName() string {
-	return d.t.msg.OriginalName
+	return d.T.Msg.OriginalName
 }
 
 // GenerateJSONSchema DynamicMessage exported function
 func (d DynamicMessage) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
-	return d.t.GenerateJSONSchema(prefix, topic)
+	return d.T.GenerateJSONSchema(prefix, topic)
 }
 
 func (d DynamicMessage) generateJSONSchemaProperties(topic string) (map[string]interface{}, error) {
-	return d.t.generateJSONSchemaProperties(topic)
+	return d.T.generateJSONSchemaProperties(topic)
 }
 
 // MarshalJSON provides a custom implementation of JSON marshalling, so that when the DynamicMessage is recursively
@@ -343,7 +343,7 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 		keyName = key
 		fieldExists = false
 		//Find message spec field that matches JSON key
-		for _, f := range d.t.msg.Fields {
+		for _, f := range d.T.Msg.Fields {
 			if string(key) == f.Name {
 				field = f
 				fieldExists = true
