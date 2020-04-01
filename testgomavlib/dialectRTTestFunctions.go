@@ -21,7 +21,7 @@ import (
 // CreateMessageByIdTest creates a dynamic message based on the input id and checks that the values within it are valid.
 func CreateMessageByIdTest(t *testing.T) {
 	includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
@@ -40,10 +40,10 @@ func CreateMessageByIdTest(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// CreateMessageByIdTest creates a dynamic message based on the input name and checks that the values within it are valid.
+// CreateMessageByNameTest creates a dynamic message based on the input name and checks that the values within it are valid.
 func CreateMessageByNameTest(t *testing.T) {
 	includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
@@ -75,7 +75,7 @@ func JSONMarshalAndUnmarshalTest(t *testing.T) {
 
 		// Decode bytes using RT
 		includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
-		defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+		defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 		require.NoError(t, err)
 
 		// Create dialect from the parsed defs.
@@ -129,8 +129,13 @@ func JSONMarshalAndUnmarshalTest(t *testing.T) {
 
 // DialectRTCommonXMLTest tests the XMLToFields and RT dialect generation functionality added to gomavlib.
 func DialectRTCommonXMLTest(t *testing.T) {
+	// Ensure that XMLToFields works with no include files, if xml file has no includes
+	includeDirs := make([]string, 0)
+	_, _, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+	require.NoError(t, err)
+
 	// Parse the XML file.
-	includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
+	includeDirs = []string{"../mavlink-upstream/message_definitions/v1.0"}
 	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 	require.NoError(t, err)
 
@@ -207,7 +212,7 @@ func DecodeAndEncodeRTTest(t *testing.T) {
 
 		// Decode bytes using RT
 		includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
-		defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+		defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 		require.NoError(t, err)
 
 		// Create dialect from the parsed defs.
