@@ -20,7 +20,6 @@ import (
 
 // CreateMessageByIdTest creates a dynamic message based on the input id and checks that the values within it are valid.
 func CreateMessageByIdTest(t *testing.T, xmlPath string, includeDirs []string) {
-	//includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
 	defs, version, err := libgen.XMLToFields(xmlPath, includeDirs)
 	require.NoError(t, err)
 
