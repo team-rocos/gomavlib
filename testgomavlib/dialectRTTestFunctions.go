@@ -19,9 +19,9 @@ import (
 // DEFINE PUBLIC STATIC FUNCTIONS.
 
 // CreateMessageByIdTest creates a dynamic message based on the input id and checks that the values within it are valid.
-func CreateMessageByIdTest(t *testing.T) {
-	includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+func CreateMessageByIdTest(t *testing.T, xmlPath string, includeDirs []string) {
+	//includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
+	defs, version, err := libgen.XMLToFields(xmlPath, includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
@@ -41,9 +41,8 @@ func CreateMessageByIdTest(t *testing.T) {
 }
 
 // CreateMessageByNameTest creates a dynamic message based on the input name and checks that the values within it are valid.
-func CreateMessageByNameTest(t *testing.T) {
-	includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+func CreateMessageByNameTest(t *testing.T, xmlPath string, includeDirs []string) {
+	defs, version, err := libgen.XMLToFields(xmlPath, includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
@@ -63,7 +62,7 @@ func CreateMessageByNameTest(t *testing.T) {
 }
 
 // JSONMarshalAndUnmarshalTest tests JSON generation, schema generation, and JSON unmarshal code.
-func JSONMarshalAndUnmarshalTest(t *testing.T) {
+func JSONMarshalAndUnmarshalTest(t *testing.T, xmlPath string, includeDirs []string) {
 	for i, c := range casesMsgsTest {
 		dCT, err := gomavlib.NewDialectCT(3, ctMessages)
 		require.NoError(t, err)
@@ -74,8 +73,7 @@ func JSONMarshalAndUnmarshalTest(t *testing.T) {
 		require.Equal(t, c.raw, bytesEncoded)
 
 		// Decode bytes using RT
-		includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
-		defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+		defs, version, err := libgen.XMLToFields(xmlPath, includeDirs)
 		require.NoError(t, err)
 
 		// Create dialect from the parsed defs.
@@ -128,15 +126,13 @@ func JSONMarshalAndUnmarshalTest(t *testing.T) {
 }
 
 // DialectRTCommonXMLTest tests the XMLToFields and RT dialect generation functionality added to gomavlib.
-func DialectRTCommonXMLTest(t *testing.T) {
+func DialectRTCommonXMLTest(t *testing.T, xmlPath string, includeDirs []string) {
 	// Ensure that XMLToFields works with no include files, if xml file has no includes
-	includeDirs := make([]string, 0)
-	_, _, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+	_, _, err := libgen.XMLToFields(xmlPath, make([]string, 0))
 	require.NoError(t, err)
 
 	// Parse the XML file.
-	includeDirs = []string{"../mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+	defs, version, err := libgen.XMLToFields(xmlPath, includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
@@ -194,7 +190,7 @@ func DialectRTCommonXMLTest(t *testing.T) {
 }
 
 // DecodeAndEncodeRTTest tests run time (RT) encoding and decoding of messages
-func DecodeAndEncodeRTTest(t *testing.T) {
+func DecodeAndEncodeRTTest(t *testing.T, xmlPath string, includeDirs []string) {
 	for _, c := range casesMsgsTest {
 		// Encode using CT
 		dCT, err := gomavlib.NewDialectCT(3, ctMessages)
@@ -211,8 +207,7 @@ func DecodeAndEncodeRTTest(t *testing.T) {
 		require.Equal(t, c.parsed, msgDecodedCT)
 
 		// Decode bytes using RT
-		includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
-		defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+		defs, version, err := libgen.XMLToFields(xmlPath, includeDirs)
 		require.NoError(t, err)
 
 		// Create dialect from the parsed defs.
