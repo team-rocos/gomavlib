@@ -8,10 +8,11 @@ import (
 	"strings"
 )
 
-type dialectFieldType int
+// DialectFieldType enum
+type DialectFieldType int
 
 const (
-	typeDouble dialectFieldType = iota + 1
+	typeDouble DialectFieldType = iota + 1
 	typeUint64
 	typeInt64
 	typeFloat
@@ -24,7 +25,8 @@ const (
 	typeChar
 )
 
-var dialectFieldTypeFromGo = map[string]dialectFieldType{
+// DialectFieldTypeFromGo provides mavlink/Go type name conversion
+var DialectFieldTypeFromGo = map[string]DialectFieldType{
 	"float64": typeDouble,
 	"uint64":  typeUint64,
 	"int64":   typeInt64,
@@ -38,7 +40,8 @@ var dialectFieldTypeFromGo = map[string]dialectFieldType{
 	"string":  typeChar,
 }
 
-var dialectFieldTypeString = map[dialectFieldType]string{
+// DialectFieldTypeString provides type/string conversion
+var DialectFieldTypeString = map[DialectFieldType]string{
 	typeDouble: "double",
 	typeUint64: "uint64_t",
 	typeInt64:  "int64_t",
@@ -52,7 +55,8 @@ var dialectFieldTypeString = map[dialectFieldType]string{
 	typeChar:   "char",
 }
 
-var dialectFieldTypeSizes = map[dialectFieldType]byte{
+// DialectFieldTypeSizes is a map providing byte sizes of DialectFieldType
+var DialectFieldTypeSizes = map[DialectFieldType]byte{
 	typeDouble: 8,
 	typeUint64: 8,
 	typeInt64:  8,
@@ -84,24 +88,56 @@ type Dialect interface {
 	getMsgById(id uint32) (*dialectMessage, bool)
 }
 
-type dialectMessageField struct {
+type DialectMessageField struct {
 	isEnum      bool
-	ftype       dialectFieldType
+	ftype       DialectFieldType
 	name        string
 	arrayLength byte
 	index       int
 	isExtension bool
 }
 
+// Public Get Functions
+
+// GetIsEnum return isEnum of DialectMessageField
+func (f *DialectMessageField) GetIsEnum() bool {
+	return f.isEnum
+}
+
+// GetFType return ftype of DialectMessageField
+func (f *DialectMessageField) GetFType() DialectFieldType {
+	return f.ftype
+}
+
+// GetName return name of DialectMessageField
+func (f *DialectMessageField) GetName() string {
+	return f.name
+}
+
+// GetArrayLength return arrayLength of DialectMessageField
+func (f *DialectMessageField) GetArrayLength() byte {
+	return f.arrayLength
+}
+
+// GetIndex return index of DialectMessageField
+func (f *DialectMessageField) GetIndex() int {
+	return f.index
+}
+
+// GetIsExtension return isExtension of DialectMessageField
+func (f *DialectMessageField) GetIsExtension() bool {
+	return f.isExtension
+}
+
 type dialectMessage interface {
 	newMsg() Message
-	getFields() []*dialectMessageField
+	getFields() []*DialectMessageField
 	getCRCExtra() byte
 	decode(buf []byte, isFrameV2 bool) (Message, error)
 	encode(msg Message, isFrameV2 bool) ([]byte, error)
 }
 
-func decodeValue(target reflect.Value, buf []byte, f *dialectMessageField) int {
+func decodeValue(target reflect.Value, buf []byte, f *DialectMessageField) int {
 	if f.isEnum == true {
 		switch f.ftype {
 		case typeUint8:
@@ -184,7 +220,7 @@ func decodeValue(target reflect.Value, buf []byte, f *dialectMessageField) int {
 	}
 }
 
-func encodeValue(buf []byte, target reflect.Value, f *dialectMessageField) int {
+func encodeValue(buf []byte, target reflect.Value, f *DialectMessageField) int {
 	if f.isEnum == true {
 		switch f.ftype {
 		case typeUint8:

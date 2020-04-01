@@ -1,4 +1,4 @@
-package gomavlib
+package testgomavlib
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/team-rocos/gomavlib"
 	libgen "github.com/team-rocos/gomavlib/commands/dialgen/libgen"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -19,19 +20,19 @@ import (
 
 // CreateMessageByIdTest creates a dynamic message based on the input id and checks that the values within it are valid.
 func CreateMessageByIdTest(t *testing.T) {
-	includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+	includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
+	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
-	dRT, err := NewDialectRT(version, defs)
+	dRT, err := gomavlib.NewDialectRT(version, defs)
 	require.NoError(t, err)
 
 	// Create dynamic message using id of each message in dRT
-	for _, mRT := range dRT.messages {
-		dm, err := dRT.CreateMessageById(uint32(mRT.msg.Id))
+	for _, mRT := range dRT.Messages {
+		dm, err := dRT.CreateMessageById(uint32(mRT.Msg.Id))
 		require.NoError(t, err)
-		require.Equal(t, mRT, dm.t)
+		require.Equal(t, mRT, dm.T)
 	}
 
 	// CreateMessageById using invalid id. Assert that error is returned
@@ -39,21 +40,21 @@ func CreateMessageByIdTest(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// CreateMessageByIdTest creates a dynamic message based on the input name and checks that the values within it are valid.
+// CreateMessageByNameTest creates a dynamic message based on the input name and checks that the values within it are valid.
 func CreateMessageByNameTest(t *testing.T) {
-	includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+	includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
+	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
-	dRT, err := NewDialectRT(version, defs)
+	dRT, err := gomavlib.NewDialectRT(version, defs)
 	require.NoError(t, err)
 
 	// Create dynamic message by name using name from each mRT in dRT
-	for _, mRT := range dRT.messages {
-		dm, err := dRT.CreateMessageByName(mRT.msg.OriginalName)
+	for _, mRT := range dRT.Messages {
+		dm, err := dRT.CreateMessageByName(mRT.Msg.OriginalName)
 		require.NoError(t, err)
-		require.Equal(t, mRT, dm.t)
+		require.Equal(t, mRT, dm.T)
 	}
 
 	// Create dynamic message using invalid name. Assert that error is returned
@@ -64,38 +65,40 @@ func CreateMessageByNameTest(t *testing.T) {
 // JSONMarshalAndUnmarshalTest tests JSON generation, schema generation, and JSON unmarshal code.
 func JSONMarshalAndUnmarshalTest(t *testing.T) {
 	for i, c := range casesMsgsTest {
-		dMsgCT, err := newDialectMessage(c.parsed)
+		dCT, err := gomavlib.NewDialectCT(3, ctMessages)
 		require.NoError(t, err)
-		bytesEncoded, err := dMsgCT.encode(c.parsed, c.isV2)
+		dMsgCT, ok := dCT.Messages[c.id]
+		require.Equal(t, true, ok)
+		bytesEncoded, err := dMsgCT.Encode(c.parsed, c.isV2)
 		require.NoError(t, err)
 		require.Equal(t, c.raw, bytesEncoded)
 
 		// Decode bytes using RT
-		includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
-		defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+		includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
+		defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 		require.NoError(t, err)
 
 		// Create dialect from the parsed defs.
-		dRT, err := NewDialectRT(version, defs)
+		dRT, err := gomavlib.NewDialectRT(version, defs)
 		require.NoError(t, err)
-		dMsgRT := dRT.messages[c.id]
-		require.Equal(t, uint(3), dRT.getVersion())
+		dMsgRT := dRT.Messages[c.id]
+		require.Equal(t, uint(3), dRT.GetVersion())
 
 		// Decode bytes using RT
-		msgDecoded, err := dMsgRT.decode(c.raw, c.isV2)
+		msgDecoded, err := dMsgRT.Decode(c.raw, c.isV2)
 		require.NoError(t, err)
 
 		// Marshal JSON
-		bytesCreated, err := msgDecoded.(*DynamicMessage).MarshalJSON()
+		bytesCreated, err := msgDecoded.(*gomavlib.DynamicMessage).MarshalJSON()
 		require.NoError(t, err)
 		if i == 7 || i == 8 { // Test cases with altered JSON
-			require.NotEqual(t, JSONTest[i], string(bytesCreated))
+			require.NotEqual(t, jsonTest[i], string(bytesCreated))
 		} else {
-			require.Equal(t, JSONTest[i], string(bytesCreated))
+			require.Equal(t, jsonTest[i], string(bytesCreated))
 		}
 
 		// Generate JSON Schema
-		schemaBytes, err := msgDecoded.(*DynamicMessage).GenerateJSONSchema("/mavlink", "topic")
+		schemaBytes, err := msgDecoded.(*gomavlib.DynamicMessage).GenerateJSONSchema("/mavlink", "topic")
 		require.NoError(t, err)
 		if i == 7 { // Test case with altered schema example
 			require.NotEqual(t, schemasTest[i], string(schemaBytes))
@@ -105,7 +108,7 @@ func JSONMarshalAndUnmarshalTest(t *testing.T) {
 
 		// Validate JSON document against schema
 		schemaLoader := gojsonschema.NewStringLoader(schemasTest[i])
-		documentLoader := gojsonschema.NewStringLoader(JSONTest[i])
+		documentLoader := gojsonschema.NewStringLoader(jsonTest[i])
 		result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 		if i == 8 { // JSONTest[8] has a string entry where it should be float32 - should not validate against schemasTest[8]
 			require.NoError(t, err)
@@ -117,27 +120,32 @@ func JSONMarshalAndUnmarshalTest(t *testing.T) {
 
 		// Test Unmarshal
 		// Create new DynamicMessage with empty fields for testing unmarshal
-		dm, err := dRT.CreateMessageById(uint32(dRT.messages[c.id].msg.Id))
+		dm, err := dRT.CreateMessageById(uint32(dRT.Messages[c.id].Msg.Id))
 		require.NoError(t, err)
 		err = dm.UnmarshalJSON(bytesCreated)
-		require.Equal(t, msgDecoded.(*DynamicMessage).Fields, dm.Fields)
+		require.Equal(t, msgDecoded.(*gomavlib.DynamicMessage).Fields, dm.Fields)
 	}
 }
 
 // DialectRTCommonXMLTest tests the XMLToFields and RT dialect generation functionality added to gomavlib.
 func DialectRTCommonXMLTest(t *testing.T) {
+	// Ensure that XMLToFields works with no include files, if xml file has no includes
+	includeDirs := make([]string, 0)
+	_, _, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+	require.NoError(t, err)
+
 	// Parse the XML file.
-	includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
-	defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
+	includeDirs = []string{"../mavlink-upstream/message_definitions/v1.0"}
+	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 	require.NoError(t, err)
 
 	// Create dialect from the parsed defs.
-	dRT, err := NewDialectRT(version, defs)
+	dRT, err := gomavlib.NewDialectRT(version, defs)
 	require.NoError(t, err)
-	require.Equal(t, uint(3), dRT.getVersion())
+	require.Equal(t, uint(3), dRT.GetVersion())
 
 	// Check Individual Messages for RT
-	msg := dRT.messages[5].msg
+	msg := dRT.Messages[5].Msg
 	require.Equal(t, "ChangeOperatorControl", msg.Name)
 	require.Equal(t, 5, msg.Id)
 	field := msg.Fields[0]
@@ -148,7 +156,7 @@ func DialectRTCommonXMLTest(t *testing.T) {
 	require.Equal(t, "string", field.Type)
 
 	// Checking Message 82 - Has float[4] array as a field
-	msg = dRT.messages[82].msg
+	msg = dRT.Messages[82].Msg
 	require.Equal(t, "SetAttitudeTarget", msg.Name)
 	require.Equal(t, 82, msg.Id)
 	field = msg.Fields[1]
@@ -156,31 +164,31 @@ func DialectRTCommonXMLTest(t *testing.T) {
 	require.Equal(t, "float32", field.Type)
 
 	// Compare with DialectCT
-	dCT, err := NewDialectCT(3, CTMessages)
+	dCT, err := gomavlib.NewDialectCT(3, ctMessages)
 	require.NoError(t, err)
 
-	require.Equal(t, len(dCT.messages), len(dRT.messages))
+	require.Equal(t, len(dCT.Messages), len(dRT.Messages))
 
 	// Compare RT and CT for all messages
-	for _, m := range CTMessages {
+	for _, m := range ctMessages {
 		index := m.GetId()
 		// Compare dCT with dRT
-		mCT := dCT.messages[index]
-		mRT := dRT.messages[index]
-		require.Equal(t, mCT.sizeNormal, byte(mRT.sizeNormal))
-		require.Equal(t, mCT.sizeExtended, byte(mRT.sizeExtended))
-		require.Equal(t, mCT.crcExtra, mRT.crcExtra)
+		mCT := dCT.Messages[index]
+		mRT := dRT.Messages[index]
+		require.Equal(t, mCT.GetSizeNormal(), byte(mRT.GetSizeNormal()))
+		require.Equal(t, mCT.GetSizeExtended(), byte(mRT.GetSizeExtended()))
+		require.Equal(t, mCT.GetCRCExtra(), mRT.GetCRCExtra())
 
 		// Compare all fields of all RT and CT Messages
-		for i := 0; i < len(mCT.fields); i++ {
-			fCT := mCT.fields[i]
-			fRT := mRT.msg.Fields[i]
-			require.Equal(t, fCT.isEnum, fRT.IsEnum)
-			require.Equal(t, fCT.ftype, dialectFieldTypeFromGo[fRT.Type])
-			require.Equal(t, fCT.name, fRT.OriginalName)
-			require.Equal(t, fCT.arrayLength, byte(fRT.ArrayLength))
-			require.Equal(t, fCT.index, fRT.Index)
-			require.Equal(t, fCT.isExtension, fRT.IsExtension)
+		for i := 0; i < len(mCT.Fields); i++ {
+			fCT := mCT.Fields[i]
+			fRT := mRT.Msg.Fields[i]
+			require.Equal(t, fCT.GetIsEnum(), fRT.IsEnum)
+			require.Equal(t, fCT.GetFType(), gomavlib.DialectFieldTypeFromGo[fRT.Type])
+			require.Equal(t, fCT.GetName(), fRT.OriginalName)
+			require.Equal(t, fCT.GetArrayLength(), byte(fRT.ArrayLength))
+			require.Equal(t, fCT.GetIndex(), fRT.Index)
+			require.Equal(t, fCT.GetIsExtension(), fRT.IsExtension)
 		}
 	}
 }
@@ -189,30 +197,32 @@ func DialectRTCommonXMLTest(t *testing.T) {
 func DecodeAndEncodeRTTest(t *testing.T) {
 	for _, c := range casesMsgsTest {
 		// Encode using CT
-		dMsgCT, err := newDialectMessage(c.parsed)
+		dCT, err := gomavlib.NewDialectCT(3, ctMessages)
 		require.NoError(t, err)
-		bytesEncoded, err := dMsgCT.encode(c.parsed, c.isV2)
+		dMsgCT, ok := dCT.Messages[c.id]
+		require.Equal(t, true, ok)
+		bytesEncoded, err := dMsgCT.Encode(c.parsed, c.isV2)
 		require.NoError(t, err)
 		require.Equal(t, c.raw, bytesEncoded)
 
 		// Decode bytes using CT method for RT vs CT comparison later
-		msgDecodedCT, err := dMsgCT.decode(c.raw, c.isV2)
+		msgDecodedCT, err := dMsgCT.Decode(c.raw, c.isV2)
 		require.NoError(t, err)
 		require.Equal(t, c.parsed, msgDecodedCT)
 
 		// Decode bytes using RT
-		includeDirs := []string{"./mavlink-upstream/message_definitions/v1.0"}
-		defs, version, err := libgen.XMLToFields("./mavlink-upstream/message_definitions/v1.0/ardupilotmega.xml", includeDirs)
+		includeDirs := []string{"../mavlink-upstream/message_definitions/v1.0"}
+		defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", includeDirs)
 		require.NoError(t, err)
 
 		// Create dialect from the parsed defs.
-		dRT, err := NewDialectRT(version, defs)
-		dMsgRT := dRT.messages[c.id]
+		dRT, err := gomavlib.NewDialectRT(version, defs)
+		dMsgRT := dRT.Messages[c.id]
 		require.NoError(t, err)
-		require.Equal(t, uint(3), dRT.getVersion())
+		require.Equal(t, uint(3), dRT.GetVersion())
 
 		// Decode bytes using RT
-		msgDecoded, err := dMsgRT.decode(bytesEncoded, c.isV2)
+		msgDecoded, err := dMsgRT.Decode(bytesEncoded, c.isV2)
 		require.NoError(t, err)
 
 		// TODO: Implement the code below properly
@@ -229,7 +239,7 @@ func DecodeAndEncodeRTTest(t *testing.T) {
 		// }
 
 		// Encode using RT
-		bytesEncodedByRT, err := dMsgRT.encode(msgDecoded, c.isV2)
+		bytesEncodedByRT, err := dMsgRT.Encode(msgDecoded, c.isV2)
 		require.NoError(t, err)
 		require.Equal(t, c.raw, bytesEncodedByRT)
 	}
@@ -246,7 +256,7 @@ var schemasTest = []string{
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"AngleOff\":{\"title\":\"/mavlink/topic/AngleOffset\",\"type\":\"number\"},\"Distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/Distances\",\"type\":\"array\"},\"Frame\":{\"title\":\"/mavlink/topic/Frame\",\"type\":\"integer\"},\"Increment\":{\"title\":\"/mavlink/topic/Increment\",\"type\":\"integer\"},\"IncrementF\":{\"title\":\"/mavlink/topic/IncrementF\",\"type\":\"number\"},\"MaxDistance\":{\"title\":\"/mavlink/topic/MaxDistance\",\"type\":\"integer\"},\"MinDistance\":{\"title\":\"/mavlink/topic/MinDistance\",\"type\":\"integer\"},\"SensorType\":{\"title\":\"/mavlink/topic/SensorType\",\"type\":\"integer\"},\"TimeUsec\":{\"title\":\"/mavlink/topic/TimeUsec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"AngleOffset\":{\"title\":\"/mavlink/topic/AngleOffset\",\"type\":\"number\"},\"Distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/Distances\",\"type\":\"array\"},\"Frame\":{\"title\":\"/mavlink/topic/Frame\",\"type\":\"integer\"},\"Increment\":{\"title\":\"/mavlink/topic/Increment\",\"type\":\"integer\"},\"IncrementF\":{\"title\":\"/mavlink/topic/IncrementF\",\"type\":\"number\"},\"MaxDistance\":{\"title\":\"/mavlink/topic/MaxDistance\",\"type\":\"integer\"},\"MinDistance\":{\"title\":\"/mavlink/topic/MinDistance\",\"type\":\"integer\"},\"SensorType\":{\"title\":\"/mavlink/topic/SensorType\",\"type\":\"integer\"},\"TimeUsec\":{\"title\":\"/mavlink/topic/TimeUsec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 }
-var JSONTest = []string{
+var jsonTest = []string{
 	"{\"AccX\":[1,2,3,4,5],\"AccY\":[1,2,3,4,5],\"AccZ\":[1,2,3,4,5],\"Command\":[1,2,3,4,5],\"PosX\":[1,2,3,4,5],\"PosY\":[1,2,3,4,5],\"PosYaw\":[1,2,3,4,5],\"PosZ\":[1,2,3,4,5],\"TimeUsec\":1,\"ValidPoints\":2,\"VelX\":[1,2,3,4,5],\"VelY\":[1,2,3,4,5],\"VelYaw\":[1,2,3,4,5],\"VelZ\":[1,2,3,4,5]}",
 	"{\"FlowCompMX\":1,\"FlowCompMY\":1,\"FlowRateX\":1,\"FlowRateY\":1,\"FlowX\":7,\"FlowY\":8,\"GroundDistance\":1,\"Quality\":10,\"SensorId\":9,\"TimeUsec\":3}",
 	"{\"Covariance\":[1,1,1,1,1,1,1,1,1],\"Pitchspeed\":1,\"Q\":[1,1,1,1],\"Rollspeed\":1,\"TimeUsec\":2,\"Yawspeed\":1}",
@@ -268,10 +278,11 @@ func dialectMsgDefToGo(in string) string {
 	return strings.ToUpper(in[:1]) + in[1:]
 }
 
+// Test case structs to loop through in testing above.
 var casesMsgsTest = []struct {
 	name   string
 	isV2   bool
-	parsed Message
+	parsed gomavlib.Message
 	raw    []byte
 	id     uint32
 }{
@@ -424,8 +435,7 @@ var casesMsgsTest = []struct {
 		330,
 	},
 }
-
-var CTMessages = []Message{
+var ctMessages = []gomavlib.Message{
 	// common.xml
 	&MessageHeartbeat{},
 	&MessageSysStatus{},
@@ -582,6 +592,13 @@ var CTMessages = []Message{
 	&MessageLoggingAck{},
 	&MessageVideoStreamInformation{},
 	&MessageVideoStreamStatus{},
+	&MessageGimbalManagerInformation{},
+	&MessageGimbalManagerStatus{},
+	&MessageGimbalManagerSetAttitude{},
+	&MessageGimbalDeviceInformation{},
+	&MessageGimbalDeviceSetAttitude{},
+	&MessageGimbalDeviceAttitudeStatus{},
+	&MessageAutopilotStateForGimbalDevice{},
 	&MessageWifiConfigAp{},
 	&MessageProtocolVersion{},
 	&MessageAisVessel{},

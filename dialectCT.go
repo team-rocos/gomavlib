@@ -16,7 +16,7 @@ import (
 // DialectCT : compile time dialect struct
 type DialectCT struct {
 	version  uint
-	messages map[uint32]*dialectMessageCT
+	Messages map[uint32]*DialectMessageCT
 }
 
 // Assert to check we're implementing the interfaces we expect to be.
@@ -24,16 +24,16 @@ var _ Dialect = &DialectCT{}
 
 // DEFINE PRIVATE TYPES AND STRUCTURES.
 
-type dialectMessageCT struct {
+type DialectMessageCT struct {
 	elemType     reflect.Type
-	fields       []*dialectMessageField
+	Fields       []*DialectMessageField
 	sizeNormal   byte
 	sizeExtended byte
 	crcExtra     byte
 }
 
 // Assert to check we're implementing the interfaces we expect to be.
-var _ dialectMessage = &dialectMessageCT{}
+var _ dialectMessage = &DialectMessageCT{}
 
 // DEFINE PUBLIC STATUC FUNCTIONS.
 
@@ -41,7 +41,7 @@ var _ dialectMessage = &dialectMessageCT{}
 func NewDialectCT(version uint, messages []Message) (*DialectCT, error) {
 	d := &DialectCT{
 		version:  version,
-		messages: make(map[uint32]*dialectMessageCT),
+		Messages: make(map[uint32]*DialectMessageCT),
 	}
 
 	for _, msg := range messages {
@@ -49,7 +49,7 @@ func NewDialectCT(version uint, messages []Message) (*DialectCT, error) {
 		if err != nil {
 			return nil, fmt.Errorf("message %T: %s", msg, err)
 		}
-		d.messages[msg.GetId()] = mp
+		d.Messages[msg.GetId()] = mp
 	}
 
 	return d, nil
@@ -75,17 +75,34 @@ func (d *DialectCT) getVersion() uint {
 func (d *DialectCT) getMsgById(id uint32) (*dialectMessage, bool) {
 	var msg dialectMessage
 	var ok bool
-	msg, ok = d.messages[id]
+	msg, ok = d.Messages[id]
 	return &msg, ok
+}
+
+// DialectMessageCT
+
+// GetSizeNormal returns sizeNormal of DialectMessageCT
+func (mp *DialectMessageCT) GetSizeNormal() byte {
+	return mp.sizeNormal
+}
+
+// GetSizeExtended returns sizeExtended of DialectMessageCT
+func (mp *DialectMessageCT) GetSizeExtended() byte {
+	return mp.sizeExtended
+}
+
+// GetCRCExtra returns crcExtra of DialectMessageCT
+func (mp *DialectMessageCT) GetCRCExtra() byte {
+	return mp.crcExtra
 }
 
 // DEFINE PRIVATE STATIC FUNCTIONS.
 
-func newDialectMessage(msg Message) (*dialectMessageCT, error) {
-	mp := &dialectMessageCT{}
+func newDialectMessage(msg Message) (*DialectMessageCT, error) {
+	mp := &DialectMessageCT{}
 	mp.elemType = reflect.TypeOf(msg).Elem()
 
-	mp.fields = make([]*dialectMessageField, mp.elemType.NumField())
+	mp.Fields = make([]*DialectMessageField, mp.elemType.NumField())
 
 	// get name
 	if strings.HasPrefix(mp.elemType.Name(), "Message") == false {
@@ -106,7 +123,7 @@ func newDialectMessage(msg Message) (*dialectMessageCT, error) {
 		}
 
 		isEnum := false
-		var dialectType dialectFieldType
+		var dialectType DialectFieldType
 
 		// enum
 		if field.Tag.Get("mavenum") != "" {
@@ -122,7 +139,7 @@ func newDialectMessage(msg Message) (*dialectMessageCT, error) {
 				return nil, fmt.Errorf("enum but tag not specified")
 			}
 
-			dialectType = dialectFieldTypeFromGo[tagEnum]
+			dialectType = DialectFieldTypeFromGo[tagEnum]
 			if dialectType == 0 {
 				return nil, fmt.Errorf("invalid go type: %v", tagEnum)
 			}
@@ -140,7 +157,7 @@ func newDialectMessage(msg Message) (*dialectMessageCT, error) {
 			}
 
 		} else {
-			dialectType = dialectFieldTypeFromGo[goType.Name()]
+			dialectType = DialectFieldTypeFromGo[goType.Name()]
 			if dialectType == 0 {
 				return nil, fmt.Errorf("invalid go type: %v", goType.Name())
 			}
@@ -170,12 +187,12 @@ func newDialectMessage(msg Message) (*dialectMessageCT, error) {
 		// size
 		var size byte
 		if arrayLength > 0 {
-			size = dialectFieldTypeSizes[dialectType] * arrayLength
+			size = DialectFieldTypeSizes[dialectType] * arrayLength
 		} else {
-			size = dialectFieldTypeSizes[dialectType]
+			size = DialectFieldTypeSizes[dialectType]
 		}
 
-		mp.fields[i] = &dialectMessageField{
+		mp.Fields[i] = &DialectMessageField{
 			isEnum: isEnum,
 			ftype:  dialectType,
 			name: func() string {
@@ -197,15 +214,15 @@ func newDialectMessage(msg Message) (*dialectMessageCT, error) {
 
 	// reorder fields as described in
 	// https://mavlink.io/en/guide/serialization.html#field_reordering
-	sort.Slice(mp.fields, func(i, j int) bool {
+	sort.Slice(mp.Fields, func(i, j int) bool {
 		// sort by weight if not extension
-		if mp.fields[i].isExtension == false && mp.fields[j].isExtension == false {
-			if w1, w2 := dialectFieldTypeSizes[mp.fields[i].ftype], dialectFieldTypeSizes[mp.fields[j].ftype]; w1 != w2 {
+		if mp.Fields[i].isExtension == false && mp.Fields[j].isExtension == false {
+			if w1, w2 := DialectFieldTypeSizes[mp.Fields[i].ftype], DialectFieldTypeSizes[mp.Fields[j].ftype]; w1 != w2 {
 				return w1 > w2
 			}
 		}
 		// sort by original index
-		return mp.fields[i].index < mp.fields[j].index
+		return mp.Fields[i].index < mp.Fields[j].index
 	})
 
 	// generate CRC extra
@@ -214,13 +231,13 @@ func newDialectMessage(msg Message) (*dialectMessageCT, error) {
 		h := NewX25()
 		h.Write([]byte(msgName + " "))
 
-		for _, f := range mp.fields {
+		for _, f := range mp.Fields {
 			// skip extensions
 			if f.isExtension == true {
 				continue
 			}
 
-			h.Write([]byte(dialectFieldTypeString[f.ftype] + " "))
+			h.Write([]byte(DialectFieldTypeString[f.ftype] + " "))
 			h.Write([]byte(f.name + " "))
 
 			if f.arrayLength > 0 {
@@ -236,21 +253,21 @@ func newDialectMessage(msg Message) (*dialectMessageCT, error) {
 
 // DEFINE PRIVATE RECEIVER FUNCTIONS.
 
-func (mp *dialectMessageCT) newMsg() Message {
+func (mp *DialectMessageCT) newMsg() Message {
 	ref := reflect.New(mp.elemType)
 	msg := ref.Interface().(Message)
 	return msg
 }
 
-func (mp *dialectMessageCT) getFields() []*dialectMessageField {
-	return mp.fields
+func (mp *DialectMessageCT) getFields() []*DialectMessageField {
+	return mp.Fields
 }
 
-func (mp *dialectMessageCT) getCRCExtra() byte {
+func (mp *DialectMessageCT) getCRCExtra() byte {
 	return mp.crcExtra
 }
 
-func (mp *dialectMessageCT) decode(buf []byte, isFrameV2 bool) (Message, error) {
+func (mp *DialectMessageCT) decode(buf []byte, isFrameV2 bool) (Message, error) {
 	msg := reflect.New(mp.elemType)
 
 	if isFrameV2 == true {
@@ -269,7 +286,7 @@ func (mp *dialectMessageCT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 	}
 
 	// decode field by field
-	for _, f := range mp.fields {
+	for _, f := range mp.Fields {
 		// skip extensions in V1 frames
 		if isFrameV2 == false && f.isExtension == true {
 			continue
@@ -294,7 +311,7 @@ func (mp *dialectMessageCT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 	return msg.Interface().(Message), nil
 }
 
-func (mp *dialectMessageCT) encode(msg Message, isFrameV2 bool) ([]byte, error) {
+func (mp *DialectMessageCT) encode(msg Message, isFrameV2 bool) ([]byte, error) {
 	var buf []byte
 
 	if isFrameV2 == true {
@@ -306,7 +323,7 @@ func (mp *dialectMessageCT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 	start := buf
 
 	// encode field by field
-	for _, f := range mp.fields {
+	for _, f := range mp.Fields {
 		// skip extensions in V1 frames
 		if isFrameV2 == false && f.isExtension == true {
 			continue
@@ -342,6 +359,16 @@ func (mp *dialectMessageCT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 	}
 
 	return buf, nil
+}
+
+// Decode is a public function necessary for testing
+func (mp *DialectMessageCT) Decode(buf []byte, isFrameV2 bool) (Message, error) {
+	return mp.decode(buf, isFrameV2)
+}
+
+// Encode is a public function necessary for testing
+func (mp *DialectMessageCT) Encode(msg Message, isFrameV2 bool) ([]byte, error) {
+	return mp.encode(msg, isFrameV2)
 }
 
 // ALL DONE.

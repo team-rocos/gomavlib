@@ -1,4 +1,4 @@
-package gomavlib
+package testgomavlib
 
 import (
 	"testing"

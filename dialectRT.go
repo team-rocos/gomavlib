@@ -17,7 +17,7 @@ import (
 type DialectRT struct {
 	version  uint
 	defs     []*libgen.OutDefinition
-	messages map[uint32]*dialectMessageRT
+	Messages map[uint32]*DialectMessageRT
 }
 
 // Assert to check we're implementing the interfaces we expect to be.
@@ -25,16 +25,18 @@ var _ Dialect = &DialectRT{}
 
 // DEFINE PRIVATE TYPES AND STRUCTURES.
 
-type dialectMessageRT struct {
+// DialectMessageRT is a run time dialect message which contains the message information
+// and a pointer to the DialectRT to which it belongs.
+type DialectMessageRT struct {
 	dialect      *DialectRT
-	msg          *libgen.OutMessage
+	Msg          *libgen.OutMessage
 	crcExtra     byte
 	sizeNormal   uint
 	sizeExtended uint
 }
 
 // Assert to check we're implementing the interfaces we expect to be.
-var _ dialectMessage = &dialectMessageRT{}
+var _ dialectMessage = &DialectMessageRT{}
 
 // DEFINE PUBLIC STATIC FUNCTIONS.
 
@@ -44,7 +46,7 @@ func NewDialectRT(version uint, outDefs []*libgen.OutDefinition) (*DialectRT, er
 	d := &DialectRT{
 		version:  version,
 		defs:     outDefs,
-		messages: make(map[uint32]*dialectMessageRT),
+		Messages: make(map[uint32]*DialectMessageRT),
 	}
 
 	// Populate the set of messages in the dialect by instantiating a dialectMessage from each message entry in the definitions.
@@ -55,7 +57,7 @@ func NewDialectRT(version uint, outDefs []*libgen.OutDefinition) (*DialectRT, er
 			sort.Slice(msg.Fields, func(i, j int) bool {
 				// sort by weight if not extension
 				if msg.Fields[i].IsExtension == false && msg.Fields[j].IsExtension == false {
-					if w1, w2 := dialectFieldTypeSizes[dialectFieldTypeFromGo[msg.Fields[i].Type]], dialectFieldTypeSizes[dialectFieldTypeFromGo[msg.Fields[j].Type]]; w1 != w2 {
+					if w1, w2 := DialectFieldTypeSizes[DialectFieldTypeFromGo[msg.Fields[i].Type]], DialectFieldTypeSizes[DialectFieldTypeFromGo[msg.Fields[j].Type]]; w1 != w2 {
 						return w1 > w2
 					}
 				}
@@ -74,7 +76,7 @@ func NewDialectRT(version uint, outDefs []*libgen.OutDefinition) (*DialectRT, er
 						continue
 					}
 
-					h.Write([]byte(dialectFieldTypeString[dialectFieldTypeFromGo[f.Type]] + " "))
+					h.Write([]byte(DialectFieldTypeString[DialectFieldTypeFromGo[f.Type]] + " "))
 
 					h.Write([]byte(f.OriginalName + " ")) // Using 'OriginalName' to ensure original Mavlink style name used
 					if f.ArrayLength > 0 {
@@ -90,7 +92,7 @@ func NewDialectRT(version uint, outDefs []*libgen.OutDefinition) (*DialectRT, er
 			sizeExtended := uint(0)
 			for _, f := range msg.Fields {
 				// Work out how big this field will be.
-				var size uint = uint(dialectFieldTypeSizes[dialectFieldTypeFromGo[f.Type]])
+				var size uint = uint(DialectFieldTypeSizes[DialectFieldTypeFromGo[f.Type]])
 
 				if f.ArrayLength > 0 {
 					size = size * uint(f.ArrayLength)
@@ -104,9 +106,9 @@ func NewDialectRT(version uint, outDefs []*libgen.OutDefinition) (*DialectRT, er
 			}
 
 			// Create a new dialectMessage capturing the vital statistics.
-			d.messages[uint32(msg.Id)] = &dialectMessageRT{
+			d.Messages[uint32(msg.Id)] = &DialectMessageRT{
 				dialect:      d,
-				msg:          msg,
+				Msg:          msg,
 				crcExtra:     crcExtra,
 				sizeNormal:   sizeNormal,
 				sizeExtended: sizeExtended,
@@ -121,6 +123,11 @@ func NewDialectRT(version uint, outDefs []*libgen.OutDefinition) (*DialectRT, er
 
 // DialectRT :: Dialect
 
+// GetVersion returns the uint version of DialectRT
+func (d *DialectRT) GetVersion() uint {
+	return d.version
+}
+
 func (d *DialectRT) getVersion() uint {
 	return d.version
 }
@@ -128,21 +135,26 @@ func (d *DialectRT) getVersion() uint {
 func (d *DialectRT) getMsgById(id uint32) (*dialectMessage, bool) {
 	var msg dialectMessage
 	var ok bool
-	msg, ok = d.messages[id]
+	msg, ok = d.Messages[id]
 	return &msg, ok
 }
+
+// GetMessages is a public get function to return the messages variable of DialectRT
+// func (d *DialectRT) GetMessages() map[uint32]*dialectMessageRT {
+// 	return d.messages
+// }
 
 // CreateMessageById returns a DynamicMessage created from finding the message in the DialectRT given corresponding to id.
 // The Fields map in the DynamicMessage created is empty.
 func (d *DialectRT) CreateMessageById(id uint32) (*DynamicMessage, error) {
 	dm := &DynamicMessage{}
 	fields := make(map[string]interface{})
-	msg, ok := d.messages[id]
+	msg, ok := d.Messages[id]
 	if !ok {
 		errorString := fmt.Sprintf("message with id=%d does not exist in this dialectRT", id)
 		return dm, errors.New(errorString)
 	}
-	dm.t = msg
+	dm.T = msg
 	dm.Fields = fields
 	return dm, nil
 }
@@ -152,10 +164,10 @@ func (d *DialectRT) CreateMessageById(id uint32) (*DynamicMessage, error) {
 func (d *DialectRT) CreateMessageByName(name string) (*DynamicMessage, error) {
 	dm := &DynamicMessage{}
 	fields := make(map[string]interface{})
-	var msg *dialectMessageRT
+	var msg *DialectMessageRT
 	foundMessage := false
-	for _, m := range d.messages {
-		if m.msg.OriginalName == name {
+	for _, m := range d.Messages {
+		if m.Msg.OriginalName == name {
 			msg = m
 			foundMessage = true
 			break
@@ -165,7 +177,7 @@ func (d *DialectRT) CreateMessageByName(name string) (*DynamicMessage, error) {
 		errorString := "message with name " + name + " does not exist in this dialectRT"
 		return dm, errors.New(errorString)
 	}
-	dm.t = msg
+	dm.T = msg
 	dm.Fields = fields
 	return dm, nil
 }
@@ -183,7 +195,7 @@ const (
 // GenerateJSONSchema generates a (primitive) JSON schema for the associated DynamicMessage; however note that since
 // we are mostly interested in making schema's for particular _topics_, the function takes a string prefix, and string topic name, which are
 // used to id the resulting schema.
-func (mp *dialectMessageRT) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
+func (mp *DialectMessageRT) GenerateJSONSchema(prefix string, topic string) ([]byte, error) {
 	// The JSON schema for a message consist of the (recursive) properties names/types:
 	schemaItems, err := mp.generateJSONSchemaProperties(prefix + Sep + topic)
 	if err != nil {
@@ -204,7 +216,7 @@ func (mp *dialectMessageRT) GenerateJSONSchema(prefix string, topic string) ([]b
 	return schemaString, nil
 }
 
-func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[string]interface{}, error) {
+func (mp *DialectMessageRT) generateJSONSchemaProperties(topic string) (map[string]interface{}, error) {
 	// // Each message's schema indicates that it is an 'object' with some nested properties: those properties are the fields and their types.
 	properties := make(map[string]interface{})
 	schemaItems := make(map[string]interface{})
@@ -213,7 +225,7 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 	schemaItems["properties"] = properties
 
 	// Iterate over each of the fields in the message.
-	for _, field := range mp.msg.Fields {
+	for _, field := range mp.Msg.Fields {
 		if field.ArrayLength != 0 && field.Type != "string" {
 			// It's an array.
 			propertyContent := make(map[string]interface{})
@@ -283,29 +295,49 @@ func (mp *dialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 	return schemaItems, nil
 }
 
+// GetMessageId returns the id of the dialectMessageRT
+func (mp *DialectMessageRT) GetMessageId() int {
+	return mp.Msg.Id
+}
+
+// GetSizeNormal returns sizeNormal of DialectMessageRT
+func (mp *DialectMessageRT) GetSizeNormal() uint {
+	return mp.sizeNormal
+}
+
+// GetSizeExtended returns sizeExtended of DialectMessageRT
+func (mp *DialectMessageRT) GetSizeExtended() uint {
+	return mp.sizeExtended
+}
+
+// GetCRCExtra returns crcExtra of DialectMessageRT
+func (mp *DialectMessageRT) GetCRCExtra() byte {
+	return mp.crcExtra
+}
+
 // DEFINE PRIVATE STATIC FUNCTIONS.
 
 // DEFINE PRIVATE RECEIVER FUNCTIONS.
 
-func (mp *dialectMessageRT) newMsg() Message {
+func (mp *DialectMessageRT) newMsg() Message {
 	// Just make an empty dynamic message which points at this dialectMessage as its parent.
 	msg := &DynamicMessage{
-		t:      mp,
+		T:      mp,
 		Fields: make(map[string]interface{}),
 	}
 	return msg
 }
 
-func (mp *dialectMessageRT) getFields() []*dialectMessageField {
+func (mp *DialectMessageRT) getFields() []*DialectMessageField {
 	// Iterate over each of the field definitions and construct a new dialectMessageField representation for each.
-	fields := make([]*dialectMessageField, 0)
-	for _, f := range mp.msg.Fields {
-		ftype := dialectFieldTypeFromGo[f.Type]
-		fields = append(fields, &dialectMessageField{
+	fields := make([]*DialectMessageField, 0)
+	for _, f := range mp.Msg.Fields {
+		ftype := DialectFieldTypeFromGo[f.Type]
+		fields = append(fields, &DialectMessageField{
 			isEnum:      f.IsEnum,
 			ftype:       ftype,
 			name:        f.Name,
-			arrayLength: dialectFieldTypeSizes[ftype],
+			arrayLength: DialectFieldTypeSizes[ftype],
 			index:       f.Index,
 			isExtension: f.IsExtension,
 		})
@@ -313,11 +345,11 @@ func (mp *dialectMessageRT) getFields() []*dialectMessageField {
 	return fields
 }
 
-func (mp *dialectMessageRT) getCRCExtra() byte {
+func (mp *DialectMessageRT) getCRCExtra() byte {
 	return mp.crcExtra
 }
 
-func (mp *dialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) {
+func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) {
 	// Insert any required padding.
 	if isFrameV2 == true {
 		// In V2 buffer length can be > message or < message.  In this latter case it must be filled with zeros to support empty-byte de-truncation and extension fields.
@@ -337,7 +369,7 @@ func (mp *dialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 	// Create the dynamic message which we're gonna fill up.
 	dm := mp.newMsg()
 
-	for _, fieldDef := range mp.msg.Fields { // TODO - Hmm, this implies that mp.msg.Fields is in order?  In that case, why do we need orderedFields?
+	for _, fieldDef := range mp.Msg.Fields { // TODO - Hmm, this implies that mp.msg.Fields is in order?  In that case, why do we need orderedFields?
 		// Skip extensions in V1 frames.
 		if isFrameV2 == false && fieldDef.IsExtension == true {
 			continue
@@ -590,14 +622,14 @@ func (mp *dialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 	return dm, nil
 }
 
-func (mp *dialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) {
+func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) {
 	// Make sure the message we're encoding matches the type of the dialectMessage being used to do the encoding.
 	var dm *DynamicMessage
 	var ok bool
 	if dm, ok = msg.(*DynamicMessage); !ok {
 		return nil, errors.New("message was not a *DynamicMessage")
 	}
-	if dm.t != mp {
+	if dm.T != mp {
 		return nil, errors.New("wrong *DynamicMessage type")
 	}
 
@@ -605,7 +637,7 @@ func (mp *dialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 	buf := &bytes.Buffer{}
 
 	// Iterate over the definitions in the wire order.
-	for _, fieldDef := range mp.msg.Fields {
+	for _, fieldDef := range mp.Msg.Fields {
 		// Need to handle each type of field separately.
 		switch fieldDef.Type {
 		case "int8":
@@ -858,6 +890,16 @@ func (mp *dialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 	// All done.
 	//fmt.Println(buf.Bytes())
 	return newBuf, nil
+}
+
+// Decode is a public function necessary for testing
+func (mp *DialectMessageRT) Decode(buf []byte, isFrameV2 bool) (Message, error) {
+	return mp.decode(buf, isFrameV2)
+}
+
+// Encode is a public function necessary for testing
+func (mp *DialectMessageRT) Encode(msg Message, isFrameV2 bool) ([]byte, error) {
+	return mp.encode(msg, isFrameV2)
 }
 
 // ALL DONE.
