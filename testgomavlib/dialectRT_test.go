@@ -9,23 +9,23 @@ import (
 // DEFINE PRIVATE TYPES AND STRUCTURES.
 // DEFINE PUBLIC STATIC FUNCTIONS.
 func TestCreateMessageById(t *testing.T) {
-	CreateMessageByIdTest(t)
+	CreateMessageByIdTest(t, "../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"../mavlink-upstream/message_definitions/v1.0"})
 }
 
 func TestCreateMessageByName(t *testing.T) {
-	CreateMessageByNameTest(t)
+	CreateMessageByNameTest(t, "../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"../mavlink-upstream/message_definitions/v1.0"})
 }
 
 func TestJSONMarshalAndUnmarshal(t *testing.T) {
-	JSONMarshalAndUnmarshalTest(t)
+	JSONMarshalAndUnmarshalTest(t, "../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"../mavlink-upstream/message_definitions/v1.0"})
 }
 
 func TestDialectRTCommonXML(t *testing.T) {
-	DialectRTCommonXMLTest(t)
+	DialectRTCommonXMLTest(t, "../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"../mavlink-upstream/message_definitions/v1.0"})
 }
 
 func TestDecodeAndEncodeRT(t *testing.T) {
-	DecodeAndEncodeRTTest(t)
+	DecodeAndEncodeRTTest(t, "../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"../mavlink-upstream/message_definitions/v1.0"})
 }
 
 // DEFINE PUBLIC RECEIVER FUNCTIONS.
