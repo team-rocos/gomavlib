@@ -32,7 +32,7 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 	// Search through the list of fields that the message is supposed to have.
 	var fieldInfo *libgen.OutField
 	for _, v := range d.T.Msg.Fields {
-		if v.Name == field {
+		if v.OriginalName == field {
 			// This is the field we are after, so remember it.
 			fieldInfo = v
 			break
@@ -285,49 +285,49 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 		switch dataType.String() {
 		//We have a string array
 		case "string":
-			d.Fields[field.Name] = append(d.Fields[field.Name].([]string), string(key))
+			d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]string), string(key))
 		//We have a number or int array.
 		case "number":
 			//We have a float to parse
 			if field.Type == "float64" || field.Type == "float32" {
 				data, err = strconv.ParseFloat(string(key), 64)
 				if err != nil {
-					errors.Wrap(err, "Field: "+field.Name)
+					errors.Wrap(err, "Field: "+field.OriginalName)
 				}
 			} else {
 				data, err = strconv.ParseInt(string(key), 0, 64)
 				if err != nil {
-					errors.Wrap(err, "Field: "+field.Name)
+					errors.Wrap(err, "Field: "+field.OriginalName)
 				}
 			}
 			//Append field to data array
 			switch field.Type {
 			case "int8":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]int8), int8((data.(int64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]int8), int8((data.(int64))))
 			case "int16":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]int16), int16((data.(int64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]int16), int16((data.(int64))))
 			case "int32":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]int32), int32((data.(int64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]int32), int32((data.(int64))))
 			case "int64":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]int64), int64((data.(int64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]int64), int64((data.(int64))))
 			case "uint8":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]uint8), uint8((data.(int64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]uint8), uint8((data.(int64))))
 			case "uint16":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]uint16), uint16((data.(int64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]uint16), uint16((data.(int64))))
 			case "uint32":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]uint32), uint32((data.(int64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]uint32), uint32((data.(int64))))
 			case "uint64":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]uint64), uint64((data.(int64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]uint64), uint64((data.(int64))))
 			case "float32":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]float32), float32((data.(float64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]float32), float32((data.(float64))))
 			case "float64":
-				d.Fields[field.Name] = append(d.Fields[field.Name].([]float64), float64(data.(float64)))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]float64), float64(data.(float64)))
 			}
 		//We have a bool array
 		case "boolean":
 			data, err := jsonparser.GetBoolean(buf, string(key))
 			_ = err
-			d.Fields[field.Name] = append(d.Fields[field.Name].([]bool), data)
+			d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]bool), data)
 		}
 
 		//Null error as it is not returned in ArrayEach, requires package modification
@@ -344,7 +344,7 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 		fieldExists = false
 		//Find message spec field that matches JSON key
 		for _, f := range d.T.Msg.Fields {
-			if string(key) == f.Name {
+			if string(key) == f.OriginalName {
 				field = f
 				fieldExists = true
 			}
@@ -358,11 +358,11 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 				if field.Type == "uint8" {
 					data, err := base64.StdEncoding.DecodeString(string(value))
 					if err != nil {
-						return errors.Wrap(err, "Byte Array Field: "+field.Name)
+						return errors.Wrap(err, "Byte Array Field: "+field.OriginalName)
 					}
-					d.Fields[field.Name] = data
+					d.Fields[field.OriginalName] = data
 				} else {
-					d.Fields[field.Name] = string(value)
+					d.Fields[field.OriginalName] = string(value)
 				}
 			//We have a JSON number or int
 			case "number":
@@ -370,76 +370,76 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 				if field.Type == "float64" || field.Type == "float32" {
 					data, err = jsonparser.GetFloat(buf, string(key))
 					if err != nil {
-						return errors.Wrap(err, "Field: "+field.Name)
+						return errors.Wrap(err, "Field: "+field.OriginalName)
 					}
 					//We have an int to parse
 				} else {
 					data, err = jsonparser.GetInt(buf, string(key))
 					if err != nil {
-						return errors.Wrap(err, "Field: "+field.Name)
+						return errors.Wrap(err, "Field: "+field.OriginalName)
 					}
 				}
 				//Copy number value to message field
 				switch field.Type {
 				case "int8":
-					d.Fields[field.Name] = int8(data.(int64))
+					d.Fields[field.OriginalName] = int8(data.(int64))
 				case "int16":
-					d.Fields[field.Name] = int16(data.(int64))
+					d.Fields[field.OriginalName] = int16(data.(int64))
 				case "int32":
-					d.Fields[field.Name] = int32(data.(int64))
+					d.Fields[field.OriginalName] = int32(data.(int64))
 				case "int64":
-					d.Fields[field.Name] = int64(data.(int64))
+					d.Fields[field.OriginalName] = int64(data.(int64))
 				case "uint8":
-					d.Fields[field.Name] = uint8(data.(int64))
+					d.Fields[field.OriginalName] = uint8(data.(int64))
 				case "uint16":
-					d.Fields[field.Name] = uint16(data.(int64))
+					d.Fields[field.OriginalName] = uint16(data.(int64))
 				case "uint32":
-					d.Fields[field.Name] = uint32(data.(int64))
+					d.Fields[field.OriginalName] = uint32(data.(int64))
 				case "uint64":
-					d.Fields[field.Name] = uint64(data.(int64))
+					d.Fields[field.OriginalName] = uint64(data.(int64))
 				case "float32":
-					d.Fields[field.Name] = float32(data.(float64))
+					d.Fields[field.OriginalName] = float32(data.(float64))
 				case "float64":
-					d.Fields[field.Name] = float64(data.(float64))
+					d.Fields[field.OriginalName] = float64(data.(float64))
 				}
 			//We have a JSON bool
 			case "boolean":
 				data, err := jsonparser.GetBoolean(buf, string(key))
 				if err != nil {
-					return errors.Wrap(err, "Field: "+field.Name)
+					return errors.Wrap(err, "Field: "+field.OriginalName)
 				}
-				d.Fields[field.Name] = data
+				d.Fields[field.OriginalName] = data
 			//We have a JSON array
 			case "array":
 				//Redeclare message array fields incase they do not exist
 				switch field.Type {
 				case "bool":
-					d.Fields[field.Name] = make([]bool, 0)
+					d.Fields[field.OriginalName] = make([]bool, 0)
 				case "int8":
-					d.Fields[field.Name] = make([]int8, 0)
+					d.Fields[field.OriginalName] = make([]int8, 0)
 				case "int16":
-					d.Fields[field.Name] = make([]int16, 0)
+					d.Fields[field.OriginalName] = make([]int16, 0)
 				case "int32":
-					d.Fields[field.Name] = make([]int32, 0)
+					d.Fields[field.OriginalName] = make([]int32, 0)
 				case "int64":
-					d.Fields[field.Name] = make([]int64, 0)
+					d.Fields[field.OriginalName] = make([]int64, 0)
 				case "uint8":
-					d.Fields[field.Name] = make([]uint8, 0)
+					d.Fields[field.OriginalName] = make([]uint8, 0)
 				case "uint16":
-					d.Fields[field.Name] = make([]uint16, 0)
+					d.Fields[field.OriginalName] = make([]uint16, 0)
 				case "uint32":
-					d.Fields[field.Name] = make([]uint32, 0)
+					d.Fields[field.OriginalName] = make([]uint32, 0)
 				case "uint64":
-					d.Fields[field.Name] = make([]uint64, 0)
+					d.Fields[field.OriginalName] = make([]uint64, 0)
 				case "float32":
-					d.Fields[field.Name] = make([]float32, 0)
+					d.Fields[field.OriginalName] = make([]float32, 0)
 				case "float64":
-					d.Fields[field.Name] = make([]float64, 0)
+					d.Fields[field.OriginalName] = make([]float64, 0)
 				case "string":
-					d.Fields[field.Name] = make([]string, 0)
+					d.Fields[field.OriginalName] = make([]string, 0)
 				default:
 					//goType is a nested Message array
-					d.Fields[field.Name] = make([]Message, 0)
+					d.Fields[field.OriginalName] = make([]Message, 0)
 				}
 				//Parse JSON array
 				jsonparser.ArrayEach(value, arrayHandler)

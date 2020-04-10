@@ -139,11 +139,6 @@ func (d *DialectRT) getMsgById(id uint32) (*dialectMessage, bool) {
 	return &msg, ok
 }
 
-// GetMessages is a public get function to return the messages variable of DialectRT
-// func (d *DialectRT) GetMessages() map[uint32]*dialectMessageRT {
-// 	return d.messages
-// }
-
 // CreateMessageById returns a DynamicMessage created from finding the message in the DialectRT given corresponding to id.
 // The Fields map in the DynamicMessage created is empty.
 func (d *DialectRT) CreateMessageById(id uint32) (*DynamicMessage, error) {
@@ -229,16 +224,16 @@ func (mp *DialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 		if field.ArrayLength != 0 && field.Type != "string" {
 			// It's an array.
 			propertyContent := make(map[string]interface{})
-			properties[field.Name] = propertyContent
+			properties[field.OriginalName] = propertyContent
 
 			if field.Type == "uint8" {
-				propertyContent["title"] = topic + Sep + field.Name
+				propertyContent["title"] = topic + Sep + field.OriginalName
 				propertyContent["type"] = "string"
 			} else {
 
 				// Arrays all have a type of 'array', regardless of that the hold, then the 'item' keyword determines what type goes in the array.
 				propertyContent["type"] = "array"
-				propertyContent["title"] = topic + Sep + field.Name
+				propertyContent["title"] = topic + Sep + field.OriginalName
 				arrayItems := make(map[string]interface{})
 				propertyContent["items"] = arrayItems
 
@@ -265,8 +260,8 @@ func (mp *DialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 		} else {
 			// It's a scalar.
 			propertyContent := make(map[string]interface{})
-			properties[field.Name] = propertyContent
-			propertyContent["title"] = topic + Sep + field.Name
+			properties[field.OriginalName] = propertyContent
+			propertyContent["title"] = topic + Sep + field.OriginalName
 
 			if field.Type == "string" {
 				propertyContent["type"] = "string"
@@ -383,20 +378,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val int8
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val int8
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "uint8":
@@ -405,20 +400,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val uint8
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val uint8
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "int16":
@@ -427,20 +422,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val int16
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val int16
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "uint16":
@@ -449,20 +444,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val uint16
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val uint16
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "int32":
@@ -471,20 +466,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val int32
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val int32
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "uint32":
@@ -493,20 +488,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val uint32
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val uint32
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "int64":
@@ -515,20 +510,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val int64
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val int64
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "uint64":
@@ -537,20 +532,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val uint64
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val uint64
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "float64":
@@ -559,20 +554,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val float64
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val float64
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "float32":
@@ -581,20 +576,20 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 				var val float32
 				for i := 0; i < fieldDef.ArrayLength; i++ {
 					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
 				}
-				if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
 				var val float32
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
-				if err := dm.SetField(fieldDef.Name, val); err != nil {
-					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
+					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			}
 		case "string":
@@ -602,19 +597,19 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 			var val uint8 // ASCII represented chars
 			for i := 0; i < fieldDef.ArrayLength; i++ {
 				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
-					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.Name+" : ")
+					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
 				if val == 0 {
 					continue // Continue reading until end of string as determined by fieldDef.ArrayLength
 				}
 				allVals += string(val)
 			}
-			if err := dm.SetField(fieldDef.Name, allVals); err != nil {
-				return nil, errors.Wrap(err, "failed to set field : "+fieldDef.Name+" : ")
+			if err := dm.SetField(fieldDef.OriginalName, allVals); err != nil {
+				return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 			}
 		default:
 			// We don't know what to do with this type.
-			return nil, errors.New("unsupported field type: " + fieldDef.Name)
+			return nil, errors.New("unsupported field type: " + fieldDef.OriginalName)
 		}
 	}
 
@@ -644,19 +639,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []int8
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]int8); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val int8
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(int8); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -665,19 +660,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []uint8
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]uint8); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val uint8
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(uint8); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -686,19 +681,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []int16
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]int16); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val int16
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(int16); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -707,19 +702,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []uint16
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]uint16); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val uint16
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(uint16); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -728,19 +723,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []int32
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]int32); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val int32
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(int32); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -749,19 +744,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []uint32
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]uint32); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val uint32
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(uint32); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -770,19 +765,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []int64
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]int64); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val int64
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(int64); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -791,19 +786,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []uint64
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]uint64); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val uint64
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(uint64); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -812,19 +807,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []float64
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]float64); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val float64
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(float64); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -833,19 +828,19 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []float32
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.([]float32); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
 				var val float32
-				if v, ok := dm.Fields[fieldDef.Name]; ok {
+				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 					if val, ok = v.(float32); !ok {
 						// The value stored for this field wasn't the right type.
-						return nil, errors.New("invalid value for field: " + fieldDef.Name)
+						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
@@ -853,10 +848,10 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 		case "string":
 			// Look up the actual value for this field.
 			var val string
-			if v, ok := dm.Fields[fieldDef.Name]; ok {
+			if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
 				if val, ok = v.(string); !ok {
 					// The value stored for this field wasn't the right type.
-					return nil, errors.New("invalid value for field: " + fieldDef.Name)
+					return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 				}
 			} // Else just use the default value.
 			numberWritten := 0
@@ -871,7 +866,7 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			}
 		default:
 			// We don't know what to do with this type.
-			return nil, errors.New("unsupported field type: " + fieldDef.Name)
+			return nil, errors.New("unsupported field type: " + fieldDef.OriginalName)
 		}
 	}
 
