@@ -549,6 +549,62 @@ const (
 	ESTIMATOR_ACCEL_ERROR ESTIMATOR_STATUS_FLAGS = 2048
 )
 
+// List of possible failure type to inject.
+type FAILURE_TYPE int
+
+const (
+	// No failure injected, used to reset a previous failure.
+	FAILURE_TYPE_OK FAILURE_TYPE = 0
+	// Sets unit off, so completely non-responsive.
+	FAILURE_TYPE_OFF FAILURE_TYPE = 1
+	// Unit is stuck e.g. keeps reporting the same value.
+	FAILURE_TYPE_STUCK FAILURE_TYPE = 2
+	// Unit is reporting complete garbage.
+	FAILURE_TYPE_GARBAGE FAILURE_TYPE = 3
+	// Unit is consistently wrong.
+	FAILURE_TYPE_WRONG FAILURE_TYPE = 4
+	// Unit is slow, so e.g. reporting at slower than expected rate.
+	FAILURE_TYPE_SLOW FAILURE_TYPE = 5
+	// Data of unit is delayed in time.
+	FAILURE_TYPE_DELAYED FAILURE_TYPE = 6
+	// Unit is sometimes working, sometimes not.
+	FAILURE_TYPE_INTERMITTENT FAILURE_TYPE = 7
+)
+
+// List of possible units where failures can be injected.
+type FAILURE_UNIT int
+
+const (
+	//
+	FAILURE_UNIT_SENSOR_GYRO FAILURE_UNIT = 0
+	//
+	FAILURE_UNIT_SENSOR_ACCEL FAILURE_UNIT = 1
+	//
+	FAILURE_UNIT_SENSOR_MAG FAILURE_UNIT = 2
+	//
+	FAILURE_UNIT_SENSOR_BARO FAILURE_UNIT = 3
+	//
+	FAILURE_UNIT_SENSOR_GPS FAILURE_UNIT = 4
+	//
+	FAILURE_UNIT_SENSOR_OPTICAL_FLOW FAILURE_UNIT = 5
+	//
+	FAILURE_UNIT_SENSOR_VIO FAILURE_UNIT = 6
+	//
+	FAILURE_UNIT_SENSOR_DISTANCE_SENSOR FAILURE_UNIT = 7
+	//
+	FAILURE_UNIT_SYSTEM_BATTERY FAILURE_UNIT = 100
+	//
+	FAILURE_UNIT_SYSTEM_MOTOR FAILURE_UNIT = 101
+	//
+	FAILURE_UNIT_SYSTEM_SERVO FAILURE_UNIT = 102
+	//
+	FAILURE_UNIT_SYSTEM_AVOIDANCE FAILURE_UNIT = 103
+	//
+	FAILURE_UNIT_SYSTEM_RC_SIGNAL FAILURE_UNIT = 104
+	//
+	FAILURE_UNIT_SYSTEM_MAVLINK_SIGNAL FAILURE_UNIT = 105
+)
+
 //
 type FENCE_ACTION int
 
@@ -1135,6 +1191,8 @@ const (
 	MAV_CMD_ILLUMINATOR_ON_OFF MAV_CMD = 405
 	// Request the home position from the vehicle.
 	MAV_CMD_GET_HOME_POSITION MAV_CMD = 410
+	// Inject artificial failure for testing purposes. Note that autopilots should implement an additional protection before accepting this command such as a specific param setting.
+	MAV_CMD_INJECT_FAILURE MAV_CMD = 420
 	// Starts receiver pairing.
 	MAV_CMD_START_RX_PAIR MAV_CMD = 500
 	// Request the interval between messages for a particular MAVLink message ID. The receiver should ACK the command and then emit its response in a MESSAGE_INTERVAL message.
@@ -7239,8 +7297,8 @@ type MessageGimbalManagerInformation struct {
 	TimeBootMs uint32
 	// Bitmap of gimbal capability flags.
 	CapFlags GIMBAL_MANAGER_CAP_FLAGS `mavenum:"uint32"`
-	// Gimbal component ID that this gimbal manager is responsible for.
-	GimbalComponent uint8
+	// Gimbal device ID that this gimbal manager is responsible for.
+	GimbalDeviceId uint8
 	// Maximum tilt/pitch angle (positive: up, negative: down)
 	TiltMax float32
 	// Minimum tilt/pitch angle (positive: up, negative: down)
@@ -7269,6 +7327,8 @@ type MessageGimbalManagerStatus struct {
 	TimeBootMs uint32
 	// High level gimbal manager flags currently applied.
 	Flags GIMBAL_MANAGER_FLAGS `mavenum:"uint32"`
+	// Gimbal device ID that this gimbal manager is responsible for.
+	GimbalDeviceId uint8
 }
 
 func (m *MessageGimbalManagerStatus) GetId() uint32 {
@@ -7287,6 +7347,8 @@ type MessageGimbalManagerSetAttitude struct {
 	TargetComponent uint8
 	// High level gimbal manager flags to use.
 	Flags GIMBAL_MANAGER_FLAGS `mavenum:"uint32"`
+	// Component ID of gimbal device to address (or 1-6 for non-MAVLink gimbal), 0 for all gimbal device components. (Send command multiple times for more than one but not all gimbals.)
+	GimbalDeviceId uint8
 	// Quaternion components, w, x, y, z (1 0 0 0 is the null-rotation, the frame is depends on whether the flag GIMBAL_MANAGER_FLAGS_YAW_LOCK is set)
 	Q [4]float32
 	// X component of angular velocity, positive is banking to the right, NaN to be ignored.

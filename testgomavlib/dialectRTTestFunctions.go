@@ -164,7 +164,6 @@ func DialectRTCommonXMLTest(t *testing.T, xmlPath string, includeDirs []string) 
 	require.NoError(t, err)
 
 	require.Equal(t, len(dCT.Messages), len(dRT.Messages))
-
 	// Compare RT and CT for all messages
 	for _, m := range ctMessages {
 		index := m.GetId()
@@ -588,6 +587,13 @@ var ctMessages = []gomavlib.Message{
 	&MessageLoggingAck{},
 	&MessageVideoStreamInformation{},
 	&MessageVideoStreamStatus{},
+	&MessageGimbalManagerInformation{},
+	&MessageGimbalManagerStatus{},
+	&MessageGimbalManagerSetAttitude{},
+	&MessageGimbalDeviceInformation{},
+	&MessageGimbalDeviceSetAttitude{},
+	&MessageGimbalDeviceAttitudeStatus{},
+	&MessageAutopilotStateForGimbalDevice{},
 	&MessageWifiConfigAp{},
 	&MessageProtocolVersion{},
 	&MessageAisVessel{},
