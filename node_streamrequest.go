@@ -89,7 +89,7 @@ func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
 	fmt.Println("IN ON EVENT FRAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	// message must be heartbeat and sender must be an ardupilot device
 	if msg, ok := evt.Message().(*DynamicMessage); ok {
-		fmt.Println("Converted to *DynamicMessage successfully")
+		fmt.Println("Converted to *DynamicMessage successfully: msg = ", msg.GetName(), ", id: ", msg.GetId())
 		if autopilot, ok := msg.Fields["autopilot"]; !ok {
 			fmt.Println("autopilot field not found")
 			return
