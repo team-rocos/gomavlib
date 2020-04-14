@@ -1,6 +1,7 @@
 package gomavlib
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -85,50 +86,72 @@ func (sr *nodeStreamRequest) run() {
 }
 
 func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
+	fmt.Println("IN ON EVENT FRAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	// message must be heartbeat and sender must be an ardupilot device
 	if msg, ok := evt.Message().(*DynamicMessage); ok {
+		fmt.Println("Converted to *DynamicMessage successfully")
 		if autopilot, ok := msg.Fields["autopilot"]; !ok {
+			fmt.Println("autopilot field not found")
 			return
 		} else if msg.GetId() != 0 {
+			fmt.Println("msgID not equal to 0")
 			return
 		} else {
 			if val, ok := autopilot.(uint8); ok {
+				fmt.Println("uint8...............")
 				if val != 3 {
+					fmt.Println("uint8 not equal to 3")
 					return
 				}
 			} else if val, ok := autopilot.(uint16); ok {
+				fmt.Println("uint16...............")
 				if val != 3 {
+					fmt.Println("uint16 not equal to 3")
 					return
 				}
 			} else if val, ok := autopilot.(uint32); ok {
+				fmt.Println("uint32...............")
 				if val != 3 {
+					fmt.Println("uint32 not equal to 3")
 					return
 				}
 			} else if val, ok := autopilot.(uint64); ok {
+				fmt.Println("uint64...............")
 				if val != 3 {
+					fmt.Println("uint64 not equal to 3")
 					return
 				}
 			} else if val, ok := autopilot.(int8); ok {
+				fmt.Println("int8...............")
 				if val != 3 {
+					fmt.Println("int8 not equal to 3")
 					return
 				}
 			} else if val, ok := autopilot.(int16); ok {
+				fmt.Println("int16...............")
 				if val != 3 {
+					fmt.Println("int16 not equal to 3")
 					return
 				}
 			} else if val, ok := autopilot.(int32); ok {
+				fmt.Println("int32...............")
 				if val != 3 {
+					fmt.Println("int32 not equal to 3")
 					return
 				}
 			} else if val, ok := autopilot.(int64); ok {
+				fmt.Println("int64...............")
 				if val != 3 {
+					fmt.Println("int64 not equal to 3")
 					return
 				}
 			} else {
+				fmt.Println("autopilot field is not any kind of int!!!")
 				return
 			}
 		}
 	} else {
+		fmt.Println("Somehow not a DynamicMessage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 		autopilot := reflect.ValueOf(evt.Message()).Elem().FieldByName("autopilot")
 		if autopilot.IsValid() == false {
 			return
@@ -137,7 +160,7 @@ func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
 			return
 		}
 	}
-
+	fmt.Println("Made it though!!!!!!!!!!!!!!!!!!!!!!!!!")
 	rnode := streamNode{
 		Channel:     evt.Channel,
 		SystemId:    evt.SystemId(),
