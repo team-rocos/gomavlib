@@ -88,7 +88,9 @@ func (sr *nodeStreamRequest) run() {
 func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
 	fmt.Println("IN ON EVENT FRAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	// message must be heartbeat and sender must be an ardupilot device
+	dynamicMessageFound := false
 	if msg, ok := evt.Message().(*DynamicMessage); ok {
+		dynamicMessageFound = true
 		fmt.Println("Converted to *DynamicMessage successfully: msg = ", msg.GetName(), ", id: ", msg.GetId())
 		if autopilot, ok := msg.Fields["autopilot"]; !ok {
 			fmt.Println("autopilot field not found")
@@ -186,34 +188,68 @@ func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
 			}
 		}
 	}()
+	if dynamicMessageFound {
+		if request == true {
+			// https://github.com/mavlink/qgroundcontrol/blob/08f400355a8f3acf1dd8ed91f7f1c757323ac182/src/FirmwarePlugin/APM/APMFirmwarePlugin.cc#L626
+			streams := []int{
+				1,  //common.MAV_DATA_STREAM_RAW_SENSORS,
+				2,  //common.MAV_DATA_STREAM_EXTENDED_STATUS,
+				3,  //common.MAV_DATA_STREAM_RC_CHANNELS,
+				6,  //common.MAV_DATA_STREAM_POSITION,
+				10, //common.MAV_DATA_STREAM_EXTRA1,
+				11, //common.MAV_DATA_STREAM_EXTRA2,
+				12, //common.MAV_DATA_STREAM_EXTRA3,
+			}
 
-	if request == true {
-		// https://github.com/mavlink/qgroundcontrol/blob/08f400355a8f3acf1dd8ed91f7f1c757323ac182/src/FirmwarePlugin/APM/APMFirmwarePlugin.cc#L626
-		streams := []int{
-			1,  //common.MAV_DATA_STREAM_RAW_SENSORS,
-			2,  //common.MAV_DATA_STREAM_EXTENDED_STATUS,
-			3,  //common.MAV_DATA_STREAM_RC_CHANNELS,
-			6,  //common.MAV_DATA_STREAM_POSITION,
-			10, //common.MAV_DATA_STREAM_EXTRA1,
-			11, //common.MAV_DATA_STREAM_EXTRA2,
-			12, //common.MAV_DATA_STREAM_EXTRA3,
+			for _, stream := range streams {
+				dm, _ := sr.n.conf.D.getMsgById(66)
+				msg := (*dm).newMsg()
+				msg.SetField("target_system", uint8(evt.SystemId()))
+				msg.SetField("target_component", uint8(evt.ComponentId()))
+				msg.SetField("req_stream_id", uint8(stream))
+				msg.SetField("req_message_rate", uint16(sr.n.conf.StreamRequestFrequency))
+				msg.SetField("start_stop", uint8(1))
+				sr.n.WriteMessageTo(evt.Channel, msg)
+				fmt.Printf("%+v\n", msg)
+			}
+
+			sr.n.eventsOut <- &EventStreamRequested{
+				Channel:     evt.Channel,
+				SystemId:    evt.SystemId(),
+				ComponentId: evt.ComponentId(),
+			}
 		}
+	} else {
+		if request == true {
+			// https://github.com/mavlink/qgroundcontrol/blob/08f400355a8f3acf1dd8ed91f7f1c757323ac182/src/FirmwarePlugin/APM/APMFirmwarePlugin.cc#L626
+			streams := []int{
+				1,  //common.MAV_DATA_STREAM_RAW_SENSORS,
+				2,  //common.MAV_DATA_STREAM_EXTENDED_STATUS,
+				3,  //common.MAV_DATA_STREAM_RC_CHANNELS,
+				6,  //common.MAV_DATA_STREAM_POSITION,
+				10, //common.MAV_DATA_STREAM_EXTRA1,
+				11, //common.MAV_DATA_STREAM_EXTRA2,
+				12, //common.MAV_DATA_STREAM_EXTRA3,
+			}
 
-		for _, stream := range streams {
-			dm, _ := sr.n.conf.D.getMsgById(66)
-			msg := (*dm).newMsg()
-			msg.SetField("TargetSystem", uint8(evt.SystemId()))
-			msg.SetField("TargetComponent", uint8(evt.ComponentId()))
-			msg.SetField("ReqStreamId", uint8(stream))
-			msg.SetField("ReqMessageRate", uint16(sr.n.conf.StreamRequestFrequency))
-			msg.SetField("StartStop", uint8(1))
-			sr.n.WriteMessageTo(evt.Channel, msg)
-		}
+			for _, stream := range streams {
+				dm, _ := sr.n.conf.D.getMsgById(66)
+				msg := (*dm).newMsg()
+				msg.SetField("TargetSystem", uint8(evt.SystemId()))
+				msg.SetField("TargetComponent", uint8(evt.ComponentId()))
+				msg.SetField("ReqStreamId", uint8(stream))
+				msg.SetField("ReqMessageRate", uint16(sr.n.conf.StreamRequestFrequency))
+				msg.SetField("StartStop", uint8(1))
+				sr.n.WriteMessageTo(evt.Channel, msg)
+				fmt.Printf("%+v\n", msg)
+			}
 
-		sr.n.eventsOut <- &EventStreamRequested{
-			Channel:     evt.Channel,
-			SystemId:    evt.SystemId(),
-			ComponentId: evt.ComponentId(),
+			sr.n.eventsOut <- &EventStreamRequested{
+				Channel:     evt.Channel,
+				SystemId:    evt.SystemId(),
+				ComponentId: evt.ComponentId(),
+			}
 		}
 	}
+
 }
