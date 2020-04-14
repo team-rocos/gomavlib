@@ -88,12 +88,14 @@ func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
 	// message must be heartbeat and sender must be an ardupilot device
 
 	if msg, ok := evt.Message().(*DynamicMessage); ok {
-		if msg.GetId() != 0 || msg.Fields["Autopilot"].(uint8) != 3 {
+		if autopilot, ok := msg.Fields["autopilot"]; !ok {
+			return
+		} else if msg.GetId() != 0 || autopilot.(uint8) != 3 {
 			return
 		}
 	} else {
 		if evt.Message().GetId() != 0 ||
-			reflect.ValueOf(evt.Message()).Elem().FieldByName("Autopilot").Int() != 3 {
+			reflect.ValueOf(evt.Message()).Elem().FieldByName("autopilot").Int() != 3 {
 			return
 		}
 	}
