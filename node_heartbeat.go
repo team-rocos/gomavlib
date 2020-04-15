@@ -53,13 +53,23 @@ func (h *nodeHeartbeat) run() {
 		case <-ticker.C:
 			dm, _ := h.n.conf.D.getMsgById(0)
 			msg := (*dm).newMsg()
-			msg.SetField("type", int8(h.n.conf.HeartbeatSystemType))
-			msg.SetField("autopilot", int8(h.n.conf.HeartbeatAutopilotType))
-			msg.SetField("base_mode", int8(0))
-			msg.SetField("custom_mode", uint32(0))
-			msg.SetField("system_status", int8(4)) // MAV_STATE_ACTIVE
-			msg.SetField("mavlink_version", uint8(mavlinkVersion))
-			h.n.WriteMessageAll(msg)
+			if _, ok := msg.(*DynamicMessage); ok {
+				msg.SetField("type", uint8(h.n.conf.HeartbeatSystemType))
+				msg.SetField("autopilot", uint8(h.n.conf.HeartbeatAutopilotType))
+				msg.SetField("base_mode", uint8(0))
+				msg.SetField("custom_mode", uint32(0))
+				msg.SetField("system_status", uint8(4)) // MAV_STATE_ACTIVE
+				msg.SetField("mavlink_version", uint8(mavlinkVersion))
+				h.n.WriteMessageAll(msg)
+			} else {
+				msg.SetField("Type", int8(h.n.conf.HeartbeatSystemType))
+				msg.SetField("Autopilot", int8(h.n.conf.HeartbeatAutopilotType))
+				msg.SetField("BaseMode", int8(0))
+				msg.SetField("CustomMode", uint32(0))
+				msg.SetField("SystemStatus", int8(4)) // MAV_STATE_ACTIVE
+				msg.SetField("MavlinkVersion", uint8(mavlinkVersion))
+				h.n.WriteMessageAll(msg)
+			}
 
 		case <-h.terminate:
 			return
