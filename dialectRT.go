@@ -883,7 +883,6 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 	}
 
 	// All done.
-	//fmt.Println(buf.Bytes())
 	return newBuf, nil
 }
 
