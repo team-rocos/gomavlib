@@ -305,8 +305,16 @@ func (p *Parser) Read() (Frame, error) {
 	if p.conf.D != nil {
 		if mp, ok := p.conf.D.getMsgById(f.GetMessage().GetId()); ok {
 			if sum := p.checksum(f); sum != f.GetChecksum() {
-				return nil, newParserError("wrong checksum (expected %.4x, got %.4x, id=%d)",
-					sum, f.GetChecksum(), f.GetMessage().GetId())
+				if frameTest, ok := f.(*FrameV2); ok {
+					return nil, newParserError("wrong checksum (expected %.4x, got %.4x, id=%d, msg=%+v, frameV2=%+v)",
+						sum, f.GetChecksum(), f.GetMessage().GetId(), f.GetMessage(), frameTest)
+				} else if frameTest, ok := f.(*FrameV1); ok {
+					return nil, newParserError("wrong checksum (expected %.4x, got %.4x, id=%d, msg=%+v, frameV1=%+v)",
+						sum, f.GetChecksum(), f.GetMessage().GetId(), f.GetMessage(), frameTest)
+				} else {
+					return nil, newParserError("wrong checksum (expected %.4x, got %.4x, id=%d, msg=%+v)",
+						sum, f.GetChecksum(), f.GetMessage().GetId(), f.GetMessage())
+				}
 			}
 
 			_, isFrameV2 := f.(*FrameV2)
