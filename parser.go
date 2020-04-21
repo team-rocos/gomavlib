@@ -174,6 +174,7 @@ func (p *Parser) signature(ff *FrameV2, key *Key) *Signature {
 func (p *Parser) Read() (Frame, error) {
 	magicByte, err := p.readBuffer.ReadByte()
 	if err != nil {
+		fmt.Println("Line 177 Read(), returning error: ", err)
 		return nil, err
 	}
 
@@ -186,6 +187,7 @@ func (p *Parser) Read() (Frame, error) {
 		// header
 		buf, err := p.readBuffer.Peek(5)
 		if err != nil {
+			fmt.Println("Line 190 Read(), returning error: ", err)
 			return nil, err
 		}
 		p.readBuffer.Discard(5)
@@ -201,6 +203,7 @@ func (p *Parser) Read() (Frame, error) {
 			msgContent = make([]byte, msgLen)
 			_, err = io.ReadFull(p.readBuffer, msgContent)
 			if err != nil {
+				fmt.Println("Line 206 Read(), returning error: ", err)
 				return nil, err
 			}
 		}
@@ -212,6 +215,7 @@ func (p *Parser) Read() (Frame, error) {
 		// checksum
 		buf, err = p.readBuffer.Peek(2)
 		if err != nil {
+			fmt.Println("Line 218 Read(), returning error: ", err)
 			return nil, err
 		}
 		p.readBuffer.Discard(2)
@@ -224,6 +228,7 @@ func (p *Parser) Read() (Frame, error) {
 		// header
 		buf, err := p.readBuffer.Peek(9)
 		if err != nil {
+			fmt.Println("Line 231 Read(), returning error: ", err)
 			return nil, err
 		}
 		p.readBuffer.Discard(9)
@@ -246,6 +251,7 @@ func (p *Parser) Read() (Frame, error) {
 			msgContent = make([]byte, msgLen)
 			_, err = io.ReadFull(p.readBuffer, msgContent)
 			if err != nil {
+				fmt.Println("Line 254 Read(), returning error: ", err)
 				return nil, err
 			}
 		}
@@ -257,6 +263,7 @@ func (p *Parser) Read() (Frame, error) {
 		// checksum
 		buf, err = p.readBuffer.Peek(2)
 		if err != nil {
+			fmt.Println("Line 266 Read(), returning error: ", err)
 			return nil, err
 		}
 		p.readBuffer.Discard(2)
@@ -266,6 +273,7 @@ func (p *Parser) Read() (Frame, error) {
 		if ff.IsSigned() {
 			buf, err := p.readBuffer.Peek(13)
 			if err != nil {
+				fmt.Println("Line 276 Read(), returning error: ", err)
 				return nil, err
 			}
 			p.readBuffer.Discard(13)
@@ -320,6 +328,7 @@ func (p *Parser) Read() (Frame, error) {
 			_, isFrameV2 := f.(*FrameV2)
 			msg, err := (*mp).decode(f.GetMessage().(*MessageRaw).Content, isFrameV2)
 			if err != nil {
+				fmt.Println("Line 331 Read(), returning error: ", err)
 				return nil, newParserError(err.Error())
 			}
 
