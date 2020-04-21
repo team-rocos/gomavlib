@@ -1,6 +1,7 @@
 package gomavlib
 
 import (
+	"fmt"
 	"io"
 )
 
@@ -73,11 +74,14 @@ func (ch *Channel) run() {
 		for {
 			frame, err := ch.parser.Read()
 			if err != nil {
+				fmt.Println("Error returned from parser.Read(): ", err)
 				// continue in case of parse errors
 				if _, ok := err.(*ParserError); ok {
+					fmt.Println("Error from parser.Read() is a parse error, continuing: ", err)
 					ch.n.eventsOut <- &EventParseError{err, ch}
 					continue
 				}
+				fmt.Println("Error from parser.Read() is NOT a parse error... Returning now: ", err)
 				return
 			}
 
