@@ -192,6 +192,7 @@ func (p *Parser) Read() (Frame, error) {
 		}
 		p.readBuffer.Discard(5)
 		msgLen := buf[0]
+		fmt.Println("V1 msgLen = ", int(msgLen), " (", msgLen, " bytes )")
 		ff.SequenceId = buf[1]
 		ff.SystemId = buf[2]
 		ff.ComponentId = buf[3]
@@ -233,6 +234,7 @@ func (p *Parser) Read() (Frame, error) {
 		}
 		p.readBuffer.Discard(9)
 		msgLen := buf[0]
+		fmt.Println("V2 msgLen = ", int(msgLen), " (", msgLen, " bytes )")
 		ff.IncompatibilityFlag = buf[1]
 		ff.CompatibilityFlag = buf[2]
 		ff.SequenceId = buf[3]
