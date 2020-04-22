@@ -2,6 +2,8 @@ package testgomavlib
 
 import (
 	"bytes"
+	"errors"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -219,25 +221,222 @@ func DecodeAndEncodeRTTest(t *testing.T, xmlPath string, includeDirs []string) {
 		msgDecoded, err := dMsgRT.Decode(bytesEncoded, c.isV2)
 		require.NoError(t, err)
 
-		// TODO: Implement the code below properly
 		//Make sure all fields of dMsgCT match equivalent values of RT msgDecoded
 		//Compare all fields of all RT and CT Messages
-		// v := reflect.ValueOf(msgDecodedCT).Elem()
-		// for i := 0; i < len(dMsgCT.Fields); i++ {
-		// 	fCT := dMsgCT.Fields[i]
-		// 	originalName := fCT.GetName()
-		// 	name := dialectMsgDefToGo(originalName)
-		// 	fRT := msgDecoded.(*gomavlib.DynamicMessage).Fields[originalName]
-		// 	fCTVal := v.FieldByName(name).Interface()
-		// 	fmt.Println(fRT)
-		// 	fmt.Println(fCTVal)
-		// }
+		v := reflect.ValueOf(msgDecodedCT).Elem()
+		for j := 0; j < len(dMsgCT.Fields); j++ {
+			fCT := dMsgCT.Fields[j]
+			originalName := fCT.GetName()
+			name := dialectMsgDefToGo(originalName)
+			fRT := msgDecoded.(*gomavlib.DynamicMessage).Fields[originalName]
+			fCTVal := v.FieldByName(name)
+			fieldType, arrayLength, err := findFieldType(msgDecoded.(*gomavlib.DynamicMessage), originalName)
+			require.NoError(t, err)
+			switch fieldType {
+			case "int8":
+				if arrayLength != 0 {
+					rtResult := fRT.([]int8)
+					ctResult := make([]int8, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						if fCTVal.Index(i).Kind() == reflect.Int || fCTVal.Index(i).Kind() == reflect.Int8 {
+							ctResult[i] = int8(fCTVal.Index(i).Int())
+						} else {
+							ctResult[i] = int8(fCTVal.Index(i).Uint())
+						}
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					if fCTVal.Kind() == reflect.Int || fCTVal.Kind() == reflect.Int8 {
+						require.Equal(t, int8(fCTVal.Int()), fRT.(int8))
+					} else {
+						require.Equal(t, int8(fCTVal.Uint()), fRT.(int8))
+					}
+				}
+			case "uint8":
+				if arrayLength != 0 {
+					rtResult := fRT.([]uint8)
+					ctResult := make([]uint8, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						if fCTVal.Index(i).Kind() == reflect.Int || fCTVal.Index(i).Kind() == reflect.Int8 {
+							ctResult[i] = uint8(fCTVal.Index(i).Int())
+						} else {
+							ctResult[i] = uint8(fCTVal.Index(i).Uint())
+						}
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					if fCTVal.Kind() == reflect.Int || fCTVal.Kind() == reflect.Int8 {
+						require.Equal(t, uint8(fCTVal.Int()), fRT.(uint8))
+					} else {
+						require.Equal(t, uint8(fCTVal.Uint()), fRT.(uint8))
+					}
+				}
+			case "int16":
+				if arrayLength != 0 {
+					rtResult := fRT.([]int16)
+					ctResult := make([]int16, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						if fCTVal.Index(i).Kind() == reflect.Int || fCTVal.Index(i).Kind() == reflect.Int16 {
+							ctResult[i] = int16(fCTVal.Index(i).Int())
+						} else {
+							ctResult[i] = int16(fCTVal.Index(i).Uint())
+						}
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					if fCTVal.Kind() == reflect.Int || fCTVal.Kind() == reflect.Int16 {
+						require.Equal(t, int16(fCTVal.Int()), fRT.(int16))
+					} else {
+						require.Equal(t, int16(fCTVal.Uint()), fRT.(int16))
+					}
+				}
+
+			case "uint16":
+				if arrayLength != 0 {
+					rtResult := fRT.([]uint16)
+					ctResult := make([]uint16, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						if fCTVal.Index(i).Kind() == reflect.Int || fCTVal.Index(i).Kind() == reflect.Int16 {
+							ctResult[i] = uint16(fCTVal.Index(i).Int())
+						} else {
+							ctResult[i] = uint16(fCTVal.Index(i).Uint())
+						}
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					if fCTVal.Kind() == reflect.Int || fCTVal.Kind() == reflect.Int16 {
+						require.Equal(t, uint16(fCTVal.Int()), fRT.(uint16))
+					} else {
+						require.Equal(t, uint16(fCTVal.Uint()), fRT.(uint16))
+					}
+				}
+
+			case "int32":
+				if arrayLength != 0 {
+					rtResult := fRT.([]int32)
+					ctResult := make([]int32, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						if fCTVal.Index(i).Kind() == reflect.Int || fCTVal.Index(i).Kind() == reflect.Int32 {
+							ctResult[i] = int32(fCTVal.Index(i).Int())
+						} else {
+							ctResult[i] = int32(fCTVal.Index(i).Uint())
+						}
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					if fCTVal.Kind() == reflect.Int || fCTVal.Kind() == reflect.Int32 {
+						require.Equal(t, int32(fCTVal.Int()), fRT.(int32))
+					} else {
+						require.Equal(t, int32(fCTVal.Uint()), fRT.(int32))
+					}
+				}
+			case "uint32":
+				if arrayLength != 0 {
+					rtResult := fRT.([]uint32)
+					ctResult := make([]uint32, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						if fCTVal.Index(i).Kind() == reflect.Int || fCTVal.Index(i).Kind() == reflect.Int32 {
+							ctResult[i] = uint32(fCTVal.Index(i).Int())
+						} else {
+							ctResult[i] = uint32(fCTVal.Index(i).Uint())
+						}
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					if fCTVal.Kind() == reflect.Int || fCTVal.Kind() == reflect.Int32 {
+						require.Equal(t, uint32(fCTVal.Int()), fRT.(uint32))
+					} else {
+						require.Equal(t, uint32(fCTVal.Uint()), fRT.(uint32))
+					}
+				}
+
+			case "int64":
+				if arrayLength != 0 {
+					rtResult := fRT.([]int64)
+					ctResult := make([]int64, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						if fCTVal.Index(i).Kind() == reflect.Int || fCTVal.Index(i).Kind() == reflect.Int64 {
+							ctResult[i] = int64(fCTVal.Index(i).Int())
+						} else {
+							ctResult[i] = int64(fCTVal.Index(i).Uint())
+						}
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					if fCTVal.Kind() == reflect.Int || fCTVal.Kind() == reflect.Int64 {
+						require.Equal(t, int64(fCTVal.Int()), fRT.(int64))
+					} else {
+						require.Equal(t, int64(fCTVal.Uint()), fRT.(int64))
+					}
+				}
+
+			case "uint64":
+				if arrayLength != 0 {
+					rtResult := fRT.([]uint64)
+					ctResult := make([]uint64, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						if fCTVal.Index(i).Kind() == reflect.Int || fCTVal.Index(i).Kind() == reflect.Int64 {
+							ctResult[i] = uint64(fCTVal.Index(i).Int())
+						} else {
+							ctResult[i] = uint64(fCTVal.Index(i).Uint())
+						}
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					if fCTVal.Kind() == reflect.Int || fCTVal.Kind() == reflect.Int64 {
+						require.Equal(t, uint64(fCTVal.Int()), fRT.(uint64))
+					} else {
+						require.Equal(t, uint64(fCTVal.Uint()), fRT.(uint64))
+					}
+				}
+			case "float64":
+				if arrayLength != 0 {
+					rtResult := fRT.([]float64)
+					ctResult := make([]float64, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						ctResult[i] = float64(fCTVal.Index(i).Float())
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					require.Equal(t, float64(fCTVal.Float()), fRT.(float64))
+				}
+
+			case "float32":
+				if arrayLength != 0 {
+					rtResult := fRT.([]float32)
+					ctResult := make([]float32, arrayLength)
+					for i := 0; i < arrayLength; i++ {
+						ctResult[i] = float32(fCTVal.Index(i).Float())
+					}
+					require.Equal(t, ctResult, rtResult)
+				} else {
+					require.Equal(t, float32(fCTVal.Float()), fRT.(float32))
+				}
+
+			case "string":
+				require.Equal(t, fCTVal.String(), fRT.(string))
+
+			default:
+				err = errors.New("invalid type so unable to convert interface values")
+				panic(err)
+			}
+		}
 
 		// Encode using RT
 		bytesEncodedByRT, err := dMsgRT.Encode(msgDecoded, c.isV2)
 		require.NoError(t, err)
 		require.Equal(t, c.raw, bytesEncodedByRT)
 	}
+}
+
+func findFieldType(dm *gomavlib.DynamicMessage, originalName string) (string, int, error) {
+	for _, f := range dm.T.Msg.Fields {
+		if f.OriginalName == originalName {
+			return f.Type, f.ArrayLength, nil
+		}
+	}
+	err := errors.New("field with given OriginalName does not exist")
+	return "", 0, err
 }
 
 var schemasTest = []string{
