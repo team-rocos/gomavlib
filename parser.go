@@ -174,7 +174,6 @@ func (p *Parser) signature(ff *FrameV2, key *Key) *Signature {
 func (p *Parser) Read() (Frame, error) {
 	magicByte, err := p.readBuffer.ReadByte()
 	if err != nil {
-		fmt.Println("Line 177 Read(), returning error: ", err)
 		return nil, err
 	}
 
@@ -187,12 +186,10 @@ func (p *Parser) Read() (Frame, error) {
 		// header
 		buf, err := p.readBuffer.Peek(5)
 		if err != nil {
-			fmt.Println("Line 190 Read(), returning error: ", err)
 			return nil, err
 		}
 		p.readBuffer.Discard(5)
 		msgLen := buf[0]
-		fmt.Println("V1 msgLen = ", int(msgLen), " (", msgLen, " bytes )")
 		ff.SequenceId = buf[1]
 		ff.SystemId = buf[2]
 		ff.ComponentId = buf[3]
@@ -204,7 +201,6 @@ func (p *Parser) Read() (Frame, error) {
 			msgContent = make([]byte, msgLen)
 			_, err = io.ReadFull(p.readBuffer, msgContent)
 			if err != nil {
-				fmt.Println("Line 206 Read(), returning error: ", err)
 				return nil, err
 			}
 		}
@@ -216,7 +212,6 @@ func (p *Parser) Read() (Frame, error) {
 		// checksum
 		buf, err = p.readBuffer.Peek(2)
 		if err != nil {
-			fmt.Println("Line 218 Read(), returning error: ", err)
 			return nil, err
 		}
 		p.readBuffer.Discard(2)
@@ -229,12 +224,10 @@ func (p *Parser) Read() (Frame, error) {
 		// header
 		buf, err := p.readBuffer.Peek(9)
 		if err != nil {
-			fmt.Println("Line 231 Read(), returning error: ", err)
 			return nil, err
 		}
 		p.readBuffer.Discard(9)
 		msgLen := buf[0]
-		fmt.Println("V2 msgLen = ", int(msgLen), " (", msgLen, " bytes )")
 		ff.IncompatibilityFlag = buf[1]
 		ff.CompatibilityFlag = buf[2]
 		ff.SequenceId = buf[3]
@@ -253,7 +246,6 @@ func (p *Parser) Read() (Frame, error) {
 			msgContent = make([]byte, msgLen)
 			_, err = io.ReadFull(p.readBuffer, msgContent)
 			if err != nil {
-				fmt.Println("Line 254 Read(), returning error: ", err)
 				return nil, err
 			}
 		}
@@ -265,7 +257,6 @@ func (p *Parser) Read() (Frame, error) {
 		// checksum
 		buf, err = p.readBuffer.Peek(2)
 		if err != nil {
-			fmt.Println("Line 266 Read(), returning error: ", err)
 			return nil, err
 		}
 		p.readBuffer.Discard(2)
@@ -275,7 +266,6 @@ func (p *Parser) Read() (Frame, error) {
 		if ff.IsSigned() {
 			buf, err := p.readBuffer.Peek(13)
 			if err != nil {
-				fmt.Println("Line 276 Read(), returning error: ", err)
 				return nil, err
 			}
 			p.readBuffer.Discard(13)
@@ -315,22 +305,13 @@ func (p *Parser) Read() (Frame, error) {
 	if p.conf.D != nil {
 		if mp, ok := p.conf.D.getMsgById(f.GetMessage().GetId()); ok {
 			if sum := p.checksum(f); sum != f.GetChecksum() {
-				if frameTest, ok := f.(*FrameV2); ok {
-					return nil, newParserError("wrong checksum (expected %.4x, got %.4x, id=%d, msg=%+v, frameV2=%+v)",
-						sum, f.GetChecksum(), f.GetMessage().GetId(), f.GetMessage(), frameTest)
-				} else if frameTest, ok := f.(*FrameV1); ok {
-					return nil, newParserError("wrong checksum (expected %.4x, got %.4x, id=%d, msg=%+v, frameV1=%+v)",
-						sum, f.GetChecksum(), f.GetMessage().GetId(), f.GetMessage(), frameTest)
-				} else {
-					return nil, newParserError("wrong checksum (expected %.4x, got %.4x, id=%d, msg=%+v)",
-						sum, f.GetChecksum(), f.GetMessage().GetId(), f.GetMessage())
-				}
+				return nil, newParserError("wrong checksum (expected %.4x, got %.4x, id=%d)",
+					sum, f.GetChecksum(), f.GetMessage().GetId())
 			}
 
 			_, isFrameV2 := f.(*FrameV2)
 			msg, err := (*mp).decode(f.GetMessage().(*MessageRaw).Content, isFrameV2)
 			if err != nil {
-				fmt.Println("Line 331 Read(), returning error: ", err)
 				return nil, newParserError(err.Error())
 			}
 
