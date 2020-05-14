@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	libgen "github.com/team-rocos/gomavlib/commands/dialgen/libgen"
 )
 
 func doTest(t *testing.T, t1 EndpointConf, t2 EndpointConf) {
@@ -558,6 +559,62 @@ func TestNodeStreamRequest(t *testing.T) {
 		for evt := range node2.Events() {
 			if ee, ok := evt.(*EventFrame); ok {
 				if _, ok = ee.Message().(*MessageRequestDataStream); ok {
+					success = true
+					break
+				}
+			}
+		}
+	}()
+
+	require.Equal(t, true, success)
+}
+
+func TestNodeStreamRequestDynamicMessage(t *testing.T) {
+	success := false
+	defs, version, err := libgen.XMLToFields("mavlink-upstream/message_definitions/v1.0/common.xml", []string{"."})
+	require.NoError(t, err)
+
+	//Create dialect from the parsed defs.
+	dRT, err := NewDialectRT(version, defs)
+	require.NoError(t, err)
+
+	func() {
+		node1, err := NewNode(NodeConf{
+			D:           dRT,
+			OutVersion:  V2,
+			OutSystemId: 10,
+			Endpoints: []EndpointConf{
+				EndpointUdpServer{"127.0.0.1:5600"},
+			},
+			HeartbeatDisable:       true,
+			StreamRequestEnable:    true,
+			StreamRequestFrequency: 10,
+		})
+		require.NoError(t, err)
+		defer node1.Close()
+
+		node2, err := NewNode(NodeConf{
+			D:           dRT,
+			OutVersion:  V2,
+			OutSystemId: 10,
+			Endpoints: []EndpointConf{
+				EndpointUdpClient{"127.0.0.1:5600"},
+			},
+			HeartbeatDisable:       false,
+			HeartbeatPeriod:        500 * time.Millisecond,
+			HeartbeatAutopilotType: 3, // MAV_AUTOPILOT_ARDUPILOTMEGA
+		})
+		require.NoError(t, err)
+		defer node2.Close()
+
+		go func() {
+			for range node1.Events() {
+			}
+		}()
+
+		for evt := range node2.Events() {
+			if ee, ok := evt.(*EventFrame); ok {
+				if ee.Message().GetId() == uint32(66) { // REQUEST_DATA_STREAM
 					success = true
 					break
 				}
