@@ -98,40 +98,12 @@ func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
 				if val != 3 {
 					return
 				}
-			} else if val, ok := autopilot.(uint16); ok {
-				if val != 3 {
-					return
-				}
-			} else if val, ok := autopilot.(uint32); ok {
-				if val != 3 {
-					return
-				}
-			} else if val, ok := autopilot.(uint64); ok {
-				if val != 3 {
-					return
-				}
-			} else if val, ok := autopilot.(int8); ok {
-				if val != 3 {
-					return
-				}
-			} else if val, ok := autopilot.(int16); ok {
-				if val != 3 {
-					return
-				}
-			} else if val, ok := autopilot.(int32); ok {
-				if val != 3 {
-					return
-				}
-			} else if val, ok := autopilot.(int64); ok {
-				if val != 3 {
-					return
-				}
 			} else {
 				return
 			}
 		}
 	} else {
-		autopilot := reflect.ValueOf(evt.Message()).Elem().FieldByName("autopilot")
+		autopilot := reflect.ValueOf(evt.Message()).Elem().FieldByName("Autopilot")
 		if autopilot.IsValid() == false {
 			return
 		} else if evt.Message().GetId() != 0 ||
