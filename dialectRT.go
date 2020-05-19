@@ -550,10 +550,10 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 			}
 		case "float64":
 			if fieldDef.ArrayLength != 0 {
-				var allVals []float64
-				var val float64
+				var allVals []JsonFloat64
+				var val JsonFloat64
 				for i := 0; i < fieldDef.ArrayLength; i++ {
-					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					if err := binary.Read(b, binary.LittleEndian, &val.F); err != nil {
 						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
@@ -562,8 +562,8 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
-				var val float64
-				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+				var val JsonFloat64
+				if err := binary.Read(b, binary.LittleEndian, &val.F); err != nil {
 					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
 				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
@@ -572,10 +572,10 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 			}
 		case "float32":
 			if fieldDef.ArrayLength != 0 {
-				var allVals []float32
-				var val float32
+				var allVals []JsonFloat32
+				var val JsonFloat32
 				for i := 0; i < fieldDef.ArrayLength; i++ {
-					if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+					if err := binary.Read(b, binary.LittleEndian, &val.F); err != nil {
 						return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 					}
 					allVals = append(allVals, val)
@@ -584,8 +584,8 @@ func (mp *DialectMessageRT) decode(buf []byte, isFrameV2 bool) (Message, error) 
 					return nil, errors.Wrap(err, "failed to set field : "+fieldDef.OriginalName+" : ")
 				}
 			} else {
-				var val float32
-				if err := binary.Read(b, binary.LittleEndian, &val); err != nil {
+				var val JsonFloat32
+				if err := binary.Read(b, binary.LittleEndian, &val.F); err != nil {
 					return nil, errors.Wrap(err, "failed to read field : "+fieldDef.OriginalName+" : ")
 				}
 				if err := dm.SetField(fieldDef.OriginalName, val); err != nil {
@@ -808,42 +808,50 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 			if fieldDef.ArrayLength != 0 {
 				var val []float64
 				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
-					if val, ok = v.([]float64); !ok {
+					if temp, ok := v.([]JsonFloat64); ok {
+						for _, t := range temp {
+							val = append(val, t.F)
+						}
+					} else {
 						// The value stored for this field wasn't the right type.
 						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
-				var val float64
+				var val JsonFloat64
 				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
-					if val, ok = v.(float64); !ok {
+					if val, ok = v.(JsonFloat64); !ok {
 						// The value stored for this field wasn't the right type.
 						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
-				binary.Write(buf, binary.LittleEndian, val)
+				binary.Write(buf, binary.LittleEndian, val.F)
 			}
 		case "float32":
 			// Look up the actual value for this field.
 			if fieldDef.ArrayLength != 0 {
 				var val []float32
 				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
-					if val, ok = v.([]float32); !ok {
+					if temp, ok := v.([]JsonFloat32); ok {
+						for _, t := range temp {
+							val = append(val, t.F)
+						}
+					} else {
 						// The value stored for this field wasn't the right type.
 						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
 				binary.Write(buf, binary.LittleEndian, val)
 			} else {
-				var val float32
+				var val JsonFloat32
 				if v, ok := dm.Fields[fieldDef.OriginalName]; ok {
-					if val, ok = v.(float32); !ok {
+					if val, ok = v.(JsonFloat32); !ok {
 						// The value stored for this field wasn't the right type.
 						return nil, errors.New("invalid value for field: " + fieldDef.OriginalName)
 					}
 				} // Else just use the default value.
-				binary.Write(buf, binary.LittleEndian, val)
+				binary.Write(buf, binary.LittleEndian, val.F)
 			}
 		case "string":
 			// Look up the actual value for this field.
