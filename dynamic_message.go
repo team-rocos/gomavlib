@@ -209,7 +209,7 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 			}
 		}
 	case "float32":
-		// Try to convert the value into an JsonFloat32.
+		// Try to convert the value into a JsonFloat32.
 		if fieldInfo.ArrayLength != 0 {
 			if v, ok := value.([]JsonFloat32); ok {
 				d.Fields[field] = v
@@ -378,7 +378,7 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 				} else if field.Type == "float32" || field.Type == "float64" { //Case where we have marshalled a special float as a string
 					data, err = strconv.ParseFloat(string(value), 64)
 					if err != nil {
-						errors.Wrap(err, "Field: "+field.OriginalName)
+						return errors.Wrap(err, "Field: "+field.OriginalName)
 					}
 					if field.Type == "float32" {
 						d.Fields[field.OriginalName] = JsonFloat32{F: float32(data.(float64))}
