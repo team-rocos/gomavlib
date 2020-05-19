@@ -191,39 +191,39 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 			}
 		}
 	case "float64":
-		// Try to convert the value into an float64.
+		// Try to convert the value into a JsonFloat64.
 		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]float64); ok {
+			if v, ok := value.([]JsonFloat64); ok {
 				d.Fields[field] = v
 			} else {
 				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []float64")
+				return errors.New("incorrect type for field: " + field + " - expected []JsonFloat64")
 			}
 		} else {
-			if v, ok := value.(float64); ok {
+			if v, ok := value.(JsonFloat64); ok {
 				// This is the correct type, so save it into our message.
 				d.Fields[field] = v
 			} else {
 				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected float64")
+				return errors.New("incorrect type for field: " + field + " - expected JsonFloat64")
 			}
 		}
 	case "float32":
-		// Try to convert the value into an float32.
+		// Try to convert the value into an JsonFloat32.
 		if fieldInfo.ArrayLength != 0 {
-			if v, ok := value.([]float32); ok {
+			if v, ok := value.([]JsonFloat32); ok {
 				d.Fields[field] = v
 			} else {
 				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected []float32")
+				return errors.New("incorrect type for field: " + field + " - expected []JsonFloat32")
 			}
 		} else {
-			if v, ok := value.(float32); ok {
+			if v, ok := value.(JsonFloat32); ok {
 				// This is the correct type, so save it into our message.
 				d.Fields[field] = v
 			} else {
 				// The value was the wrong type.
-				return errors.New("incorrect type for field: " + field + " - expected float32")
+				return errors.New("incorrect type for field: " + field + " - expected JsonFloat32")
 			}
 		}
 	case "string":
@@ -285,7 +285,20 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 		switch dataType.String() {
 		//We have a string array
 		case "string":
-			d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]string), string(key))
+			// For special cases where floats are marshalled as a string (when they have a value of nan, +inf, or -inf)
+			if field.Type == "float32" || field.Type == "float64" {
+				data, err = strconv.ParseFloat(string(key), 64)
+				if err != nil {
+					errors.Wrap(err, "Field: "+field.OriginalName)
+				}
+				if field.Type == "float32" {
+					d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]JsonFloat32), JsonFloat32{F: float32((data.(float64)))})
+				} else {
+					d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]JsonFloat64), JsonFloat64{F: data.(float64)})
+				}
+			} else {
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]string), string(key))
+			}
 		//We have a number or int array.
 		case "number":
 			//We have a float to parse
@@ -319,9 +332,9 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 			case "uint64":
 				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]uint64), uint64((data.(int64))))
 			case "float32":
-				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]float32), float32((data.(float64))))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]JsonFloat32), JsonFloat32{F: float32((data.(float64)))})
 			case "float64":
-				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]float64), float64(data.(float64)))
+				d.Fields[field.OriginalName] = append(d.Fields[field.OriginalName].([]JsonFloat64), JsonFloat64{F: data.(float64)})
 			}
 		//We have a bool array
 		case "boolean":
@@ -347,6 +360,7 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 			if string(key) == f.OriginalName {
 				field = f
 				fieldExists = true
+				break
 			}
 		}
 		if fieldExists == true {
@@ -361,6 +375,16 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 						return errors.Wrap(err, "Byte Array Field: "+field.OriginalName)
 					}
 					d.Fields[field.OriginalName] = data
+				} else if field.Type == "float32" || field.Type == "float64" { //Case where we have marshalled a special float as a string
+					data, err = strconv.ParseFloat(string(value), 64)
+					if err != nil {
+						errors.Wrap(err, "Field: "+field.OriginalName)
+					}
+					if field.Type == "float32" {
+						d.Fields[field.OriginalName] = JsonFloat32{F: float32(data.(float64))}
+					} else {
+						d.Fields[field.OriginalName] = JsonFloat64{F: data.(float64)}
+					}
 				} else {
 					d.Fields[field.OriginalName] = string(value)
 				}
@@ -398,9 +422,9 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 				case "uint64":
 					d.Fields[field.OriginalName] = uint64(data.(int64))
 				case "float32":
-					d.Fields[field.OriginalName] = float32(data.(float64))
+					d.Fields[field.OriginalName] = JsonFloat32{F: float32(data.(float64))}
 				case "float64":
-					d.Fields[field.OriginalName] = float64(data.(float64))
+					d.Fields[field.OriginalName] = JsonFloat64{F: data.(float64)}
 				}
 			//We have a JSON bool
 			case "boolean":
@@ -432,9 +456,9 @@ func (d *DynamicMessage) UnmarshalJSON(buf []byte) error {
 				case "uint64":
 					d.Fields[field.OriginalName] = make([]uint64, 0)
 				case "float32":
-					d.Fields[field.OriginalName] = make([]float32, 0)
+					d.Fields[field.OriginalName] = make([]JsonFloat32, 0)
 				case "float64":
-					d.Fields[field.OriginalName] = make([]float64, 0)
+					d.Fields[field.OriginalName] = make([]JsonFloat64, 0)
 				case "string":
 					d.Fields[field.OriginalName] = make([]string, 0)
 				default:

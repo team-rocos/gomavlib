@@ -3,6 +3,7 @@ package testgomavlib
 import (
 	"bytes"
 	"errors"
+	"math"
 	"reflect"
 	"regexp"
 	"strings"
@@ -86,7 +87,6 @@ func JSONMarshalAndUnmarshalTest(t *testing.T, xmlPath string, includeDirs []str
 		// Decode bytes using RT
 		msgDecoded, err := dMsgRT.Decode(c.raw, c.isV2)
 		require.NoError(t, err)
-
 		// Marshal JSON
 		bytesCreated, err := msgDecoded.(*gomavlib.DynamicMessage).MarshalJSON()
 		require.NoError(t, err)
@@ -112,6 +112,9 @@ func JSONMarshalAndUnmarshalTest(t *testing.T, xmlPath string, includeDirs []str
 		if i == 8 { // JSONTest[8] has a string entry where it should be float32 - should not validate against schemasTest[8]
 			require.NoError(t, err)
 			require.Equal(t, false, result.Valid())
+		} else if i == 1 || i == 9 { // float as nan, +inf, or -inf string not accepted
+			require.NoError(t, err)
+			require.Equal(t, false, result.Valid())
 		} else {
 			require.NoError(t, err)
 			require.Equal(t, true, result.Valid())
@@ -123,7 +126,35 @@ func JSONMarshalAndUnmarshalTest(t *testing.T, xmlPath string, includeDirs []str
 		require.NoError(t, err)
 		err = dm.UnmarshalJSON(bytesCreated)
 		require.NoError(t, err)
-		require.Equal(t, msgDecoded.(*gomavlib.DynamicMessage).Fields, dm.Fields)
+		if i == 1 { // Check that NaN, Inf, and -Inf have been umarshalled correctly.
+			check := math.IsNaN(float64(dm.Fields["flow_comp_m_x"].(gomavlib.JsonFloat32).F))
+			require.Equal(t, true, check)
+			check = math.IsInf(float64(dm.Fields["flow_comp_m_y"].(gomavlib.JsonFloat32).F), 1)
+			require.Equal(t, true, check)
+			check = math.IsInf(float64(dm.Fields["ground_distance"].(gomavlib.JsonFloat32).F), -1)
+			require.Equal(t, true, check)
+		} else if i == 9 { // Check slice of NaN, +Inf, and -Inf float 64 values.
+			array := dm.Fields["distance"].([]gomavlib.JsonFloat64)
+			patternCount := 0
+			for j := 0; j < 16; j++ {
+				val := array[j].F
+				if patternCount <= 1 {
+					check := math.IsNaN(val)
+					require.Equal(t, true, check)
+					patternCount++
+				} else if patternCount == 2 {
+					check := math.IsInf(val, 1)
+					require.Equal(t, true, check)
+					patternCount++
+				} else if patternCount == 3 {
+					check := math.IsInf(val, -1)
+					require.Equal(t, true, check)
+					patternCount = 0 // Reset the pattern
+				}
+			}
+		} else {
+			require.Equal(t, msgDecoded.(*gomavlib.DynamicMessage).Fields, dm.Fields)
+		}
 	}
 }
 
@@ -192,7 +223,7 @@ func DialectRTCommonXMLTest(t *testing.T, xmlPath string, includeDirs []string) 
 
 // DecodeAndEncodeRTTest tests run time (RT) encoding and decoding of messages
 func DecodeAndEncodeRTTest(t *testing.T, xmlPath string, includeDirs []string) {
-	for _, c := range casesMsgsTest {
+	for index, c := range casesMsgsTest {
 		// Encode using CT
 		dCT, err := gomavlib.NewDialectCT(3, ctMessages)
 		require.NoError(t, err)
@@ -205,7 +236,10 @@ func DecodeAndEncodeRTTest(t *testing.T, xmlPath string, includeDirs []string) {
 		// Decode bytes using CT method for RT vs CT comparison later
 		msgDecodedCT, err := dMsgCT.Decode(c.raw, c.isV2)
 		require.NoError(t, err)
-		require.Equal(t, c.parsed, msgDecodedCT)
+
+		if index != 1 && index != 9 { // require.Equal will not work for two equal messages with a field of NaN, since two NaN values are defined as not equal.
+			require.Equal(t, c.parsed, msgDecodedCT)
+		}
 
 		// Decode bytes using RT
 		defs, version, err := libgen.XMLToFields(xmlPath, includeDirs)
@@ -391,26 +425,63 @@ func DecodeAndEncodeRTTest(t *testing.T, xmlPath string, includeDirs []string) {
 				}
 			case "float64":
 				if arrayLength != 0 {
-					rtResult := fRT.([]float64)
+					temp := fRT.([]gomavlib.JsonFloat64)
+					rtResult := make([]float64, arrayLength)
 					ctResult := make([]float64, arrayLength)
 					for i := 0; i < arrayLength; i++ {
 						ctResult[i] = float64(fCTVal.Index(i).Float())
+						rtResult[i] = temp[i].F
 					}
-					require.Equal(t, ctResult, rtResult)
+					if index == 9 {
+						for i := 0; i < arrayLength; i++ {
+							if math.IsNaN(ctResult[i]) {
+								check := math.IsNaN(rtResult[i])
+								require.Equal(t, true, check)
+							} else if math.IsInf(ctResult[i], 1) {
+								check := math.IsInf(rtResult[i], 1)
+								require.Equal(t, true, check)
+							} else if math.IsInf(ctResult[i], -1) {
+								check := math.IsInf(rtResult[i], -1)
+								require.Equal(t, true, check)
+							}
+						}
+					} else {
+						require.Equal(t, ctResult, rtResult)
+					}
 				} else {
-					require.Equal(t, float64(fCTVal.Float()), fRT.(float64))
+					require.Equal(t, float64(fCTVal.Float()), fRT.(gomavlib.JsonFloat64).F)
 				}
 
 			case "float32":
 				if arrayLength != 0 {
-					rtResult := fRT.([]float32)
+					temp := fRT.([]gomavlib.JsonFloat32)
+					rtResult := make([]float32, arrayLength)
 					ctResult := make([]float32, arrayLength)
 					for i := 0; i < arrayLength; i++ {
 						ctResult[i] = float32(fCTVal.Index(i).Float())
+						rtResult[i] = temp[i].F
 					}
 					require.Equal(t, ctResult, rtResult)
 				} else {
-					require.Equal(t, float32(fCTVal.Float()), fRT.(float32))
+					if index == 1 { // Use CT Val to check for NaN, +Inf, and -Inf. Use this to test RT results.
+						nan := math.IsNaN(fCTVal.Float())
+						posInf := math.IsInf(fCTVal.Float(), 1)
+						negInf := math.IsInf(fCTVal.Float(), -1)
+						if nan {
+							test := math.IsNaN(float64(fRT.(gomavlib.JsonFloat32).F))
+							require.Equal(t, true, test)
+						} else if posInf {
+							test := math.IsInf(float64(fRT.(gomavlib.JsonFloat32).F), 1)
+							require.Equal(t, true, test)
+						} else if negInf {
+							test := math.IsInf(float64(fRT.(gomavlib.JsonFloat32).F), -1)
+							require.Equal(t, true, test)
+						} else { // Else treat normally
+							require.Equal(t, float32(fCTVal.Float()), fRT.(gomavlib.JsonFloat32).F)
+						}
+					} else { // Else treat normally
+						require.Equal(t, float32(fCTVal.Float()), fRT.(gomavlib.JsonFloat32).F)
+					}
 				}
 
 			case "string":
@@ -449,10 +520,11 @@ var schemasTest = []string{
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"angle_offset\":{\"title\":\"/mavlink/topic/angle_offset\",\"type\":\"number\"},\"distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/distances\",\"type\":\"array\"},\"frame\":{\"title\":\"/mavlink/topic/frame\",\"type\":\"integer\"},\"increment\":{\"title\":\"/mavlink/topic/increment\",\"type\":\"integer\"},\"increment_f\":{\"title\":\"/mavlink/topic/increment_f\",\"type\":\"number\"},\"max_distance\":{\"title\":\"/mavlink/topic/max_distance\",\"type\":\"integer\"},\"min_distance\":{\"title\":\"/mavlink/topic/min_distance\",\"type\":\"integer\"},\"sensor_type\":{\"title\":\"/mavlink/topic/sensor_type\",\"type\":\"integer\"},\"time_usec\":{\"title\":\"/mavlink/topic/time_usec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"angle_off\":{\"title\":\"/mavlink/topic/angle_offset\",\"type\":\"number\"},\"distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/distances\",\"type\":\"array\"},\"frame\":{\"title\":\"/mavlink/topic/frame\",\"type\":\"integer\"},\"increment\":{\"title\":\"/mavlink/topic/increment\",\"type\":\"integer\"},\"increment_f\":{\"title\":\"/mavlink/topic/increment_f\",\"type\":\"number\"},\"max_distance\":{\"title\":\"/mavlink/topic/max_distance\",\"type\":\"integer\"},\"min_distance\":{\"title\":\"/mavlink/topic/min_distance\",\"type\":\"integer\"},\"sensor_type\":{\"title\":\"/mavlink/topic/sensor_type\",\"type\":\"integer\"},\"time_usec\":{\"title\":\"/mavlink/topic/time_usec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"angle_offset\":{\"title\":\"/mavlink/topic/angle_offset\",\"type\":\"number\"},\"distances\":{\"items\":{\"type\":\"integer\"},\"title\":\"/mavlink/topic/distances\",\"type\":\"array\"},\"frame\":{\"title\":\"/mavlink/topic/frame\",\"type\":\"integer\"},\"increment\":{\"title\":\"/mavlink/topic/increment\",\"type\":\"integer\"},\"increment_f\":{\"title\":\"/mavlink/topic/increment_f\",\"type\":\"number\"},\"max_distance\":{\"title\":\"/mavlink/topic/max_distance\",\"type\":\"integer\"},\"min_distance\":{\"title\":\"/mavlink/topic/min_distance\",\"type\":\"integer\"},\"sensor_type\":{\"title\":\"/mavlink/topic/sensor_type\",\"type\":\"integer\"},\"time_usec\":{\"title\":\"/mavlink/topic/time_usec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
+	"{\"$id\":\"/mavlink/topic\",\"$schema\":\"https://json-schema.org/draft-07/schema#\",\"properties\":{\"count\":{\"title\":\"/mavlink/topic/count\",\"type\":\"integer\"},\"distance\":{\"items\":{\"type\":\"number\"},\"title\":\"/mavlink/topic/distance\",\"type\":\"array\"},\"time_usec\":{\"title\":\"/mavlink/topic/time_usec\",\"type\":\"integer\"}},\"title\":\"/mavlink/topic\",\"type\":\"object\"}",
 }
 var jsonTest = []string{
 	"{\"acc_x\":[1,2,3,4,5],\"acc_y\":[1,2,3,4,5],\"acc_z\":[1,2,3,4,5],\"command\":[1,2,3,4,5],\"pos_x\":[1,2,3,4,5],\"pos_y\":[1,2,3,4,5],\"pos_yaw\":[1,2,3,4,5],\"pos_z\":[1,2,3,4,5],\"time_usec\":1,\"valid_points\":2,\"vel_x\":[1,2,3,4,5],\"vel_y\":[1,2,3,4,5],\"vel_yaw\":[1,2,3,4,5],\"vel_z\":[1,2,3,4,5]}",
-	"{\"flow_comp_m_x\":1,\"flow_comp_m_y\":1,\"flow_rate_x\":1,\"flow_rate_y\":1,\"flow_x\":7,\"flow_y\":8,\"ground_distance\":1,\"quality\":10,\"sensor_id\":9,\"time_usec\":3}",
+	"{\"flow_comp_m_x\":\"nan\",\"flow_comp_m_y\":\"+inf\",\"flow_rate_x\":1,\"flow_rate_y\":1,\"flow_x\":7,\"flow_y\":8,\"ground_distance\":\"-inf\",\"quality\":10,\"sensor_id\":9,\"time_usec\":3}",
 	"{\"covariance\":[1,1,1,1,1,1,1,1,1],\"pitchspeed\":1,\"q\":[1,1,1,1],\"rollspeed\":1,\"time_usec\":2,\"yawspeed\":1}",
 	"{\"airspeed\":1234,\"alt\":1234,\"climb\":1234,\"groundspeed\":1234,\"heading\":12,\"throttle\":123}",
 	"{\"hw_unique_id\":\"AQIDBAUGBwgJCgsMDQ4PEA==\",\"hw_version_major\":3,\"hw_version_minor\":4,\"name\":\"sapog.px4.io\",\"sw_vcs_commit\":7,\"sw_version_major\":5,\"sw_version_minor\":6,\"time_usec\":1,\"uptime_sec\":2}",
@@ -460,6 +532,7 @@ var jsonTest = []string{
 	"{\"angle_offset\":0,\"distances\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72],\"frame\":0,\"increment\":36,\"increment_f\":0,\"max_distance\":50,\"min_distance\":1,\"sensor_type\":2,\"time_usec\":1}",
 	"{\"angle_offset\":0,\"distances\":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72],\"frame\":0,\"increment\":36,\"increment_f\":0,\"max_distance\":50,\"min_distance\":1,\"sensor_type\":2,\"time_usec\":1}",
 	"{\"angle_offset\":\"invalidString\",\"distances\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72],\"frame\":0,\"increment\":36,\"increment_f\":0,\"max_distance\":50,\"min_distance\":1,\"sensor_type\":2,\"time_usec\":1}",
+	"{\"count\":4,\"distance\":[\"nan\",\"nan\",\"+inf\",\"-inf\",\"nan\",\"nan\",\"+inf\",\"-inf\",\"nan\",\"nan\",\"+inf\",\"-inf\",\"nan\",\"nan\",\"+inf\",\"-inf\"],\"time_usec\":10}",
 }
 
 // Function that is not exported so copy and pasted here for testing purposes.
@@ -507,9 +580,9 @@ var casesMsgsTest = []struct {
 		true,
 		&MessageOpticalFlow{
 			TimeUsec:       3,
-			FlowCompMX:     1,
-			FlowCompMY:     1,
-			GroundDistance: 1,
+			FlowCompMX:     float32(math.NaN()),   // Nan
+			FlowCompMY:     float32(math.Inf(1)),  // + Inf
+			GroundDistance: float32(math.Inf(-1)), // -Inf
 			FlowX:          7,
 			FlowY:          8,
 			SensorId:       9,
@@ -517,7 +590,7 @@ var casesMsgsTest = []struct {
 			FlowRateX:      1,
 			FlowRateY:      1,
 		},
-		[]byte("\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x3F\x00\x00\x80\x3F\x00\x00\x80\x3F\x07\x00\x08\x00\x09\x0A\x00\x00\x80\x3F\x00\x00\x80\x3F"),
+		[]byte("\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc0\x7f\x00\x00\x80\x7f\x00\x00\x80\xff\x07\x00\x08\x00\x09\x0a\x00\x00\x80\x3f\x00\x00\x80\x3f"),
 		100,
 	},
 	{
@@ -628,7 +701,19 @@ var casesMsgsTest = []struct {
 		[]byte("\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x00\x07\x00\x08\x00\x09\x00\x0A\x00\x0B\x00\x0C\x00\x0D\x00\x0E\x00\x0F\x00\x10\x00\x11\x00\x12\x00\x13\x00\x14\x00\x15\x00\x16\x00\x17\x00\x18\x00\x19\x00\x1A\x00\x1B\x00\x1C\x00\x1D\x00\x1E\x00\x1F\x00\x20\x00\x21\x00\x22\x00\x23\x00\x24\x00\x25\x00\x26\x00\x27\x00\x28\x00\x29\x00\x2A\x00\x2B\x00\x2C\x00\x2D\x00\x2E\x00\x2F\x00\x30\x00\x31\x00\x32\x00\x33\x00\x34\x00\x35\x00\x36\x00\x37\x00\x38\x00\x39\x00\x3A\x00\x3B\x00\x3C\x00\x3D\x00\x3E\x00\x3F\x00\x40\x00\x41\x00\x42\x00\x43\x00\x44\x00\x45\x00\x46\x00\x47\x00\x48\x00\x01\x00\x32\x00\x02\x24"),
 		330,
 	},
+	{
+		"V2 message with float64 NaN, +Inf, and -Inf values",
+		true,
+		&MessageWheelDistance{
+			TimeUsec: 10,
+			Count:    4,
+			Distance: [16]float64{math.NaN(), math.NaN(), math.Inf(1), math.Inf(-1), math.NaN(), math.NaN(), math.Inf(1), math.Inf(-1), math.NaN(), math.NaN(), math.Inf(1), math.Inf(-1), math.NaN(), math.NaN(), math.Inf(1), math.Inf(-1)},
+		},
+		[]byte("\x0a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\xf8\x7f\x01\x00\x00\x00\x00\x00\xf8\x7f\x00\x00\x00\x00\x00\x00\xf0\x7f\x00\x00\x00\x00\x00\x00\xf0\xff\x01\x00\x00\x00\x00\x00\xf8\x7f\x01\x00\x00\x00\x00\x00\xf8\x7f\x00\x00\x00\x00\x00\x00\xf0\x7f\x00\x00\x00\x00\x00\x00\xf0\xff\x01\x00\x00\x00\x00\x00\xf8\x7f\x01\x00\x00\x00\x00\x00\xf8\x7f\x00\x00\x00\x00\x00\x00\xf0\x7f\x00\x00\x00\x00\x00\x00\xf0\xff\x01\x00\x00\x00\x00\x00\xf8\x7f\x01\x00\x00\x00\x00\x00\xf8\x7f\x00\x00\x00\x00\x00\x00\xf0\x7f\x00\x00\x00\x00\x00\x00\xf0\xff\x04"),
+		9000,
+	},
 }
+
 var ctMessages = []gomavlib.Message{
 	// common.xml
 	&MessageHeartbeat{},
