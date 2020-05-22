@@ -133,6 +133,13 @@ func JSONMarshalAndUnmarshalTest(t *testing.T, xmlPath string, includeDirs []str
 			require.Equal(t, true, check)
 			check = math.IsInf(float64(dm.Fields["ground_distance"].(gomavlib.JsonFloat32).F), -1)
 			require.Equal(t, true, check)
+
+			// check that SetField as a float32 also works:
+			err := dm.SetField("flow_comp_m_x", float32(math.NaN()))
+			require.NoError(t, err)
+			check = math.IsNaN(float64(dm.Fields["flow_comp_m_x"].(gomavlib.JsonFloat32).F))
+			require.Equal(t, true, check)
+
 		} else if i == 9 { // Check slice of NaN, +Inf, and -Inf float 64 values.
 			array := dm.Fields["distance"].([]gomavlib.JsonFloat64)
 			patternCount := 0
@@ -151,6 +158,16 @@ func JSONMarshalAndUnmarshalTest(t *testing.T, xmlPath string, includeDirs []str
 					require.Equal(t, true, check)
 					patternCount = 0 // Reset the pattern
 				}
+			}
+
+			// Check that SetField as a slice of float64 also works
+			floatSlice := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+			err := dm.SetField("distance", floatSlice)
+			require.NoError(t, err)
+			vals, ok := dm.Fields["distance"].([]gomavlib.JsonFloat64)
+			require.Equal(t, true, ok)
+			for i, val := range vals {
+				require.Equal(t, float64(i+1), val.F)
 			}
 		} else {
 			require.Equal(t, msgDecoded.(*gomavlib.DynamicMessage).Fields, dm.Fields)
