@@ -195,6 +195,12 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 		if fieldInfo.ArrayLength != 0 {
 			if v, ok := value.([]JsonFloat64); ok {
 				d.Fields[field] = v
+			} else if v, ok := value.([]float64); ok {
+				jsonFloatSlice := make([]JsonFloat64, len(v))
+				for i, val := range v {
+					jsonFloatSlice[i] = JsonFloat64{F: val}
+				}
+				d.Fields[field] = jsonFloatSlice
 			} else {
 				// The value was the wrong type.
 				return errors.New("incorrect type for field: " + field + " - expected []JsonFloat64")
@@ -203,6 +209,8 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 			if v, ok := value.(JsonFloat64); ok {
 				// This is the correct type, so save it into our message.
 				d.Fields[field] = v
+			} else if v, ok := value.(float64); ok {
+				d.Fields[field] = JsonFloat64{F: v}
 			} else {
 				// The value was the wrong type.
 				return errors.New("incorrect type for field: " + field + " - expected JsonFloat64")
@@ -213,6 +221,12 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 		if fieldInfo.ArrayLength != 0 {
 			if v, ok := value.([]JsonFloat32); ok {
 				d.Fields[field] = v
+			} else if v, ok := value.([]float32); ok {
+				jsonFloatSlice := make([]JsonFloat32, len(v))
+				for i, val := range v {
+					jsonFloatSlice[i] = JsonFloat32{F: val}
+				}
+				d.Fields[field] = jsonFloatSlice
 			} else {
 				// The value was the wrong type.
 				return errors.New("incorrect type for field: " + field + " - expected []JsonFloat32")
@@ -221,6 +235,8 @@ func (d DynamicMessage) SetField(field string, value interface{}) error {
 			if v, ok := value.(JsonFloat32); ok {
 				// This is the correct type, so save it into our message.
 				d.Fields[field] = v
+			} else if v, ok := value.(float32); ok {
+				d.Fields[field] = JsonFloat32{F: v}
 			} else {
 				// The value was the wrong type.
 				return errors.New("incorrect type for field: " + field + " - expected JsonFloat32")
