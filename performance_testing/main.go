@@ -10,14 +10,14 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/team-rocos/gomavlib"
-	"github.com/team-rocos/gomavlib/dialects/common"
+	"github.com/team-rocos/gomavlib/commands/dialgen/libgen"
 )
 
 var (
-	address  string
-	messages []string
-	stop     float64
-	random   bool
+	address     string
+	messages    []string
+	stop        float64
+	random, udp bool
 )
 
 func messageDetails(input []string, messageName string) (bool, int) {
@@ -26,18 +26,27 @@ func messageDetails(input []string, messageName string) (bool, int) {
 	for _, msgString := range input {
 		msg := strings.Split(msgString, "@")
 		msgNameCheck := strings.ToUpper(msg[0])
-		if (msgNameCheck != "HEARTBEAT") && (msgNameCheck != "SYSSTATUS") && (msgNameCheck != "ATTITUDE") {
-			err := fmt.Errorf("invalid message name. Messages available are: Heartbeat, Attitude, and SysStatus")
+		if (msgNameCheck != "HEARTBEAT") && (msgNameCheck != "SYS_STATUS") && (msgNameCheck != "ATTITUDE") {
+			err := fmt.Errorf("invalid message name. Messages available are: HEARTBEAT, ATTITUDE, and SYS_STATUS")
 			fmt.Println("Error: ", err)
 			os.Exit(1)
 		}
 		if msgNameCheck == messageName {
 			messageFound = true
 			if len(msg) > 1 {
-				if strings.Contains(msg[1], "ms") { // period input in milliseconds
+				if strings.Contains(msg[1], "us") { // period input in milliseconds
+					period := strings.SplitN(msg[1], "us", 2)
+					var err error
+					messagePeriod, err = strconv.Atoi(period[0])
+					if err != nil {
+						fmt.Println("Error: ", err)
+						os.Exit(1)
+					}
+				} else if strings.Contains(msg[1], "ms") { // period input in milliseconds
 					period := strings.SplitN(msg[1], "ms", 2)
 					var err error
 					messagePeriod, err = strconv.Atoi(period[0])
+					messagePeriod *= 1000
 					if err != nil {
 						fmt.Println("Error: ", err)
 						os.Exit(1)
@@ -46,7 +55,7 @@ func messageDetails(input []string, messageName string) (bool, int) {
 					period := strings.SplitN(msg[1], "s", 2)
 					var err error
 					messagePeriod, err = strconv.Atoi(period[0])
-					messagePeriod *= 1000 // Convert from seconds to milliseconds
+					messagePeriod *= 1000000 // Convert from seconds to milliseconds
 					if err != nil {
 						fmt.Println("Error: ", err)
 						os.Exit(1)
@@ -64,92 +73,149 @@ func messageDetails(input []string, messageName string) (bool, int) {
 	return true, messagePeriod
 }
 
-func randomHeartbeat() *common.MessageHeartbeat {
+func randomHeartbeat(dm *gomavlib.DynamicMessage) error {
 	rand.Seed(time.Now().UnixNano())
-	return &common.MessageHeartbeat{
-		Type:           common.MAV_TYPE(rand.Intn(34)),
-		Autopilot:      common.MAV_AUTOPILOT(rand.Intn(19)) + 1,
-		BaseMode:       1,
-		CustomMode:     3,
-		SystemStatus:   common.MAV_STATE(rand.Intn(9)),
-		MavlinkVersion: 2,
+	err := dm.SetField("type", uint8(rand.Intn(34)))
+	if err != nil {
+		return err
 	}
-}
-func randomAttitude() *common.MessageAttitude {
-	rand.Seed(time.Now().UnixNano())
-	return &common.MessageAttitude{
-		TimeBootMs: uint32(time.Now().UnixNano()),
-		Roll:       float32(rand.Intn(101)),
-		Pitch:      float32(rand.Intn(101)),
-		Yaw:        float32(rand.Intn(101)),
-		Rollspeed:  float32(rand.Intn(101)),
-		Pitchspeed: float32(rand.Intn(101)),
-		Yawspeed:   float32(rand.Intn(101)),
+	err = dm.SetField("autopilot", uint8(rand.Intn(19)+1))
+	if err != nil {
+		return err
 	}
-}
-func randomSysStatus() *common.MessageSysStatus {
-	rand.Seed(time.Now().UnixNano())
-	return &common.MessageSysStatus{
-		OnboardControlSensorsPresent: 1,
-		OnboardControlSensorsEnabled: 1,
-		OnboardControlSensorsHealth:  1,
-		Load:                         uint16(rand.Intn(900)),
-		VoltageBattery:               uint16(rand.Intn(101)),
-		CurrentBattery:               int16(rand.Intn(101)),
-		BatteryRemaining:             int8(rand.Intn(101)),
-		DropRateComm:                 0,
-		ErrorsComm:                   0,
-		ErrorsCount1:                 0,
-		ErrorsCount2:                 0,
-		ErrorsCount3:                 0,
-		ErrorsCount4:                 0,
+	err = dm.SetField("base_mode", uint8(1))
+	if err != nil {
+		return err
 	}
+	err = dm.SetField("custom_mode", uint32(3))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("system_status", uint8(rand.Intn(9)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("mavlink_version", uint8(2))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-var msg1 = &common.MessageHeartbeat{
-	Type:           6,
-	Autopilot:      5,
-	BaseMode:       4,
-	CustomMode:     3,
-	SystemStatus:   2,
-	MavlinkVersion: 2,
+func randomAttitude(dm *gomavlib.DynamicMessage) error {
+	rand.Seed(time.Now().UnixNano())
+	err := dm.SetField("time_boot_ms", uint32(rand.Intn(34)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("roll", float32(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("pitch", float32(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("yaw", float32(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("rollspeed", float32(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("pitchspeed", float32(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("yawspeed", float32(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-var msg2 = &common.MessageSysStatus{
-	OnboardControlSensorsPresent: 1,
-	OnboardControlSensorsEnabled: 1,
-	OnboardControlSensorsHealth:  1,
-	Load:                         100,
-	VoltageBattery:               50,
-	CurrentBattery:               60,
-	BatteryRemaining:             50,
-	DropRateComm:                 0,
-	ErrorsComm:                   0,
-	ErrorsCount1:                 0,
-	ErrorsCount2:                 0,
-	ErrorsCount3:                 0,
-	ErrorsCount4:                 0,
+func randomSysStatus(dm *gomavlib.DynamicMessage) error {
+	rand.Seed(time.Now().UnixNano())
+	err := dm.SetField("onboard_control_sensors_present", uint32(rand.Intn(34)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("onboard_control_sensors_enabled", uint32(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("onboard_control_sensors_health", uint32(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("load", uint16(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("voltage_battery", uint16(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("current_battery", int16(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("battery_remaining", int8(rand.Intn(101)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("drop_rate_comm", uint16(rand.Intn(10)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("errors_comm", uint16(rand.Intn(10)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("errors_count1", uint16(rand.Intn(10)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("errors_count2", uint16(rand.Intn(10)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("errors_count3", uint16(rand.Intn(10)))
+	if err != nil {
+		return err
+	}
+	err = dm.SetField("errors_count4", uint16(rand.Intn(10)))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-var msg3 = &common.MessageAttitude{
-	TimeBootMs: 2,
-	Roll:       0,
-	Pitch:      1,
-	Yaw:        2,
-	Rollspeed:  3,
-	Pitchspeed: 4,
-	Yawspeed:   5,
-}
+var heartbeatMsg *gomavlib.DynamicMessage
+var sysStatusMsg *gomavlib.DynamicMessage
+var attitudeMsg *gomavlib.DynamicMessage
+
+var node *gomavlib.Node
+var nodeReceive *gomavlib.Node
 
 func main() {
-	pflag.StringVarP(&address, "address", "a", "", "Set tcp address to which to send MAVlink messages.")
+	pflag.StringVarP(&address, "address", "a", "", "Set address to which to send MAVlink messages.")
 	pflag.StringSliceVarP(&messages, "msg", "m", []string{""}, "Set message(s) to be sent as well and the period at which they are sent.")
 	pflag.Float64VarP(&stop, "stop", "s", 10, "Set the length of time in seconds to send messages. Up to millisecond resolution (3dp).")
 	pflag.BoolVarP(&random, "random", "r", false, "Use this to randomise the fields of the messages sent.")
+	pflag.BoolVarP(&udp, "udp", "u", false, "Set this to send to a udp port. Otherwise defaults to tcp")
 	pflag.Parse()
 
-	fmt.Println("Setting address to: ", address)
+	addressType := "TCP"
+	if udp {
+		addressType = "UDP"
+	}
+	fmt.Println("Setting address to: ", addressType, address)
 	fmt.Println("Setting timeout to: ", stop)
+
+	random = true // TODO: create constant value messages as alternative to randomised message fields
 	if random {
 		fmt.Println("Sending messages with randomised field values")
 	} else {
@@ -157,18 +223,47 @@ func main() {
 	}
 
 	sendHeartbeat, heartbeatPeriod := messageDetails(messages, "HEARTBEAT")
-	sendSysStatus, sysStatusPeriod := messageDetails(messages, "SYSSTATUS")
+	sendSysStatus, sysStatusPeriod := messageDetails(messages, "SYS_STATUS")
 	sendAttitude, attitudePeriod := messageDetails(messages, "ATTITUDE")
 
-	fmt.Println("sendHeartbeat = ", sendHeartbeat, ", sendSysStatus = ", sendSysStatus, ", sendAttitude = ", sendAttitude)
-	fmt.Println("heartbeatPeriod = ", heartbeatPeriod, ", sysStatusPeriod = ", sysStatusPeriod, ", attitudePeriod = ", attitudePeriod)
+	heartbeatFreq := 0
+	sysStatusFreq := 0
+	attitudeFreq := 0
+	if sendHeartbeat {
+		heartbeatFreq = 1000000 / heartbeatPeriod
+	}
+	if sendSysStatus {
+		sysStatusFreq = 1000000 / sysStatusPeriod
+	}
+	if sendAttitude {
+		attitudeFreq = 1000000 / attitudePeriod
+	}
+	fmt.Println("heartbeatFreq = ", heartbeatFreq, ", sysStatusFreq = ", sysStatusFreq, ", attitudeFreq = ", attitudeFreq)
 
-	node, err := gomavlib.NewNode(gomavlib.NodeConf{
-		Endpoints: []gomavlib.EndpointConf{
-			//gomavlib.EndpointTcpServer{"192.168.1.74:5600"},
+	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"."})
+	if err != nil {
+		fmt.Println("error creating defs from xml file, err: ", err)
+		os.Exit(1)
+	}
+	// Create dialect from the parsed defs.
+	dRT, err := gomavlib.NewDialectRT(version, defs)
+	if err != nil {
+		fmt.Println("error creating dRT, err: ", err)
+		os.Exit(1)
+	}
+	var nodeEndpoints []gomavlib.EndpointConf
+	if udp {
+		nodeEndpoints = []gomavlib.EndpointConf{
+			gomavlib.EndpointUdpServer{address},
+		}
+	} else {
+		nodeEndpoints = []gomavlib.EndpointConf{
 			gomavlib.EndpointTcpServer{address},
-		},
-		D:           common.Dialect,
+		}
+	}
+	node, err = gomavlib.NewNode(gomavlib.NodeConf{
+		Endpoints:   nodeEndpoints,
+		D:           dRT,
 		OutVersion:  gomavlib.V2, // change to V1 if you're unable to write to the target
 		OutSystemId: 10,
 	})
@@ -177,11 +272,19 @@ func main() {
 	}
 	defer node.Close()
 
-	nodeReceive, err := gomavlib.NewNode(gomavlib.NodeConf{
-		Endpoints: []gomavlib.EndpointConf{
+	var nodeReceiveEndpoints []gomavlib.EndpointConf
+	if udp {
+		nodeReceiveEndpoints = []gomavlib.EndpointConf{
+			gomavlib.EndpointUdpClient{address},
+		}
+	} else {
+		nodeReceiveEndpoints = []gomavlib.EndpointConf{
 			gomavlib.EndpointTcpClient{address},
-		},
-		D:           common.Dialect,
+		}
+	}
+	nodeReceive, err = gomavlib.NewNode(gomavlib.NodeConf{
+		Endpoints:   nodeReceiveEndpoints,
+		D:           dRT,
 		OutVersion:  gomavlib.V2, // change to V1 if you're unable to write to the target
 		OutSystemId: 10,
 	})
@@ -190,11 +293,25 @@ func main() {
 	}
 	defer nodeReceive.Close()
 
+	if sendHeartbeat {
+		heartbeatMsg, err = dRT.CreateMessageByName("HEARTBEAT")
+		if err != nil {
+			panic(err)
+		}
+	}
+	if sendSysStatus {
+		sysStatusMsg, err = dRT.CreateMessageByName("SYS_STATUS")
+	}
+	if sendAttitude {
+		attitudeMsg, err = dRT.CreateMessageByName("ATTITUDE")
+	}
+
 	stopchan := make(chan struct{})
 	stoppedchanHeartbeat := make(chan struct{})
 	stoppedchanSysStatus := make(chan struct{})
 	stoppedchanAttitude := make(chan struct{})
 	stoppedchanReceive := make(chan struct{})
+	stopchanReceive := make(chan struct{})
 
 	heartbeatMessagesReceived := 0
 	sysStatusMessagesReceived := 0
@@ -207,14 +324,14 @@ func main() {
 	if sendHeartbeat {
 		go func() { // Heartbeat
 			defer close(stoppedchanHeartbeat)
-			for t := range time.NewTicker(time.Duration(heartbeatPeriod) * time.Millisecond).C {
+			for t := range time.NewTicker(time.Duration(heartbeatPeriod) * time.Microsecond).C {
 				select {
 				default:
-					if random {
-						node.WriteMessageAll(randomHeartbeat())
-					} else {
-						node.WriteMessageAll(msg1)
+					err := randomHeartbeat(heartbeatMsg)
+					if err != nil {
+						panic(err)
 					}
+					node.WriteMessageAll(heartbeatMsg)
 					countHeartbeat++
 				case <-stopchan:
 					fmt.Println("Time elapsed: ", t)
@@ -228,14 +345,14 @@ func main() {
 	if sendSysStatus {
 		go func() { // SysStatus
 			defer close(stoppedchanSysStatus)
-			for range time.NewTicker(time.Duration(sysStatusPeriod) * time.Millisecond).C {
+			for range time.NewTicker(time.Duration(sysStatusPeriod) * time.Microsecond).C {
 				select {
 				default:
-					if random {
-						node.WriteMessageAll(randomSysStatus())
-					} else {
-						node.WriteMessageAll(msg2)
+					err := randomSysStatus(sysStatusMsg)
+					if err != nil {
+						panic(err)
 					}
+					node.WriteMessageAll(sysStatusMsg)
 					countSysStatus++
 				case <-stopchan:
 					fmt.Println("Closing SysStatus go routine...")
@@ -248,14 +365,14 @@ func main() {
 	if sendAttitude {
 		go func() { // Attitude
 			defer close(stoppedchanAttitude)
-			for range time.NewTicker(time.Duration(attitudePeriod) * time.Millisecond).C {
+			for range time.NewTicker(time.Duration(attitudePeriod) * time.Microsecond).C {
 				select {
 				default:
-					if random {
-						node.WriteMessageAll(randomAttitude())
-					} else {
-						node.WriteMessageAll(msg3)
+					err := randomAttitude(attitudeMsg)
+					if err != nil {
+						panic(err)
 					}
+					node.WriteMessageAll(attitudeMsg)
 					countAttitude++
 				case <-stopchan:
 					fmt.Println("Closing Attitude go routine...")
@@ -272,19 +389,18 @@ func main() {
 			select {
 			default:
 				if frm, ok := evt.(*gomavlib.EventFrame); ok {
-					if msgReceived, ok := frm.Message().(*common.MessageHeartbeat); ok {
-						if msgReceived.Autopilot == 0 {
-							fmt.Printf("received: id=%d, %+v\n", frm.Message().GetId(), frm.Message())
-						} else {
+					if msg, ok := frm.Message().(*gomavlib.DynamicMessage); ok {
+						if msg.GetName() == "HEARTBEAT" {
+							//fmt.Printf("received: id=%d, %+v\n", msg.GetId(), msg)
 							heartbeatMessagesReceived++
+						} else if msg.GetName() == "SYS_STATUS" {
+							sysStatusMessagesReceived++
+						} else if msg.GetName() == "ATTITUDE" {
+							attitudeMessagesReceived++
 						}
-					} else if _, ok := frm.Message().(*common.MessageSysStatus); ok {
-						sysStatusMessagesReceived++
-					} else if _, ok := frm.Message().(*common.MessageAttitude); ok {
-						attitudeMessagesReceived++
 					}
 				}
-			case <-stopchan:
+			case <-stopchanReceive:
 				fmt.Println("Closing nodeReceive go routine...")
 				return
 			}
@@ -303,6 +419,7 @@ func main() {
 	if sendAttitude {
 		<-stoppedchanAttitude
 	}
+	close(stopchanReceive)
 	<-stoppedchanReceive
 	fmt.Println("Closed all go routines!")
 
