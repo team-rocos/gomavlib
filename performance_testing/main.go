@@ -73,126 +73,6 @@ func messageDetails(input []string) ([]*gomavlib.DynamicMessage, bool, []int) {
 	return dm, true, periods
 }
 
-func randomHeartbeat(dm *gomavlib.DynamicMessage) error {
-	rand.Seed(time.Now().UnixNano())
-	err := dm.SetField("type", uint8(rand.Intn(34)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("autopilot", uint8(rand.Intn(19)+1))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("base_mode", uint8(1))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("custom_mode", uint32(3))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("system_status", uint8(rand.Intn(9)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("mavlink_version", uint8(2))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func randomAttitude(dm *gomavlib.DynamicMessage) error {
-	rand.Seed(time.Now().UnixNano())
-	err := dm.SetField("time_boot_ms", uint32(rand.Intn(34)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("roll", float32(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("pitch", float32(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("yaw", float32(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("rollspeed", float32(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("pitchspeed", float32(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("yawspeed", float32(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func randomSysStatus(dm *gomavlib.DynamicMessage) error {
-	rand.Seed(time.Now().UnixNano())
-	err := dm.SetField("onboard_control_sensors_present", uint32(rand.Intn(34)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("onboard_control_sensors_enabled", uint32(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("onboard_control_sensors_health", uint32(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("load", uint16(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("voltage_battery", uint16(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("current_battery", int16(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("battery_remaining", int8(rand.Intn(101)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("drop_rate_comm", uint16(rand.Intn(10)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("errors_comm", uint16(rand.Intn(10)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("errors_count1", uint16(rand.Intn(10)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("errors_count2", uint16(rand.Intn(10)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("errors_count3", uint16(rand.Intn(10)))
-	if err != nil {
-		return err
-	}
-	err = dm.SetField("errors_count4", uint16(rand.Intn(10)))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func randomDynamicMessage(dm *gomavlib.DynamicMessage) error {
 	rand.Seed(time.Now().UnixNano())
 	for _, fieldInfo := range dm.T.Msg.Fields {
@@ -491,12 +371,12 @@ func main() {
 		for i, msgToSend := range dynamicMsgSlice {
 			msg := msgToSend
 			index := i
-			go func(m *gomavlib.DynamicMessage) {
+			go func() {
 				fmt.Printf("Starting go routine to send %v\n", msg.GetName())
 				msgName := msg.GetName()
 				period := periodSlice[index]
 				defer close(stoppedSendMessageChannels[msgName])
-				for t := range time.NewTicker(time.Duration(period) * time.Microsecond).C {
+				for range time.NewTicker(time.Duration(period) * time.Microsecond).C {
 					select {
 					default:
 						err := randomDynamicMessage(msg)
@@ -506,12 +386,11 @@ func main() {
 						node.WriteMessageAll(msg)
 						sentMessages[msgName]++
 					case <-stopchan:
-						fmt.Println("Time elapsed: ", t)
 						fmt.Printf("Closing send %v go routine...\n", msgName)
 						return
 					}
 				}
-			}(msg)
+			}()
 		}
 	}
 
@@ -551,10 +430,7 @@ func main() {
 
 	// Print counts
 	for _, m := range dynamicMsgSlice {
-		fmt.Printf("%v Messages Sent: %v\n", m.GetName(), sentMessages[m.GetName()])
-	}
-
-	for _, m := range dynamicMsgSlice {
+		fmt.Printf("%v Messages Sent    : %v\n", m.GetName(), sentMessages[m.GetName()])
 		fmt.Printf("%v Messages Received: %v\n", m.GetName(), receivedMessages[m.GetName()])
 	}
 }
