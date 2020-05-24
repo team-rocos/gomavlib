@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -18,59 +19,58 @@ var (
 	messages    []string
 	stop        float64
 	random, udp bool
+	dRT         *gomavlib.DialectRT
 )
 
-func messageDetails(input []string, messageName string) (bool, int) {
+func messageDetails(input []string) ([]*gomavlib.DynamicMessage, bool, []int) {
+	dm := make([]*gomavlib.DynamicMessage, 0)
+	var periods []int
 	messagePeriod := 0
-	messageFound := false
 	for _, msgString := range input {
 		msg := strings.Split(msgString, "@")
-		msgNameCheck := strings.ToUpper(msg[0])
-		if (msgNameCheck != "HEARTBEAT") && (msgNameCheck != "SYS_STATUS") && (msgNameCheck != "ATTITUDE") {
-			err := fmt.Errorf("invalid message name. Messages available are: HEARTBEAT, ATTITUDE, and SYS_STATUS")
+		msgName := strings.ToUpper(msg[0])
+		dmInstance, err := dRT.CreateMessageByName(msgName)
+		if err != nil {
 			fmt.Println("Error: ", err)
 			os.Exit(1)
 		}
-		if msgNameCheck == messageName {
-			messageFound = true
-			if len(msg) > 1 {
-				if strings.Contains(msg[1], "us") { // period input in milliseconds
-					period := strings.SplitN(msg[1], "us", 2)
-					var err error
-					messagePeriod, err = strconv.Atoi(period[0])
-					if err != nil {
-						fmt.Println("Error: ", err)
-						os.Exit(1)
-					}
-				} else if strings.Contains(msg[1], "ms") { // period input in milliseconds
-					period := strings.SplitN(msg[1], "ms", 2)
-					var err error
-					messagePeriod, err = strconv.Atoi(period[0])
-					messagePeriod *= 1000
-					if err != nil {
-						fmt.Println("Error: ", err)
-						os.Exit(1)
-					}
-				} else if strings.Contains(msg[1], "s") { // period input in seconds
-					period := strings.SplitN(msg[1], "s", 2)
-					var err error
-					messagePeriod, err = strconv.Atoi(period[0])
-					messagePeriod *= 1000000 // Convert from seconds to milliseconds
-					if err != nil {
-						fmt.Println("Error: ", err)
-						os.Exit(1)
-					}
-				}
+		dm = append(dm, dmInstance)
 
+		if len(msg) > 1 {
+			if strings.Contains(msg[1], "us") { // period input in milliseconds
+				period := strings.SplitN(msg[1], "us", 2)
+				var err error
+				messagePeriod, err = strconv.Atoi(period[0])
+				if err != nil {
+					fmt.Println("Error: ", err)
+					os.Exit(1)
+				}
+				periods = append(periods, messagePeriod)
+			} else if strings.Contains(msg[1], "ms") { // period input in milliseconds
+				period := strings.SplitN(msg[1], "ms", 2)
+				var err error
+				messagePeriod, err = strconv.Atoi(period[0])
+				messagePeriod *= 1000 // Concert from milliseconds to microseconds
+				if err != nil {
+					fmt.Println("Error: ", err)
+					os.Exit(1)
+				}
+				periods = append(periods, messagePeriod)
+			} else if strings.Contains(msg[1], "s") { // period input in seconds
+				period := strings.SplitN(msg[1], "s", 2)
+				var err error
+				messagePeriod, err = strconv.Atoi(period[0])
+				messagePeriod *= 1000000 // Convert from seconds to microseconds
+				if err != nil {
+					fmt.Println("Error: ", err)
+					os.Exit(1)
+				}
+				periods = append(periods, messagePeriod)
 			}
-			break
+
 		}
 	}
-	if !messageFound {
-		return false, 0
-	}
-
-	return true, messagePeriod
+	return dm, true, periods
 }
 
 func randomHeartbeat(dm *gomavlib.DynamicMessage) error {
@@ -193,6 +193,194 @@ func randomSysStatus(dm *gomavlib.DynamicMessage) error {
 	return nil
 }
 
+func randomDynamicMessage(dm *gomavlib.DynamicMessage) error {
+	rand.Seed(time.Now().UnixNano())
+	for _, fieldInfo := range dm.T.Msg.Fields {
+		fieldName := fieldInfo.OriginalName
+		switch fieldInfo.Type {
+		case "int8":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]int8, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = int8(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, int8(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "uint8":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]uint8, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = uint8(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, uint8(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "int16":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]int16, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = int16(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, int16(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "uint16":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]uint16, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = uint16(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, uint16(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "int32":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]int32, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = int32(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, int32(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "uint32":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]uint32, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = uint32(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, uint32(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "int64":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]int64, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = int64(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, int64(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "uint64":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]uint64, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = uint64(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, uint64(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "float64":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]float64, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = float64(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, float64(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "float32":
+			if fieldInfo.ArrayLength != 0 {
+				result := make([]float32, fieldInfo.ArrayLength)
+				for i := 0; i < fieldInfo.ArrayLength; i++ {
+					result[i] = float32(rand.Intn(100))
+				}
+				err := dm.SetField(fieldName, result)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := dm.SetField(fieldName, float32(rand.Intn(100)))
+				if err != nil {
+					return err
+				}
+			}
+		case "string":
+			if fieldInfo.ArrayLength == 0 {
+				return errors.New("DynamicMessage string field has an array lenght of 0")
+			}
+			result := ""
+			for i := 0; i < fieldInfo.ArrayLength; i++ {
+				if i%3 == 0 {
+					result += "c"
+				} else if i%2 == 0 {
+					result += "b"
+				} else {
+					result += "a"
+				}
+			}
+			dm.SetField(fieldName, result)
+		default:
+			return errors.New("unsupported field type in dynamic MAVLink message")
+		}
+	}
+
+	return nil
+}
+
 var heartbeatMsg *gomavlib.DynamicMessage
 var sysStatusMsg *gomavlib.DynamicMessage
 var attitudeMsg *gomavlib.DynamicMessage
@@ -216,29 +404,6 @@ func main() {
 	fmt.Println("Setting timeout to: ", stop)
 
 	random = true // TODO: create constant value messages as alternative to randomised message fields
-	if random {
-		fmt.Println("Sending messages with randomised field values")
-	} else {
-		fmt.Println("Sending messages with constant field values")
-	}
-
-	sendHeartbeat, heartbeatPeriod := messageDetails(messages, "HEARTBEAT")
-	sendSysStatus, sysStatusPeriod := messageDetails(messages, "SYS_STATUS")
-	sendAttitude, attitudePeriod := messageDetails(messages, "ATTITUDE")
-
-	heartbeatFreq := 0
-	sysStatusFreq := 0
-	attitudeFreq := 0
-	if sendHeartbeat {
-		heartbeatFreq = 1000000 / heartbeatPeriod
-	}
-	if sendSysStatus {
-		sysStatusFreq = 1000000 / sysStatusPeriod
-	}
-	if sendAttitude {
-		attitudeFreq = 1000000 / attitudePeriod
-	}
-	fmt.Println("heartbeatFreq = ", heartbeatFreq, ", sysStatusFreq = ", sysStatusFreq, ", attitudeFreq = ", attitudeFreq)
 
 	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"."})
 	if err != nil {
@@ -246,11 +411,21 @@ func main() {
 		os.Exit(1)
 	}
 	// Create dialect from the parsed defs.
-	dRT, err := gomavlib.NewDialectRT(version, defs)
+	dRT, err = gomavlib.NewDialectRT(version, defs)
 	if err != nil {
 		fmt.Println("error creating dRT, err: ", err)
 		os.Exit(1)
 	}
+
+	// Create dynamicMessage
+	dynamicMsgSlice, sendDynamicMsg, periodSlice := messageDetails(messages)
+	if !sendDynamicMsg {
+		fmt.Println("dynamic message not found")
+	}
+	for i, msg := range dynamicMsgSlice {
+		fmt.Printf("Sending %v at %v Hz\n", msg.GetName(), 1000000/periodSlice[i])
+	}
+
 	var nodeEndpoints []gomavlib.EndpointConf
 	if udp {
 		nodeEndpoints = []gomavlib.EndpointConf{
@@ -293,93 +468,51 @@ func main() {
 	}
 	defer nodeReceive.Close()
 
-	if sendHeartbeat {
-		heartbeatMsg, err = dRT.CreateMessageByName("HEARTBEAT")
-		if err != nil {
-			panic(err)
-		}
-	}
-	if sendSysStatus {
-		sysStatusMsg, err = dRT.CreateMessageByName("SYS_STATUS")
-	}
-	if sendAttitude {
-		attitudeMsg, err = dRT.CreateMessageByName("ATTITUDE")
-	}
-
 	stopchan := make(chan struct{})
-	stoppedchanHeartbeat := make(chan struct{})
-	stoppedchanSysStatus := make(chan struct{})
-	stoppedchanAttitude := make(chan struct{})
 	stoppedchanReceive := make(chan struct{})
 	stopchanReceive := make(chan struct{})
 
-	heartbeatMessagesReceived := 0
-	sysStatusMessagesReceived := 0
-	attitudeMessagesReceived := 0
-
-	countHeartbeat := 0
-	countSysStatus := 0
-	countAttitude := 0
-
-	if sendHeartbeat {
-		go func() { // Heartbeat
-			defer close(stoppedchanHeartbeat)
-			for t := range time.NewTicker(time.Duration(heartbeatPeriod) * time.Microsecond).C {
-				select {
-				default:
-					err := randomHeartbeat(heartbeatMsg)
-					if err != nil {
-						panic(err)
-					}
-					node.WriteMessageAll(heartbeatMsg)
-					countHeartbeat++
-				case <-stopchan:
-					fmt.Println("Time elapsed: ", t)
-					fmt.Println("Closing Heartbeat go routine...")
-					return
-				}
-			}
-		}()
+	sentMessages := make(map[string]int)
+	for _, m := range dynamicMsgSlice {
+		sentMessages[m.GetName()] = 0
 	}
 
-	if sendSysStatus {
-		go func() { // SysStatus
-			defer close(stoppedchanSysStatus)
-			for range time.NewTicker(time.Duration(sysStatusPeriod) * time.Microsecond).C {
-				select {
-				default:
-					err := randomSysStatus(sysStatusMsg)
-					if err != nil {
-						panic(err)
-					}
-					node.WriteMessageAll(sysStatusMsg)
-					countSysStatus++
-				case <-stopchan:
-					fmt.Println("Closing SysStatus go routine...")
-					return
-				}
-			}
-		}()
+	receivedMessages := make(map[string]int)
+	for _, m := range dynamicMsgSlice {
+		receivedMessages[m.GetName()] = 0
 	}
 
-	if sendAttitude {
-		go func() { // Attitude
-			defer close(stoppedchanAttitude)
-			for range time.NewTicker(time.Duration(attitudePeriod) * time.Microsecond).C {
-				select {
-				default:
-					err := randomAttitude(attitudeMsg)
-					if err != nil {
-						panic(err)
+	stoppedSendMessageChannels := make(map[string]chan struct{})
+	for _, m := range dynamicMsgSlice {
+		stoppedSendMessageChannels[m.GetName()] = make(chan struct{})
+	}
+
+	if sendDynamicMsg {
+		for i, msgToSend := range dynamicMsgSlice {
+			msg := msgToSend
+			index := i
+			go func(m *gomavlib.DynamicMessage) {
+				fmt.Printf("Starting go routine to send %v\n", msg.GetName())
+				msgName := msg.GetName()
+				period := periodSlice[index]
+				defer close(stoppedSendMessageChannels[msgName])
+				for t := range time.NewTicker(time.Duration(period) * time.Microsecond).C {
+					select {
+					default:
+						err := randomDynamicMessage(msg)
+						if err != nil {
+							panic(err)
+						}
+						node.WriteMessageAll(msg)
+						sentMessages[msgName]++
+					case <-stopchan:
+						fmt.Println("Time elapsed: ", t)
+						fmt.Printf("Closing send %v go routine...\n", msgName)
+						return
 					}
-					node.WriteMessageAll(attitudeMsg)
-					countAttitude++
-				case <-stopchan:
-					fmt.Println("Closing Attitude go routine...")
-					return
 				}
-			}
-		}()
+			}(msg)
+		}
 	}
 
 	go func() { // Receive
@@ -390,14 +523,8 @@ func main() {
 			default:
 				if frm, ok := evt.(*gomavlib.EventFrame); ok {
 					if msg, ok := frm.Message().(*gomavlib.DynamicMessage); ok {
-						if msg.GetName() == "HEARTBEAT" {
-							//fmt.Printf("received: id=%d, %+v\n", msg.GetId(), msg)
-							heartbeatMessagesReceived++
-						} else if msg.GetName() == "SYS_STATUS" {
-							sysStatusMessagesReceived++
-						} else if msg.GetName() == "ATTITUDE" {
-							attitudeMessagesReceived++
-						}
+						name := msg.GetName()
+						receivedMessages[name]++
 					}
 				}
 			case <-stopchanReceive:
@@ -408,27 +535,26 @@ func main() {
 	}()
 
 	time.Sleep(time.Duration(stop*1000) * time.Millisecond)
-	close(stopchan)
 
-	if sendHeartbeat {
-		<-stoppedchanHeartbeat
+	// Close send go routine
+	close(stopchan)
+	for _, m := range dynamicMsgSlice {
+		channel := stoppedSendMessageChannels[m.GetName()]
+		<-channel // Wait for channel to close
 	}
-	if sendSysStatus {
-		<-stoppedchanSysStatus
-	}
-	if sendAttitude {
-		<-stoppedchanAttitude
-	}
+
+	// Now close receive go routine
 	close(stopchanReceive)
-	<-stoppedchanReceive
+	<-stoppedchanReceive // Wait for channel to close
+
 	fmt.Println("Closed all go routines!")
 
 	// Print counts
-	fmt.Println("countHeartbeat = ", countHeartbeat)
-	fmt.Println("countSysStatus = ", countSysStatus)
-	fmt.Println("countAttitude = ", countAttitude)
+	for _, m := range dynamicMsgSlice {
+		fmt.Printf("%v Messages Sent: %v\n", m.GetName(), sentMessages[m.GetName()])
+	}
 
-	fmt.Println("Heartbeat Received: ", heartbeatMessagesReceived)
-	fmt.Println("SysStatus Received: ", sysStatusMessagesReceived)
-	fmt.Println("Attitude Received: ", attitudeMessagesReceived)
+	for _, m := range dynamicMsgSlice {
+		fmt.Printf("%v Messages Received: %v\n", m.GetName(), receivedMessages[m.GetName()])
+	}
 }
