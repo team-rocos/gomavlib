@@ -310,11 +310,11 @@ func MessageSender(address string, messages []string, stop float64, udp bool, xm
 	var nodeEndpoints []gomavlib.EndpointConf
 	if udp {
 		nodeEndpoints = []gomavlib.EndpointConf{
-			gomavlib.EndpointUdpServer{address},
+			gomavlib.EndpointUdpClient{address},
 		}
 	} else {
 		nodeEndpoints = []gomavlib.EndpointConf{
-			gomavlib.EndpointTcpServer{address},
+			gomavlib.EndpointTcpClient{address},
 		}
 	}
 	node, err = gomavlib.NewNode(gomavlib.NodeConf{
@@ -332,11 +332,11 @@ func MessageSender(address string, messages []string, stop float64, udp bool, xm
 		var nodeReceiveEndpoints []gomavlib.EndpointConf
 		if udp {
 			nodeReceiveEndpoints = []gomavlib.EndpointConf{
-				gomavlib.EndpointUdpClient{address},
+				gomavlib.EndpointUdpServer{address},
 			}
 		} else {
 			nodeReceiveEndpoints = []gomavlib.EndpointConf{
-				gomavlib.EndpointTcpClient{address},
+				gomavlib.EndpointTcpServer{address},
 			}
 		}
 		nodeReceive, err = gomavlib.NewNode(gomavlib.NodeConf{
