@@ -1,4 +1,4 @@
-package main
+package performancetesting
 
 import (
 	"errors"
@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/spf13/pflag"
 	"github.com/team-rocos/gomavlib"
 	"github.com/team-rocos/gomavlib/commands/dialgen/libgen"
 )
@@ -262,20 +261,20 @@ func randomDynamicMessage(dm *gomavlib.DynamicMessage) error {
 	return nil
 }
 
-func main() {
-	pflag.StringVarP(&address, "address", "a", "", "Set address to which to send MAVlink messages.")
-	pflag.StringSliceVarP(&messages, "msg", "m", []string{""}, "Set message(s) to be sent as well and the period at which they are sent.")
-	pflag.Float64VarP(&stop, "stop", "s", 10, "Set the length of time in seconds to send messages. Up to millisecond resolution (3dp).")
-	pflag.BoolVarP(&udp, "udp", "u", false, "Set this to send to a udp port. Otherwise defaults to tcp")
-	pflag.BoolVarP(&useReceiveNode, "receive", "r", false, "Set this to set up a receive node, which can be used to confirm the number of messages sent successfully.")
-	pflag.Parse()
+// func main() {
+// 	pflag.StringVarP(&address, "address", "a", "", "Set address to which to send MAVlink messages.")
+// 	pflag.StringSliceVarP(&messages, "msg", "m", []string{""}, "Set message(s) to be sent as well and the period at which they are sent.")
+// 	pflag.Float64VarP(&stop, "stop", "s", 10, "Set the length of time in seconds to send messages. Up to millisecond resolution (3dp).")
+// 	pflag.BoolVarP(&udp, "udp", "u", false, "Set this to send to a udp port. Otherwise defaults to tcp")
+// 	pflag.BoolVarP(&useReceiveNode, "receive", "r", false, "Set this to set up a receive node, which can be used to confirm the number of messages sent successfully.")
+// 	pflag.Parse()
 
-	err := MessageSender(address, messages, stop, udp, "../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"."}, useReceiveNode)
-	if err != nil {
-		fmt.Println("error sending messages in MessageSender, err: ", err)
-		os.Exit(1)
-	}
-}
+// 	err := MessageSender(address, messages, stop, udp, "../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"."}, useReceiveNode)
+// 	if err != nil {
+// 		fmt.Println("error sending messages in MessageSender, err: ", err)
+// 		os.Exit(1)
+// 	}
+// }
 
 // MessageSender sends MAVLink messages to the specified address, at the specified frequency, until the stop timeout value is reached.
 // The messages send have randomised field values.
