@@ -16,25 +16,29 @@ import (
 )
 
 var (
-	address     string
-	messages    []string
-	stop        float64
-	random, udp bool
-	dRT         *gomavlib.DialectRT
-	dmMutex     = sync.RWMutex{}
+	address             string
+	messages            []string
+	stop                float64
+	udp, useReceiveNode bool
+	dRT                 *gomavlib.DialectRT
+	dmMutex             = sync.RWMutex{}
+	node, nodeReceive   *gomavlib.Node
 )
 
-func messageDetails(input []string) ([]*gomavlib.DynamicMessage, []int) {
+func messageDetails(input []string) ([]*gomavlib.DynamicMessage, []int, error) {
 	dm := make([]*gomavlib.DynamicMessage, 0)
 	var periods []int
 	messagePeriod := 0
+	if len(input) == 0 {
+		fmt.Println("input []string to messageDetails function must be greater than 0")
+		os.Exit(1)
+	}
 	for _, msgString := range input {
 		msg := strings.Split(msgString, "@")
 		msgName := strings.ToUpper(msg[0])
 		dmInstance, err := dRT.CreateMessageByName(msgName)
 		if err != nil {
-			fmt.Println("Error creating dynamic message: ", err)
-			os.Exit(1)
+			return dm, periods, err
 		}
 		dm = append(dm, dmInstance)
 
@@ -44,8 +48,7 @@ func messageDetails(input []string) ([]*gomavlib.DynamicMessage, []int) {
 				var err error
 				messagePeriod, err = strconv.Atoi(period[0])
 				if err != nil {
-					fmt.Println("Error: ", err)
-					os.Exit(1)
+					return dm, periods, err
 				}
 				periods = append(periods, messagePeriod)
 			} else if strings.Contains(msg[1], "ms") { // period input in milliseconds
@@ -54,8 +57,7 @@ func messageDetails(input []string) ([]*gomavlib.DynamicMessage, []int) {
 				messagePeriod, err = strconv.Atoi(period[0])
 				messagePeriod *= 1000 // Concert from milliseconds to microseconds
 				if err != nil {
-					fmt.Println("Error: ", err)
-					os.Exit(1)
+					return dm, periods, err
 				}
 				periods = append(periods, messagePeriod)
 			} else if strings.Contains(msg[1], "s") { // period input in seconds
@@ -64,15 +66,13 @@ func messageDetails(input []string) ([]*gomavlib.DynamicMessage, []int) {
 				messagePeriod, err = strconv.Atoi(period[0])
 				messagePeriod *= 1000000 // Convert from seconds to microseconds
 				if err != nil {
-					fmt.Println("Error: ", err)
-					os.Exit(1)
+					return dm, periods, err
 				}
 				periods = append(periods, messagePeriod)
 			}
-
 		}
 	}
-	return dm, periods
+	return dm, periods, nil
 }
 
 func randomDynamicMessage(dm *gomavlib.DynamicMessage) error {
@@ -262,16 +262,33 @@ func randomDynamicMessage(dm *gomavlib.DynamicMessage) error {
 	return nil
 }
 
-var node *gomavlib.Node
-var nodeReceive *gomavlib.Node
-
 func main() {
 	pflag.StringVarP(&address, "address", "a", "", "Set address to which to send MAVlink messages.")
 	pflag.StringSliceVarP(&messages, "msg", "m", []string{""}, "Set message(s) to be sent as well and the period at which they are sent.")
 	pflag.Float64VarP(&stop, "stop", "s", 10, "Set the length of time in seconds to send messages. Up to millisecond resolution (3dp).")
-	pflag.BoolVarP(&random, "random", "r", false, "Use this to randomise the fields of the messages sent.")
 	pflag.BoolVarP(&udp, "udp", "u", false, "Set this to send to a udp port. Otherwise defaults to tcp")
+	pflag.BoolVarP(&useReceiveNode, "receive", "r", false, "Set this to set up a receive node, which can be used to confirm the number of messages sent successfully.")
 	pflag.Parse()
+
+	err := MessageSender(address, messages, stop, udp, "../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"."}, useReceiveNode)
+	if err != nil {
+		fmt.Println("error sending messages in MessageSender, err: ", err)
+		os.Exit(1)
+	}
+}
+
+// MessageSender sends MAVLink messages to the specified address, at the specified frequency, until the stop timeout value is reached.
+// The messages send have randomised field values.
+// Inputs:
+// - address: A string showing the ip:port address, e.g. "192.168.1.84:5600"
+// - messages: Slice of strings specifying the MAVLink message name, and the period between messages sent separated with '@', e.g. "ATTITUDE@10ms".
+// Period units of seconds (s), milliseconds (ms), or microseconds (us) can be specified.
+// - stop: A float64 value giving the amount of time in seconds that messages should be sent. E.g, 10, would stop MessageSender after 10 seconds.
+// udp: A boolean variable. If set to true, the address spcified will be interpreted as udp. If false, it will be interpreted as a tcp address.
+// xmlPath: A string showing the path to the dialect XML file used to create the MAVLink dialect.
+// includeDirs: A string slice providing any applicable xml files included by the dialect XML file specified in the xmlPath input.
+// receiveNode: Boolean variable. If true, a local receive node is created which can be used to confirm the number of messages sent successfully.
+func MessageSender(address string, messages []string, stop float64, udp bool, xmlPath string, includeDirs []string, useReceiveNode bool) error {
 
 	addressType := "TCP"
 	if udp {
@@ -280,26 +297,17 @@ func main() {
 	fmt.Println("Setting address to: ", addressType, address)
 	fmt.Println("Setting timeout to: ", stop)
 
-	random = true // TODO: create constant value messages as alternative to randomised message fields
-
-	defs, version, err := libgen.XMLToFields("../mavlink-upstream/message_definitions/v1.0/common.xml", []string{"."})
+	defs, version, err := libgen.XMLToFields(xmlPath, includeDirs)
 	if err != nil {
-		fmt.Println("error creating defs from xml file, err: ", err)
-		os.Exit(1)
+		return err
 	}
 	// Create dialect from the parsed defs.
 	dRT, err = gomavlib.NewDialectRT(version, defs)
 	if err != nil {
-		fmt.Println("error creating dRT, err: ", err)
-		os.Exit(1)
+		return err
 	}
 
-	// Create dynamicMessage
-	dynamicMsgSlice, periodSlice := messageDetails(messages)
-	for i, msg := range dynamicMsgSlice {
-		fmt.Printf("Sending %v at %v Hz\n", msg.GetName(), 1000000/periodSlice[i])
-	}
-
+	// Create nodes for sending and receiving messages
 	var nodeEndpoints []gomavlib.EndpointConf
 	if udp {
 		nodeEndpoints = []gomavlib.EndpointConf{
@@ -317,30 +325,40 @@ func main() {
 		OutSystemId: 10,
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer node.Close()
 
-	var nodeReceiveEndpoints []gomavlib.EndpointConf
-	if udp {
-		nodeReceiveEndpoints = []gomavlib.EndpointConf{
-			gomavlib.EndpointUdpClient{address},
+	if useReceiveNode {
+		var nodeReceiveEndpoints []gomavlib.EndpointConf
+		if udp {
+			nodeReceiveEndpoints = []gomavlib.EndpointConf{
+				gomavlib.EndpointUdpClient{address},
+			}
+		} else {
+			nodeReceiveEndpoints = []gomavlib.EndpointConf{
+				gomavlib.EndpointTcpClient{address},
+			}
 		}
-	} else {
-		nodeReceiveEndpoints = []gomavlib.EndpointConf{
-			gomavlib.EndpointTcpClient{address},
+		nodeReceive, err = gomavlib.NewNode(gomavlib.NodeConf{
+			Endpoints:   nodeReceiveEndpoints,
+			D:           dRT,
+			OutVersion:  gomavlib.V2, // change to V1 if you're unable to write to the target
+			OutSystemId: 10,
+		})
+		if err != nil {
+			return err
 		}
+		defer nodeReceive.Close()
 	}
-	nodeReceive, err = gomavlib.NewNode(gomavlib.NodeConf{
-		Endpoints:   nodeReceiveEndpoints,
-		D:           dRT,
-		OutVersion:  gomavlib.V2, // change to V1 if you're unable to write to the target
-		OutSystemId: 10,
-	})
+	// Create dynamicMessage
+	dynamicMsgSlice, periodSlice, err := messageDetails(messages)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	defer nodeReceive.Close()
+	for i, msg := range dynamicMsgSlice {
+		fmt.Printf("Sending %v at %v Hz\n", msg.GetName(), 1000000/periodSlice[i])
+	}
 
 	stopchan := make(chan struct{})
 	stoppedchanReceive := make(chan struct{})
@@ -361,7 +379,31 @@ func main() {
 		stoppedSendMessageChannels[m.GetName()] = make(chan struct{})
 	}
 
-	// Send DynamicMessages
+	if useReceiveNode {
+		go func() { // Receive
+			fmt.Println("Starting go routine to recieve all messages")
+			defer close(stoppedchanReceive)
+			// print every message we receive
+			for evt := range nodeReceive.Events() {
+				select {
+				default:
+					if frm, ok := evt.(*gomavlib.EventFrame); ok {
+						dmMutex.Lock()
+						if msg, ok := frm.Message().(*gomavlib.DynamicMessage); ok {
+							name := msg.GetName()
+							receivedMessages[name]++
+						}
+						dmMutex.Unlock()
+					}
+				case <-stopchanReceive:
+					fmt.Println("Closing nodeReceive go routine...")
+					return
+				}
+			}
+		}()
+	}
+
+	// Send DynamicMessages, creating a go routine for each topic.
 	for i, msgToSend := range dynamicMsgSlice {
 		msg := msgToSend
 		index := i
@@ -379,7 +421,8 @@ func main() {
 					dmMutex.Lock()
 					err := randomDynamicMessage(msg)
 					if err != nil {
-						panic(err)
+						fmt.Println("error creating random values for DynamicMessage fields: err", err)
+						os.Exit(1)
 					}
 					node.WriteMessageAll(msg)
 					dmMutex.Unlock()
@@ -394,27 +437,6 @@ func main() {
 		}()
 	}
 
-	go func() { // Receive
-		defer close(stoppedchanReceive)
-		// print every message we receive
-		for evt := range nodeReceive.Events() {
-			select {
-			default:
-				if frm, ok := evt.(*gomavlib.EventFrame); ok {
-					dmMutex.Lock()
-					if msg, ok := frm.Message().(*gomavlib.DynamicMessage); ok {
-						name := msg.GetName()
-						receivedMessages[name]++
-					}
-					dmMutex.Unlock()
-				}
-			case <-stopchanReceive:
-				fmt.Println("Closing nodeReceive go routine...")
-				return
-			}
-		}
-	}()
-
 	time.Sleep(time.Duration(stop*1000) * time.Millisecond)
 
 	// Close send go routine
@@ -425,14 +447,20 @@ func main() {
 	}
 
 	// Now close receive go routine
-	close(stopchanReceive)
-	<-stoppedchanReceive // Wait for channel to close
-
+	if useReceiveNode {
+		close(stopchanReceive)
+		<-stoppedchanReceive // Wait for channel to close
+	}
 	fmt.Println("Closed all go routines!")
 
 	// Print counts
 	for _, m := range dynamicMsgSlice {
 		fmt.Printf("%v Messages Sent    : %v\n", m.GetName(), sentMessages[m.GetName()])
-		fmt.Printf("%v Messages Received: %v\n", m.GetName(), receivedMessages[m.GetName()])
+		if useReceiveNode {
+			fmt.Printf("%v Messages Received: %v\n", m.GetName(), receivedMessages[m.GetName()])
+		}
 	}
+
+	// All done, so return no errors.
+	return nil
 }
