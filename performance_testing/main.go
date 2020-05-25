@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -20,9 +21,10 @@ var (
 	stop        float64
 	random, udp bool
 	dRT         *gomavlib.DialectRT
+	dmMutex     = sync.RWMutex{}
 )
 
-func messageDetails(input []string) ([]*gomavlib.DynamicMessage, bool, []int) {
+func messageDetails(input []string) ([]*gomavlib.DynamicMessage, []int) {
 	dm := make([]*gomavlib.DynamicMessage, 0)
 	var periods []int
 	messagePeriod := 0
@@ -31,7 +33,7 @@ func messageDetails(input []string) ([]*gomavlib.DynamicMessage, bool, []int) {
 		msgName := strings.ToUpper(msg[0])
 		dmInstance, err := dRT.CreateMessageByName(msgName)
 		if err != nil {
-			fmt.Println("Error: ", err)
+			fmt.Println("Error creating dynamic message: ", err)
 			os.Exit(1)
 		}
 		dm = append(dm, dmInstance)
@@ -70,7 +72,7 @@ func messageDetails(input []string) ([]*gomavlib.DynamicMessage, bool, []int) {
 
 		}
 	}
-	return dm, true, periods
+	return dm, periods
 }
 
 func randomDynamicMessage(dm *gomavlib.DynamicMessage) error {
@@ -257,13 +259,8 @@ func randomDynamicMessage(dm *gomavlib.DynamicMessage) error {
 			return errors.New("unsupported field type in dynamic MAVLink message")
 		}
 	}
-
 	return nil
 }
-
-var heartbeatMsg *gomavlib.DynamicMessage
-var sysStatusMsg *gomavlib.DynamicMessage
-var attitudeMsg *gomavlib.DynamicMessage
 
 var node *gomavlib.Node
 var nodeReceive *gomavlib.Node
@@ -298,10 +295,7 @@ func main() {
 	}
 
 	// Create dynamicMessage
-	dynamicMsgSlice, sendDynamicMsg, periodSlice := messageDetails(messages)
-	if !sendDynamicMsg {
-		fmt.Println("dynamic message not found")
-	}
+	dynamicMsgSlice, periodSlice := messageDetails(messages)
 	for i, msg := range dynamicMsgSlice {
 		fmt.Printf("Sending %v at %v Hz\n", msg.GetName(), 1000000/periodSlice[i])
 	}
@@ -367,31 +361,37 @@ func main() {
 		stoppedSendMessageChannels[m.GetName()] = make(chan struct{})
 	}
 
-	if sendDynamicMsg {
-		for i, msgToSend := range dynamicMsgSlice {
-			msg := msgToSend
-			index := i
-			go func() {
-				fmt.Printf("Starting go routine to send %v\n", msg.GetName())
-				msgName := msg.GetName()
-				period := periodSlice[index]
-				defer close(stoppedSendMessageChannels[msgName])
-				for range time.NewTicker(time.Duration(period) * time.Microsecond).C {
-					select {
-					default:
-						err := randomDynamicMessage(msg)
-						if err != nil {
-							panic(err)
-						}
-						node.WriteMessageAll(msg)
-						sentMessages[msgName]++
-					case <-stopchan:
-						fmt.Printf("Closing send %v go routine...\n", msgName)
-						return
+	// Send DynamicMessages
+	for i, msgToSend := range dynamicMsgSlice {
+		msg := msgToSend
+		index := i
+		dmMutex.Lock()
+		msgName := msg.GetName()
+		dmMutex.Unlock()
+
+		go func() {
+			fmt.Printf("Starting go routine to send %v\n", msgName)
+			period := periodSlice[index]
+			defer close(stoppedSendMessageChannels[msgName])
+			for range time.NewTicker(time.Duration(period) * time.Microsecond).C {
+				select {
+				default:
+					dmMutex.Lock()
+					err := randomDynamicMessage(msg)
+					if err != nil {
+						panic(err)
 					}
+					node.WriteMessageAll(msg)
+					dmMutex.Unlock()
+
+					sentMessages[msgName]++
+
+				case <-stopchan:
+					fmt.Printf("Closing send %v go routine...\n", msgName)
+					return
 				}
-			}()
-		}
+			}
+		}()
 	}
 
 	go func() { // Receive
@@ -401,10 +401,12 @@ func main() {
 			select {
 			default:
 				if frm, ok := evt.(*gomavlib.EventFrame); ok {
+					dmMutex.Lock()
 					if msg, ok := frm.Message().(*gomavlib.DynamicMessage); ok {
 						name := msg.GetName()
 						receivedMessages[name]++
 					}
+					dmMutex.Unlock()
 				}
 			case <-stopchanReceive:
 				fmt.Println("Closing nodeReceive go routine...")
