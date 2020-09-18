@@ -216,7 +216,6 @@ func (mp *DialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 	properties := make(map[string]interface{})
 	schemaItems := make(map[string]interface{})
 	schemaItems["type"] = "object"
-	schemaItems["title"] = topic
 	schemaItems["properties"] = properties
 
 	// Iterate over each of the fields in the message.
@@ -227,13 +226,11 @@ func (mp *DialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 			properties[field.OriginalName] = propertyContent
 
 			if field.Type == "uint8" {
-				propertyContent["title"] = topic + Sep + field.OriginalName
 				propertyContent["type"] = "string"
 			} else {
 
 				// Arrays all have a type of 'array', regardless of that the hold, then the 'item' keyword determines what type goes in the array.
 				propertyContent["type"] = "array"
-				propertyContent["title"] = topic + Sep + field.OriginalName
 				arrayItems := make(map[string]interface{})
 				propertyContent["items"] = arrayItems
 
@@ -261,7 +258,6 @@ func (mp *DialectMessageRT) generateJSONSchemaProperties(topic string) (map[stri
 			// It's a scalar.
 			propertyContent := make(map[string]interface{})
 			properties[field.OriginalName] = propertyContent
-			propertyContent["title"] = topic + Sep + field.OriginalName
 
 			if field.Type == "string" {
 				propertyContent["type"] = "string"
