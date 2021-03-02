@@ -627,6 +627,9 @@ func (mp *DialectMessageRT) encode(msg Message, isFrameV2 bool) ([]byte, error) 
 	// We're filling a buffer byte by byte.
 	buf := &bytes.Buffer{}
 
+	dm.fieldsMutex.RLock()
+	defer dm.fieldsMutex.RUnlock()
+
 	// Iterate over the definitions in the wire order.
 	for _, fieldDef := range mp.Msg.Fields {
 		// Need to handle each type of field separately.

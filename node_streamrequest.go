@@ -89,6 +89,8 @@ func (sr *nodeStreamRequest) onEventFrame(evt *EventFrame) {
 	dynamicMessageFound := false
 	if msg, ok := evt.Message().(*DynamicMessage); ok {
 		dynamicMessageFound = true
+		msg.fieldsMutex.RLock()
+		defer msg.fieldsMutex.Unlock()
 		if autopilot, ok := msg.Fields["autopilot"]; !ok {
 			return
 		} else if msg.GetId() != 0 {
